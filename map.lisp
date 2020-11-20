@@ -4,7 +4,6 @@
   (map (make-hash-table :test 'equal))
   )
 
-;; Don't touch:
 (defconstant +primary-directions+
   (list :N :NW :SW :S :SE :NE))
 
@@ -15,7 +14,7 @@
 (deftype direction () (cons 'member +primary-directions+))
 (deftype hex-vertex () (cons 'member +vertex-directions+))
 (deftype elevation () '(signed-byte 32))
-(deftype crd () '(cons (unsigned-byte 32) (unsigned-byte 32)))
+(deftype crd () '(cons fixnum fixnum))
 
 (setf (fdefinition 'crd) #'cons
       (fdefinition 'x) #'car
@@ -31,41 +30,53 @@
   (hex-edge (gethash crd (world-map world))
 	    direction))
 
-
+(defun crd-vertex (crd direction world)
+  (declare (type crd crd)
+	   (type hex-vertex direction))
+  (hex-vertex (crd-hex crd world) direction))
 
 (defun opposite (direction)
   (declare (type hex-vertex direction))
-  (ecase direction ;;;TODO: (dictq
-    (:N :S)
-    ()))
+  (gethash direction
+	   (sera:dictq :N :S
+		       :NNW :SSE
+		       :NW :SE
+		       :W :E
+		       :SW :NE
+		       :SSW :NNE
+		       :NNE :SSW
+		       :NE :SW
+		       :E :W
+		       :SE :NW
+		       :SSE :NNW
+		       :S :N)))
 
 (defun crd-neighbour (crd direction)
   (declare (type crd crd)
 	   (type direction direction))
-  (macrolet ((xodd+ () '(rem x 2))
-	     (xodd- () '(1- (xodd+))))
+  (symbol-macrolet ((xodd+ (mod x 2))
+		    (xodd- (1- xodd+)))
     
     (let ((x (x crd))
 	  (y (y crd)))
-
       (the (values crd &optional)
 	   (ecase direction
 	     (:N (crd x (1+ y)))
-	     (:NE (crd (1+ x) (+ y (xodd+))))
-	     (:SE (crd (1+ x) (+ y (xodd-))))
+	     (:NE (crd (1+ x) (+ y xodd+)))
+	     (:SE (crd (1+ x) (+ y xodd-)))
 	     (:S (crd x (1- y)))
-	     (:SW (crd (1- x) (+ y (xodd-))))
-	     (:NW (crd (1- x) (+ y (xodd+)))))))))
+	     (:SW (crd (1- x) (+ y xodd-)))
+	     (:NW (crd (1- x) (+ y xodd+))))))))
 
-#|
 (defun set-crd (crd hex world)
   (setf (gethash crd (world-map world)) hex)
-  (do ((direction (mapcan #'list ;;counter clockwise starting from NNE
-			  +vertex-directions+
-			  +primary-directions+)
-		  (cdr direction))
-       (neighbour +primary-directions+ (cdr neighbour)))
-    (setf (hex-vertex hex direction)
-	  ))
+  (loop for direction in +primary-directions+
+	for neighbour = (crd-hex (crd-neighbour crd direction)
+				 world)
+	when neighbour
+	  do (setf (hex-edge hex direction)
+		   (hex-edge neighbour (opposite direction)))))
+	
 
-|#
+
+
