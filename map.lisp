@@ -68,6 +68,80 @@
 	     (:SW (crd (1- x) (+ y xodd-)))
 	     (:NW (crd (1- x) (+ y xodd+))))))))
 
+(defun generate-map (width height world)
+  (let* ((source-data (read-pgm "mhmap.pgm"))
+	 (float-hex-width (float (/ width))) ; maybe 1+ ?
+	 (float-hex-height (float (/ height))))
+    (macrolet ((read-data (direction)
+		 `(rem ; make elevation values 0 - 10
+		   (round (2faref source-data
+				  (+ (* (xofs ,direction)
+					float-hex-width)
+				     (/ x width))
+				  (+ (* (yofs ,direction)
+					float-hex-height)
+				     (/ y height))))
+		   10)))
+      (dotimes (y height)
+	(dotimes (x width)
+	  (setf (gethash (crd x y) (world-map world))
+		(make-hex
+		 :elevation (read-data :CEN)
+		 :n-edge (or (hex-edge (crd-hex
+					  (crd-neighbour
+					   (crd x y) :N)
+					  world)
+				       :S)
+			     (make-edge
+			      :west (read-data :NNW)
+			      :middle (read-data :N)
+			      :east (read-data :NNE)))
+		 :nw-edge (or (hex-edge (crd-hex
+					    (crd-neighbour
+					     (crd x y) :NW)
+					    world)
+					:SE)
+			      (make-edge
+			       :west (read-data :W)
+			       :middle (read-data :NW)
+			       :east (read-data :NNW)))
+		 :sw-edge (or (hex-edge (crd-hex
+					    (crd-neighbour
+					     (crd x y) :SW)
+					    world)
+					:NE)
+			      (make-edge
+			       :west (read-data :W)
+			       :middle (read-data :SW)
+			       :east (read-data :SSW)))
+		 :s-edge (or (hex-edge (crd-hex
+					  (crd-neighbour
+					   (crd x y) :S)
+					  world)
+				       :N)
+			     (make-edge
+			      :west (read-data :SSW)
+			      :middle (read-data :S)
+			      :east (read-data :SSE)))
+		 :se-edge (or (hex-edge (crd-hex
+					    (crd-neighbour
+					     (crd x y) :SE)
+					    world)
+					:NW)
+			      (make-edge
+			       :west (read-data :SSE)
+			       :middle (read-data :SE)
+			       :east (read-data :E)))
+		 :ne-edge (or (hex-edge (crd-hex
+					    (crd-neighbour
+					     (crd x y) :NE)
+					    world)
+					:SW)
+			      (make-edge
+			       :west (read-data :NNE)
+			       :middle (read-data :NE)
+			       :east (read-data :E))))))))))
+
 (defun set-crd (crd hex world)
   (setf (gethash crd (world-map world)) hex)
   (loop for direction in +primary-directions+

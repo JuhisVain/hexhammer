@@ -2,12 +2,12 @@
 
 (defstruct hex
   (elevation 0 :type elevation)
-  (N-edge NIL :type edge)
-  (NW-edge NIL :type edge)
-  (SW-edge NIL :type edge)
-  (S-edge NIL :type edge)
-  (SE-edge NIL :type edge)
-  (NE-edge NIL :type edge))
+  (N-edge NIL :type (or edge null))
+  (NW-edge NIL :type (or edge null))
+  (SW-edge NIL :type (or edge null))
+  (S-edge NIL :type (or edge null))
+  (SE-edge NIL :type (or edge null))
+  (NE-edge NIL :type (or edge null)))
 
 (defstruct edge
   (feature nil :type (or null edge-feature))
@@ -19,16 +19,51 @@
 (defstruct edge-feature
   )
 
+
+;;; Offsets of x and y (low left origin) coordinates of hex (r = 0.5) vertices
+(defmacro xofs (direction)
+  (case direction
+    (:E 1.0)
+    (:NE 0.875)
+    (:NNE 0.75)
+    (:CEN '(xofs :N))
+    (:N 0.5)
+    (:NNW 0.25)
+    (:NW 0.125)
+    (:W 0.0)
+    (:SW '(xofs :NW))
+    (:SSW '(xofs :NNW))
+    (:S '(xofs :N))
+    (:SSE '(xofs :NNE))
+    (:SE '(xofs :NE))))
+
+(defmacro yofs (direction)
+  (case direction
+    (:E '(yofs :CEN))
+    (:NE '(yofs :NW))
+    (:NNE '(yofs :N))
+    (:CEN (coerce (* 1/2 (sin (/ pi 3))) 'single-float))
+    (:N (coerce (sin (/ pi 3)) 'single-float))
+    (:NNW '(yofs :N))
+    (:NW (coerce (* 3/4 (sin (/ pi 3))) 'single-float))
+    (:W '(yofs :CEN))
+    (:SW (coerce (* 1/4 (sin (/ pi 3))) 'single-float))
+    (:SSW '(yofs :S))
+    (:S 0.0)
+    (:SSE '(yofs :S))
+    (:SE '(yofs :SW))))
+
 (defun hex-edge (hex direction)
-  (declare (type hex hex)
+  (declare (type (or hex null) hex)
 	   (type direction direction))
-  (ecase direction
-    (:N (hex-N-edge hex))
-    (:NW (hex-NW-edge hex))
-    (:SW (hex-SW-edge hex))
-    (:S (hex-S-edge hex))
-    (:SE (hex-SE-edge hex))
-    (:NE (hex-NE-edge hex))))
+  (when hex
+    (ecase direction
+      (:N (hex-N-edge hex))
+      (:NW (hex-NW-edge hex))
+      (:SW (hex-SW-edge hex))
+      (:S (hex-S-edge hex))
+      (:SE (hex-SE-edge hex))
+      (:NE (hex-NE-edge hex)))))
 
 (defun set-hex-edge (hex direction new-edge)
   (declare (type hex hex)
