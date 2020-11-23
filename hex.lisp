@@ -31,7 +31,7 @@
       (:SE (hex-SE-edge hex))
       (:NE (hex-NE-edge hex)))))
 
-(defun set-hex-edge (hex direction new-edge)
+(defun (setf hex-edge) (hex direction new-edge)
   (declare (type hex hex)
 	   (type direction direction)
 	   (type edge new-edge))
@@ -42,8 +42,6 @@
     (:S (setf (hex-S-edge hex) new-edge))
     (:SE (setf (hex-SE-edge hex) new-edge))
     (:NE (setf (hex-NE-edge hex) new-edge))))
-
-(defsetf hex-edge set-hex-edge)
 
 (defun hex-vertex (hex vert-direction)
   (declare (type hex hex)
@@ -63,7 +61,7 @@
     (:W (edge-west (hex-SW-edge hex)))
     (:NW (edge-middle (hex-NW-edge hex)))))
 
-(defun set-hex-vertex (hex vert-direction new-vert-value)
+(defun (setf hex-vertex) (hex vert-direction new-vert-value)
   (declare (type hex hex)
 	   (type hex-vertex vert-direction)
 	   (type elevation new-vert-value))
@@ -81,5 +79,3 @@
     (:SW (setf (edge-middle (hex-SW-edge hex)) new-vert-value))
     (:W (setf (edge-west (hex-SW-edge hex)) new-vert-value))
     (:NW (setf (edge-middle (hex-NW-edge hex)) new-vert-value))))
-
-(defsetf hex-vertex set-hex-vertex)
