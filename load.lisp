@@ -1,7 +1,10 @@
 (ql:quickload :serapeum)
+(ql:quickload :sdl2)
+(ql:quickload :cl-cairo2)
 
 (load "package.lisp")
 (load "graphics.lisp")
 (load "map.lisp")
 (load "hex.lisp")
 (load "pgmread.lisp")
+(load "window.lisp")

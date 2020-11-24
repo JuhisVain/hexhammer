@@ -65,7 +65,7 @@
   (declare (type hex hex)
 	   (type hex-vertex vert-direction)
 	   (type elevation new-vert-value))
-  (ecase vert-direction
+  (ccase vert-direction
     (:CEN (setf (hex-elevation hex) new-vert-value))
     (:NNW (setf (edge-west (hex-N-edge hex)) new-vert-value))
     (:N (setf (edge-middle (hex-N-edge hex)) new-vert-value))
