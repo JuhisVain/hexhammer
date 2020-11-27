@@ -7,4 +7,5 @@
 (load "map.lisp")
 (load "hex.lisp")
 (load "pgmread.lisp")
+(load "viewstate.lisp")
 (load "window.lisp")

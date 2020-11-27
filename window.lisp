@@ -15,40 +15,14 @@
 	    (sdl2:set-render-draw-color renderer 100 100 100 255)
 	    (sdl2:render-clear renderer)
 	    (sdl2:render-present renderer)
-	    #|
-	    (let* ((cairo-surface
-		     (cairo:create-image-surface-for-data
-		      buffer :argb32 1000 800 (* 4 1000)))
-		   (cairo-context (cairo:create-context cairo-surface)))
-	      (cairo:with-context (cairo-context)
-		(cairo:set-source-rgb 0 0 0)
-		(cairo:paint)
-		(cairo:set-source-rgb 0 1 0)
-		(cairo:set-line-width 3)
-		(cairo:move-to 0 0)
-		(cairo:line-to 1000 800)
-		;(cairo:stroke)
-		(cairo:set-line-width 2)
-		(cairo:line-to 500 200)
-		;(cairo:stroke)
-		(cairo:set-line-width 1)
-		(cairo:line-to 0 0)
-		;(cairo:stroke)
-		(cairo:set-source-rgb 1 0 0)
-		(cairo:set-line-width 1)
-		(cairo:arc 0 0 30 0 (* 2 pi))
-		(cairo:stroke)
-		)
-	      (cairo:destroy cairo-context)
-	      (cairo:destroy cairo-surface))|#
 
 	    (let ((test-state
 		    (make-instance 'view-state
 				   :texture texture
 				   :buffer buffer)))
 
-	      (dotimes (x 5)
-		(dotimes (y 5)
+	      (dotimes (x 20)
+		(dotimes (y 10)
 		  (draw-hex (crd x y) test-state)))
 
 
@@ -66,19 +40,19 @@
 					    (centre-x test-state)
 					    (centre-y test-state))
 				    (clear-all test-state)
-				    (dotimes (x 5)
-				      (dotimes (y 5)
+				    (dotimes (x 20)
+				      (dotimes (y 10)
 					(draw-hex (crd x y) test-state)))
 				    
 				    ))
 
 		(:mousewheel (:y roll) ; 1 = away, -1 inwards, todo: test with non smooth wheel
-			     (incf (hex-r test-state) roll) ;; todo: focus on centre or mouse
+			     (incf (hex-r test-state) (* 10 roll))
 
 			     (clear-all test-state)
-				    (dotimes (x 5)
-				      (dotimes (y 5)
-					(draw-hex (crd x y) test-state)))
+			     (dotimes (x 20)
+			       (dotimes (y 10)
+				 (draw-hex (crd x y) test-state)))
 			     
 			     )
 		
@@ -100,26 +74,6 @@
 	      )))))))
 
 (defvar +sin60+ (sqrt (/ 3 4)))
-
-(defclass view-state ()
-  ((width :initform 1000
-	  :initarg :width
-	  :accessor width)
-   (height :initform 800
-	   :initarg :height
-	   :accessor height)
-   (centre-x :initform (* 4 75.0)
-	     :initarg :centre-x
-	     :accessor centre-x)
-   (centre-y :initform (* 6 +sin60+ 75.0)
-	     :initarg :centre-y
-	     :accessor centre-y)
-   (texture :initarg :texture
-	    :accessor texture)
-   (buffer :initarg :buffer
-	   :accessor buffer)
-   (hex-r :initform 75.0 ; ZOOM
-	  :accessor hex-r)))
 
 (defun clear-all (view-state)
   (let* ((cairo-surface
