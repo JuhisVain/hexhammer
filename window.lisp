@@ -143,6 +143,8 @@
     (cairo:destroy cairo-context)
     (cairo:destroy cairo-surface)))
 
+(defparameter *soft* 0.1)
+
 (defun draw-contours (crd map view-state)
   (let* ((cairo-surface
 	   (cairo:create-image-surface-for-data
@@ -180,7 +182,7 @@
 	(cairo:set-line-width 0.5)
 	
 	;;do NNW "kite":
-	(let ((top (record-contours hex :nnw :n 1))
+	(let ((top (record-contours hex :nnw :n 1)) ;; TODO: remove 'used' contours
 	      (left (record-contours hex :nw :nnw 1))
 	      (bottom (record-contours hex :nw :cen 1))
 	      (right (record-contours hex :n :cen 1)))
@@ -202,16 +204,18 @@
 				 bottom-contour-y-offset))
 			  
 			  (recipient-index (contour-index elevation left))
-			  (contour-x-offset (contour-offset recipient-index
-							    (contours-range left)
-							    quarter-r))
-			  (contour-y-offset (contour-offset recipient-index
-							    (contours-range left)
-							    quarter-down-y))
+			  (contour-x-offset
+			    (contour-offset recipient-index
+					    (contours-range left)
+					    quarter-r))
+			  (contour-y-offset
+			    (contour-offset recipient-index
+					    (contours-range left)
+					    quarter-down-y))
 
-			  ;; multiplying by something <1 will soften curves:
-			  (x1 (+ x0 (* +cos60+ contour-x-offset)))
-			  (y1 (- y0 (* +sin60+ contour-y-offset)))
+			  ;; multiplying controlpoints by <1 will soften curves:
+			  (x1 (+ x0 (* +sin60+ contour-x-offset *soft*)))
+			  (y1 (- y0 (* +sin60+ contour-y-offset *soft*)))
 			  
 			  (x3 (+ top-left-x quarter-r
 				 contour-x-offset))
@@ -221,29 +225,30 @@
 					  half-r)
 				       2)
 				    +sin60+))|#
-			  (x2 (+ x3 bottom-contour-x-offset))
-			  (y2 (+ y3 bottom-contour-y-offset)))
+			  (x2 (+ x3 (* *soft* bottom-contour-x-offset)))
+			  (y2 (+ y3 (* *soft* bottom-contour-y-offset))))
 
 		     (cairo:move-to x0 y0)
 		     (cairo:curve-to x1 y1 x2 y2 x3 y3)
 		     ;(cairo:line-to x1 y1)(cairo:line-to x2 y2)(cairo:line-to x3 y3)
 		     ))
 		  ((is-contour-of elevation right)
-		   (let* (;; same as with (is-contour-of elevation LEFT)
+		   (let* (
+			  (bottom-contour-x-offset
+			    (contour-offset (contour-index elevation bottom)
+					    (contours-range bottom)
+					    (- r quarter-r)))
+			  (bottom-contour-y-offset
+			    (contour-offset (contour-index elevation bottom)
+					    (contours-range bottom)
+					    quarter-down-y))
 			  (x0 (+ top-left-x quarter-r
-				 (contour-offset (contour-index elevation bottom)
-						 ;index-from-left
-						   (contours-range bottom)
-						   (- r quarter-r))))
+				 bottom-contour-x-offset))
 			  (y0 (+ top-left-y quarter-down-y
-				 (contour-offset (contour-index elevation bottom)
-						 ;index-from-left
-						   (contours-range bottom)
-						   quarter-down-y)))
+				 bottom-contour-y-offset))
 
-			  ;; TODO: figure out perfect circle control points
 			  (recipient-index (contour-index elevation right))
-			  ;(contour-x-offset )
+			  ;;(contour-x-offset 0)
 			  (contour-y-offset
 			    (contour-offset recipient-index
 					    (contours-range right)
@@ -284,50 +289,115 @@
 							    (contours-range top)
 							    half-r))
 			  
-			  (x1 (+ x0 (* +cos60+ (* 0.16 r)))) ;; todo: circlize
+			  (x1 (+ x0 (* +cos60+ (* 0.16 r))))
 			  (y1 (- y0 (* +sin60+ (* 0.16 r))))
 			  
 			  (x3 (+ top-left-x half-r
 				 contour-x-offset))
 			  (y3 top-left-y)
 			  (x2 x3)
-			  (y2 #|(+ y0 (* (tan (/ pi 3)) ; not too sure about this one
-				       (- x0 x3)
-				       ))|#
-			    (+ top-left-y ;; this one's ok
-			       (/ (/ (- (* +sin60+ r)
-					half-r)
-				     2)
-				  +sin60+))
-			      ))
+			  (y2 (+ y3 (* r 0.16))))
 		     
 		     (cairo:move-to x0 y0)
 		     (cairo:curve-to x1 y1 x2 y2 x3 y3)
 		     ;(cairo:line-to x1 y1)(cairo:line-to x2 y2)(cairo:line-to x3 y3)
 		     )))) ;; end bottom
-#|
+
 	  (do-contours (elevation right)
 	    (cond ((is-contour-of elevation top)
+		   (let* (
+			  (right-contour-y-offset
+			    (contour-offset (contour-index elevation right)
+					    (contours-range right)
+					    half-down-y))
+			  (x0 (+ top-left-x r))
+			  (y0 (+ top-left-y
+				 right-contour-y-offset))
+
+			  (recipient-index (contour-index elevation top))
+			  (contour-x-offset (contour-offset recipient-index
+							    (contours-range top)
+							    half-r))
+			  
+			  (x1 (+ top-left-x half-r
+				 (* (1+ *soft*) contour-x-offset)))
+			  (y1 y0)
+
+			  (x3 (+ top-left-x half-r
+				 contour-x-offset))
+			  (y3 top-left-y)
+			  (x2 x3)
+			  (y2 (+ top-left-y
+				 (* *soft* right-contour-y-offset))))
+		     
+		     (cairo:move-to x0 y0)
+		     ;(cairo:line-to x1 y1)(cairo:line-to x2 y2)(cairo:line-to x3 y3)
+		     (cairo:curve-to x1 y1 x2 y2 x3 y3)
+		     ))
+		  
+		  ((is-contour-of elevation left)
 		   (let* ((x0 (+ top-left-x r))
 			  (y0 (+ top-left-y
 				 (contour-offset
 				  (contour-index elevation right)
 				  (contours-range right)
 				  half-down-y)))
-			  (x1 )
-			  (y1 ))
+			  (x1 (- x0 (* 0.16 r)))
+			  (y1 y0)
+
+			  (recipient-index (contour-index elevation left))
+			  (contour-x-offset (contour-offset recipient-index
+							    (contours-range left)
+							    quarter-r))
+			  (contour-y-offset (contour-offset recipient-index
+							    (contours-range left)
+							    quarter-down-y))
+
+			  (x3 (+ top-left-x quarter-r
+				 contour-x-offset))
+			  (y3 (+ top-left-y quarter-down-y
+				 (- contour-y-offset)))
+			  (x2 (+ x3 (* +sin60+ (* 0.16 r))))
+			  (y2 (+ y3 (* +cos60+ (* 0.16 r)))))
+		     
 		     (cairo:move-to x0 y0)
-		     (cairo:curve-to x1 y1 x2 y2 x3 y3)))
-		  ((is-contour-of elevation left)
-		   (let* ()
-		     (cairo:move-to x0 y0)
-		     (cairo:curve-to x1 y1 x2 y2 x3 y3))
-		   )))
+		     ;(cairo:line-to x1 y1)(cairo:line-to x2 y2)(cairo:line-to x3 y3)
+		     (cairo:curve-to x1 y1 x2 y2 x3 y3)
+		     ))))
+	  
 	  (do-contours (elevation left)
 	    (when (is-contour-of elevation top)
-	      (let* ()
+	      (let* (
+		     (left-contour-x-offset
+		       (contour-offset
+			(contour-index elevation left)
+			(contours-range left)
+			quarter-r))
+		     (left-contour-y-offset
+		       (contour-offset
+			(contour-index elevation left)
+			(contours-range left)
+			quarter-down-y))
+		     (x0 (+ top-left-x quarter-r left-contour-x-offset))
+		     (y0 (+ top-left-y quarter-down-y
+			    (- left-contour-y-offset)))
+		     (x1 (+ x0 (* +sin60+ (* 0.16 r))))
+		     (y1 (+ y0 (* +cos60+ (* 0.16 r))))
+
+		     (recipient-index (contour-index elevation top))
+		     (contour-x-offset (contour-offset recipient-index
+						       (contours-range top)
+						       half-r))
+		     
+		     (x3 (+ top-left-x half-r
+			    contour-x-offset))
+		     (y3 top-left-y)
+		     (x2 x3)
+		     (y2 (+ y3 (* 0.16 r)))
+		     )
 		(cairo:move-to x0 y0)
-		(cairo:curve-to x1 y1 x2 y2 x3 y3)))) |#
+		(cairo:curve-to x1 y1 x2 y2 x3 y3))))
+	  
 	  ;; top's contours have been done already
 	  )
 	

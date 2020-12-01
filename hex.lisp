@@ -55,6 +55,22 @@
 	      (contours-left contours)
 	      (contours-range contours))))
 
+(defun remove-contour (elevation contours)
+  (cond ((= elevation (contours-left contours))
+	 (incf (contours-left contours)
+	       (signum (contours-range contours)))
+	 (incf (contours-range contours)
+	       (- (signum (contours-range contours)))))
+	((= elevation (+ (contours-left contours)
+			 (contours-range contours)))
+	 (incf (contours-range contours)
+	       (- (signum (contours-range contours)))))
+	(t (error "Elevation ~a is neither ~a or ~a~%"
+		  elevation (contours-left contours)
+		  (+ (contours-left contours)
+		     (contours-range contours))))))
+
+
 (defun contour-index (elevation contours)
   (let ((index
 	  (if (>= (contours-range contours) 0)
