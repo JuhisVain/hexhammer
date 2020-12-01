@@ -19,6 +19,51 @@
 (defstruct edge-feature
   )
 
+(defstruct contours
+  (left 0 :type (signed-byte 8))
+  (range 0 :type (signed-byte 8)))
+
+(defmacro do-contours ((ele-var contours) &body body)
+  `(if (>= (contours-range ,contours)
+	   0)
+       (do ((,ele-var (1+ (contours-left ,contours))
+		      (1+ ,ele-var)))
+	   ((> ,ele-var (+ (contours-range ,contours)
+			   (contours-left ,contours))))
+	 ,@body)
+       (do ((,ele-var (contours-left ,contours)
+		      (1- ,ele-var)))
+	   ((< ,ele-var (+ (contours-range ,contours)
+			   (contours-left ,contours)
+			   1)))
+	 ,@body)))
+
+(defun record-contours (hex left right divisor)
+  (let* ((ele-l (round (hex-vertex hex left)
+		       divisor))
+	 (ele-r (round (hex-vertex hex right)
+		       divisor)))
+    (make-contours :left ele-l
+		   :range (- ele-r ele-l))))
+
+(defun is-contour-of (elevation contours)
+  (funcall (if (>= (contours-range contours) 0)
+	       #'< #'>=)
+	   (contours-left contours)
+	   elevation
+	   (+ 1
+	      (contours-left contours)
+	      (contours-range contours))))
+
+(defun contour-index (elevation contours)
+  (let ((index
+	  (if (>= (contours-range contours) 0)
+	      (- elevation (contours-left contours) 1)
+	      (abs (- elevation (contours-left contours))))))
+    (if (and (<= 0 index)
+	     (< index (abs (contours-range contours))))
+	index)))
+
 (defun hex-edge (hex direction)
   (declare (type (or hex null) hex)
 	   (type direction direction))
@@ -44,8 +89,10 @@
     (:NE (setf (hex-NE-edge hex) new-edge))))
 
 (defun hex-vertex (hex vert-direction)
-  (declare (type hex hex)
-	   (type hex-vertex vert-direction))
+  (declare ;(type hex hex)
+   (type hex-vertex vert-direction))
+  (when (not hex)
+    (return-from hex-vertex))
   (ecase vert-direction
     (:CEN (hex-elevation hex))
     (:NNW (edge-west (hex-N-edge hex)))

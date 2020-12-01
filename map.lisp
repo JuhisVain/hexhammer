@@ -73,74 +73,135 @@
 	 (float-hex-width (float (/ width))) ; maybe 1+ ?
 	 (float-hex-height (float (/ height))))
     (macrolet ((read-data (direction)
-		 `(rem ; make elevation values 0 - 10
-		   (round (2faref source-data
-				  (+ (* (xofs ,direction)
-					float-hex-width)
-				     (/ x width))
-				  (+ (* (yofs ,direction)
-					float-hex-height)
-				     (/ y height))))
-		   10)))
+		 `(round (2faref source-data ;; this is broken DON'T USE after testing done
+				 (+ (* (xofs ,direction)
+				       float-hex-width)
+				    (/ x width))
+				 (+ (* (yofs ,direction)
+				       float-hex-height)
+				    (/ y height)))
+			 2)
+		 ))
       (dotimes (y height)
 	(dotimes (x width)
 	  (setf (gethash (crd x y) (world-map world))
-		(make-hex
-		 :elevation (read-data :CEN)
-		 :n-edge (or (hex-edge (crd-hex
-					  (crd-neighbour
-					   (crd x y) :N)
-					  world)
-				       :S)
-			     (make-edge
-			      :west (read-data :NNW)
-			      :middle (read-data :N)
-			      :east (read-data :NNE)))
-		 :nw-edge (or (hex-edge (crd-hex
-					    (crd-neighbour
-					     (crd x y) :NW)
-					    world)
-					:SE)
-			      (make-edge
-			       :west (read-data :W)
-			       :middle (read-data :NW)
-			       :east (read-data :NNW)))
-		 :sw-edge (or (hex-edge (crd-hex
-					    (crd-neighbour
-					     (crd x y) :SW)
-					    world)
-					:NE)
-			      (make-edge
-			       :west (read-data :W)
-			       :middle (read-data :SW)
-			       :east (read-data :SSW)))
-		 :s-edge (or (hex-edge (crd-hex
-					  (crd-neighbour
-					   (crd x y) :S)
-					  world)
-				       :N)
-			     (make-edge
-			      :west (read-data :SSW)
-			      :middle (read-data :S)
-			      :east (read-data :SSE)))
-		 :se-edge (or (hex-edge (crd-hex
-					    (crd-neighbour
-					     (crd x y) :SE)
-					    world)
-					:NW)
-			      (make-edge
-			       :west (read-data :SSE)
-			       :middle (read-data :SE)
-			       :east (read-data :E)))
-		 :ne-edge (or (hex-edge (crd-hex
-					    (crd-neighbour
-					     (crd x y) :NE)
-					    world)
-					:SW)
-			      (make-edge
-			       :west (read-data :NNE)
-			       :middle (read-data :NE)
-			       :east (read-data :E))))))))))
+		(let* ((nnw (read-data :NNW))
+		       (nne (read-data :NNE))
+		       (w (read-data :w))
+		       (ssw (read-data :ssw))
+		       (sse (read-data :sse))
+		       (e (read-data :e))
+		       (hex (make-hex
+			     :elevation (read-data :CEN)
+			     :n-edge (or (hex-edge (crd-hex
+						    (crd-neighbour
+						     (crd x y) :N)
+						    world)
+						   :S)
+					 (make-edge
+					  :west (or ; this is a mess
+						 (hex-vertex (crd-hex
+							    (crd-neighbour
+							     (crd x y) :nw)
+							    world)
+							   :e)
+						 nnw)
+					  :middle (read-data :N)
+					  :east nne))
+			     :nw-edge (or (hex-edge (crd-hex
+						     (crd-neighbour
+						      (crd x y) :NW)
+						     world)
+						    :SE)
+					  (make-edge
+					   :west (or
+						  (hex-vertex (crd-hex
+							     (crd-neighbour
+							      (crd x y) :sw)
+							     world)
+							    :nne)
+						  w)
+					   :middle (read-data :NW)
+					   :east (or
+						  (hex-vertex (crd-hex
+							     (crd-neighbour
+							      (crd x y) :n)
+							     world)
+							    :ssw)
+						  nnw)))
+			     :sw-edge (or (hex-edge (crd-hex
+						     (crd-neighbour
+						      (crd x y) :SW)
+						     world)
+						    :NE)
+					  (make-edge
+					   :west (or
+						  (hex-vertex (crd-hex
+							     (crd-neighbour
+							      (crd x y) :nw)
+							     world)
+							    :sse)
+						  w)
+					   :middle (read-data :SW)
+					   :east (or
+						  (hex-vertex (crd-hex
+							     (crd-neighbour
+							      (crd x y) :s)
+							     world)
+							    :nnw)
+						  ssw)))
+			     :s-edge (or (hex-edge (crd-hex
+						    (crd-neighbour
+						     (crd x y) :S)
+						    world)
+						   :N)
+					 (make-edge
+					  :west (or
+						 (hex-vertex (crd-hex
+							     (crd-neighbour
+							      (crd x y) :sw)
+							     world)
+							    :e)
+						 ssw)
+					  :middle (read-data :S)
+					  :east (or
+						 (hex-vertex (crd-hex
+							     (crd-neighbour
+							      (crd x y) :se)
+							     world)
+							    :w)
+						 sse)))
+			     :se-edge (or (hex-edge (crd-hex
+						     (crd-neighbour
+						      (crd x y) :SE)
+						     world)
+						    :NW)
+					  (make-edge
+					   :west (or
+						  (hex-vertex (crd-hex
+							     (crd-neighbour
+							      (crd x y) :s)
+							     world)
+							    :nne)
+						  sse)
+					   :middle (read-data :SE)
+					   :east e))
+			     :ne-edge (or (hex-edge (crd-hex
+						     (crd-neighbour
+						      (crd x y) :NE)
+						     world)
+						    :SW)
+					  (make-edge
+					   :west nne
+					   :middle (read-data :NE)
+					   :east (or
+						  (hex-vertex (crd-hex
+							     (crd-neighbour
+							      (crd x y) :se)
+							     world)
+							    :nnw)
+						  e))))))
+		  hex)))))))
 
 (defun set-crd (crd hex world)
   (setf (gethash crd (world-map world)) hex)
