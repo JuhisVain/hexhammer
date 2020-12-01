@@ -33,7 +33,11 @@
     (:SSE '(yofs :S))
     (:SE '(yofs :SW))))
 
-(defun contour-offset (contour-index contour-count edge-x-vector-pix)
-  "Pixels to the right of this edge's left vertex."
-  (let ((width (/ edge-x-vector-pix (+ 1 (abs contour-count)))))
-    (* (1+ contour-index) width)))
+(defun contour-offset (contour-index contour-count edge-vector-pix)
+  "Pixels to the right (or down) from this contour edge's left (or high) vertex"
+  (let* ((margin (/ edge-vector-pix 4))
+	 (width (/ (- edge-vector-pix
+		      (* 2 margin))
+		   (+ 1 (abs contour-count)))))
+    (+ margin (* (1+ contour-index)
+		 width))))
