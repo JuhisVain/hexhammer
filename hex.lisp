@@ -19,11 +19,52 @@
 (defstruct edge-feature
   )
 
+
 (defstruct contours
   (left 0 :type (signed-byte 8))
-  (range 0 :type (signed-byte 8)))
+  (range 0 :type (signed-byte 8))
+  (list nil :type list))
 
-(defmacro do-contours ((ele-var contours) &body body)
+(defun record-contours (hex left right divisor)
+  (let* ((left-ele (round (hex-vertex hex left)
+			  divisor))
+	 (right-ele (round (hex-vertex hex right)
+			   divisor))
+	 (difference (- right-ele left-ele)))
+    (make-contours
+     :left left-ele
+     :range difference
+     :list
+     (cond ((> difference 0)
+	    (loop for elevation from (1+ left-ele) to right-ele
+		  collect elevation))
+	   ((< difference 0)
+	    (loop for elevation from left-ele downto (1+ right-ele)
+		  collect elevation))))))
+
+(defun extract-contour (elevation contours)
+  (setf (contours-list contours)
+	(delete elevation (contours-list contours))))
+
+(defun contour-index (elevation contours)
+  (let ((index
+	  (if (>= (contours-range contours) 0)
+	      (- elevation (contours-left contours) 1)
+	      (abs (- elevation (contours-left contours))))))
+    (if (and (<= 0 index)
+	     (< index (abs (contours-range contours))))
+	index)))
+
+(defun is-contour-of (elevation contours)
+  (funcall (if (>= (contours-range contours) 0)
+	       #'< #'>=)
+	   (contours-left contours)
+	   elevation
+	   (+ 1
+	      (contours-left contours)
+	      (contours-range contours))))
+
+'(defmacro do-contours ((ele-var contours) &body body)
   `(if (>= (contours-range ,contours)
 	   0)
        (do ((,ele-var (1+ (contours-left ,contours))
@@ -38,7 +79,7 @@
 			   1)))
 	 ,@body)))
 
-(defun record-contours (hex left right divisor)
+'(defun record-contours (hex left right divisor)
   (let* ((ele-l (round (hex-vertex hex left)
 		       divisor))
 	 (ele-r (round (hex-vertex hex right)
@@ -46,16 +87,9 @@
     (make-contours :left ele-l
 		   :range (- ele-r ele-l))))
 
-(defun is-contour-of (elevation contours)
-  (funcall (if (>= (contours-range contours) 0)
-	       #'< #'>=)
-	   (contours-left contours)
-	   elevation
-	   (+ 1
-	      (contours-left contours)
-	      (contours-range contours))))
 
-(defun remove-contour (elevation contours)
+
+'(defun remove-contour (elevation contours)
   (cond ((= elevation (contours-left contours))
 	 (incf (contours-left contours)
 	       (signum (contours-range contours)))
@@ -71,7 +105,7 @@
 		     (contours-range contours))))))
 
 
-(defun contour-index (elevation contours)
+'(defun contour-index (elevation contours)
   (let ((index
 	  (if (>= (contours-range contours) 0)
 	      (- elevation (contours-left contours) 1)

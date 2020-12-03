@@ -20,6 +20,9 @@
       (fdefinition 'x) #'car
       (fdefinition 'y) #'cdr)
 
+(defsetf x rplaca)
+(defsetf y rplacd)
+
 (defun crd-hex (crd world)
   (declare (type crd crd))
   (gethash crd (world-map world)))
