@@ -23,28 +23,46 @@
 (defstruct contours
   (left 0 :type (signed-byte 8))
   (range 0 :type (signed-byte 8))
-  (list nil :type list))
+  (deque nil :type linkage))
 
 (defun record-contours (hex left right divisor)
   (let* ((left-ele (round (hex-vertex hex left)
 			  divisor))
 	 (right-ele (round (hex-vertex hex right)
 			   divisor))
-	 (difference (- right-ele left-ele)))
-    (make-contours
-     :left left-ele
-     :range difference
-     :list
-     (cond ((> difference 0)
-	    (loop for elevation from (1+ left-ele) to right-ele
-		  collect elevation))
-	   ((< difference 0)
-	    (loop for elevation from left-ele downto (1+ right-ele)
-		  collect elevation))))))
+	 (difference (- right-ele left-ele))
+	 (contours
+	   (make-contours
+	    :left left-ele
+	    :range difference
+	    :deque (make-linkage))))
+    (cond ((> difference 0)
+	   (loop for elevation from (1+ left-ele) to right-ele
+		 do (push-right elevation (contours-deque contours))))
+	  ((< difference 0)
+	   (loop for elevation from left-ele downto (1+ right-ele)
+		 do (push-right elevation (contours-deque contours)))))
+    contours))
 
-(defun extract-contour (elevation contours)
-  (setf (contours-list contours)
-	(delete elevation (contours-list contours))))
+;; test:
+'(defun record (left right)
+  (let* ((left-ele (round left
+			  1))
+	 (right-ele (round right
+			   1))
+	 (difference (- right-ele left-ele))
+	 (contours
+	   (make-contours
+	    :left left-ele
+	    :range difference
+	    :deque (make-linkage))))
+    (cond ((> difference 0)
+	   (loop for elevation from (1+ left-ele) to right-ele
+		 do (push-right elevation (contours-deque contours))))
+	  ((< difference 0)
+	   (loop for elevation from left-ele downto (1+ right-ele)
+		 do (push-right elevation (contours-deque contours)))))
+    contours))
 
 (defun contour-index (elevation contours)
   (let ((index
@@ -56,63 +74,34 @@
 	index)))
 
 (defun is-contour-of (elevation contours)
-  (funcall (if (>= (contours-range contours) 0)
+  (or (= elevation
+	(link-this (linkage-leftmost (contours-deque contours))))
+      (= elevation
+	 (link-this (linkage-rightmost (contours-deque contours))))))
+
+#|  (funcall (if (>= (contours-range contours) 0)
 	       #'< #'>=)
 	   (contours-left contours)
 	   elevation
 	   (+ 1
 	      (contours-left contours)
-	      (contours-range contours))))
+(contours-range contours))))|#
 
-'(defmacro do-contours ((ele-var contours) &body body)
-  `(if (>= (contours-range ,contours)
-	   0)
-       (do ((,ele-var (1+ (contours-left ,contours))
-		      (1+ ,ele-var)))
-	   ((> ,ele-var (+ (contours-range ,contours)
-			   (contours-left ,contours))))
-	 ,@body)
-       (do ((,ele-var (contours-left ,contours)
-		      (1- ,ele-var)))
-	   ((< ,ele-var (+ (contours-range ,contours)
-			   (contours-left ,contours)
-			   1)))
-	 ,@body)))
+(defmacro probe-contours ((at-left at-right) var
+			  &body body)
+  `(when (eql (peek-left (contours-deque ,at-right))
+	      (peek-right (contours-deque ,at-left)))
+     (do ((,var (peek-left (contours-deque ,at-right))
+		(peek-left (contours-deque ,at-right))))
+	 ((or
+	   (null (peek-left (contours-deque ,at-right)))
+	   (not (eql (peek-left (contours-deque ,at-right))
+		     (peek-right (contours-deque ,at-left))))))
+       (progn (pop-left (contours-deque ,at-right))
+	      (pop-right (contours-deque ,at-left)))
+       ,@body
+       )))
 
-'(defun record-contours (hex left right divisor)
-  (let* ((ele-l (round (hex-vertex hex left)
-		       divisor))
-	 (ele-r (round (hex-vertex hex right)
-		       divisor)))
-    (make-contours :left ele-l
-		   :range (- ele-r ele-l))))
-
-
-
-'(defun remove-contour (elevation contours)
-  (cond ((= elevation (contours-left contours))
-	 (incf (contours-left contours)
-	       (signum (contours-range contours)))
-	 (incf (contours-range contours)
-	       (- (signum (contours-range contours)))))
-	((= elevation (+ (contours-left contours)
-			 (contours-range contours)))
-	 (incf (contours-range contours)
-	       (- (signum (contours-range contours)))))
-	(t (error "Elevation ~a is neither ~a or ~a~%"
-		  elevation (contours-left contours)
-		  (+ (contours-left contours)
-		     (contours-range contours))))))
-
-
-'(defun contour-index (elevation contours)
-  (let ((index
-	  (if (>= (contours-range contours) 0)
-	      (- elevation (contours-left contours) 1)
-	      (abs (- elevation (contours-left contours))))))
-    (if (and (<= 0 index)
-	     (< index (abs (contours-range contours))))
-	index)))
 
 (defun hex-edge (hex direction)
   (declare (type (or hex null) hex)

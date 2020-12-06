@@ -173,6 +173,10 @@
 	   (three-quarters-r (* 0.75 r))
 	   (three-halfs-r (* 1.5 r))
 
+	   (angle-diff (/ +sf-pi+ -3))
+	   (sin-diff (sin angle-diff))
+	   (cos-diff (cos angle-diff))
+
 	   (hex-centre-x (+ origin-x
 			    
 			    r
@@ -186,224 +190,60 @@
 			    (* (mod (1- (x crd)) 2) ;apply on even x
 			       half-down-y))))
 
-      (cairo:with-context (cairo-context)
-	(cairo:set-source-rgb 0.5 0.5 0.5)
-	(cairo:set-line-width 0.5)
-	(let ((top (record-contours hex :nnw :n 1))
-	      (left (record-contours hex :nw :nnw 1))
-	      (bottom (record-contours hex :nw :cen 1))
-	      (right (record-contours hex :n :cen 1)))
-	  (dolist (elevation (contours-list bottom))
-	    (cond
-	      ((is-contour-of elevation left)
-	       (extract-contour elevation bottom)
-	       (extract-contour elevation left)
-	       (let* ((long-cathetus-offset
-			(- half-down-y
-			   (contour-offset (contour-index elevation bottom)
-					   (contours-range bottom)
-					   half-down-y)))
-		      (short-cathetus-offset
-			(contour-offset (contour-index elevation left)
-					(contours-range left)
-					half-r))
-		      (xy0
-			(crd long-cathetus-offset
-			     0))
-		      (xy1
-			(crd long-cathetus-offset
-			     (* short-cathetus-offset *soft*)))
-		      (xy2
-			(crd (- half-down-y
-				(* long-cathetus-offset 0.5 *soft*))
-			     short-cathetus-offset))
-		      (xy3
-			(crd half-down-y
-			     short-cathetus-offset))
-		      (angle (* 5/6 +sf-pi+))
-		      (sin (sin angle))
-		      (cos (cos angle)))
+      (let ((top (record-contours hex :n :nnw 1))
+	    (left (record-contours hex :nnw :nw 1))
+	    (bottom (record-contours hex :nw :cen 1))
+	    (right (record-contours hex :cen :n 1))
+	    (angle (* 5/6 +sf-pi+)))
+	(draw-kite-contours top left bottom right
+			    angle hex-centre-x hex-centre-y
+			    (hex-r view-state) cairo-context))
 
-		 (rotate xy0 () sin cos hex-centre-x hex-centre-y)
-		 (rotate xy1 () sin cos hex-centre-x hex-centre-y)
-		 (rotate xy2 () sin cos hex-centre-x hex-centre-y)
-		 (rotate xy3 () sin cos hex-centre-x hex-centre-y)
+      (let ((top (record-contours hex :ne :nne 1))
+	    (left (record-contours hex :nne :n 1))
+	    (bottom (record-contours hex :n :cen 1))
+	    (right (record-contours hex :cen :ne 1))
+	    (angle (* 3/6 +sf-pi+)))
+	(draw-kite-contours top left bottom right
+			    angle hex-centre-x hex-centre-y
+			    (hex-r view-state) cairo-context))
 
-		 (cairo:move-to (x xy0) (y xy0))
-		 (cairo:curve-to (x xy1) (y xy1)
-				 (x xy2) (y xy2)
-				 (x xy3) (y xy3))
+      (let ((top (record-contours hex :se :e 1))
+	    (left (record-contours hex :e :ne 1))
+	    (bottom (record-contours hex :ne :cen 1))
+	    (right (record-contours hex :cen :se 1))
+	    (angle (* 1/6 +sf-pi+)))
+	(draw-kite-contours top left bottom right
+			    angle hex-centre-x hex-centre-y
+			    (hex-r view-state) cairo-context))
 
-		 '(progn
-		   (cairo:line-to (x xy1) (y xy1))
-		   (cairo:line-to (x xy2) (y xy2))
-		   (cairo:line-to (x xy3) (y xy3)))
-		 ))
-	      ((is-contour-of elevation right)
-	       (extract-contour elevation bottom)
-	       (extract-contour elevation right)
-	       (let* ((long-cathetus-offset
-			(- half-down-y
-			   (contour-offset (contour-index elevation bottom)
-					   (contours-range bottom)
-					   half-down-y)))
-		      (right-cathetus-offset
-			(- half-down-y
-			   (contour-offset (contour-index elevation right)
-					   (contours-range right)
-					   half-down-y)))
-		      (xy0
-			(crd long-cathetus-offset
-			     0))
-		      (xy1
-			(crd long-cathetus-offset
-			     (* 0.36 long-cathetus-offset)))
-		      
-		      (angle-diff (/ +sf-pi+ -3))
-		      (sin-diff (sin angle-diff))
-		      (cos-diff (cos angle-diff))
-		      
-		      (xy2
-			(rotate (crd right-cathetus-offset
-				     (* -0.36 right-cathetus-offset))
-				() sin-diff cos-diff))
-		      (xy3
-			(rotate (crd right-cathetus-offset
-				     0)
-				() sin-diff cos-diff))
-		      
-		      (angle (* 5/6 +sf-pi+))
-		      (sin (sin angle))
-		      (cos (cos angle)))
+      (let ((top (record-contours hex :s :sse 1))
+	    (left (record-contours hex :sse :se 1))
+	    (bottom (record-contours hex :se :cen 1))
+	    (right (record-contours hex :cen :s 1))
+	    (angle (* 11/6 +sf-pi+)))
+	(draw-kite-contours top left bottom right
+			    angle hex-centre-x hex-centre-y
+			    (hex-r view-state) cairo-context))
 
-		 (rotate xy0 () sin cos hex-centre-x hex-centre-y)
-		 (rotate xy1 () sin cos hex-centre-x hex-centre-y)
-		 (rotate xy2 () sin cos hex-centre-x hex-centre-y)
-		 (rotate xy3 () sin cos hex-centre-x hex-centre-y)
-
-		 (cairo:move-to (x xy0) (y xy0))
-		 (cairo:curve-to (x xy1) (y xy1)
-		   (x xy2) (y xy2)
-		   (x xy3) (y xy3))
-		 '(progn
-		   (cairo:line-to (x xy1) (y xy1))
-		   (cairo:line-to (x xy2) (y xy2))
-		   (cairo:line-to (x xy3) (y xy3)))
-		 
-		 
-		 ))
-	      ((is-contour-of elevation top)
-	       (extract-contour elevation bottom)
-	       (extract-contour elevation top)
-	       (let* ((long-cathetus-offset
-			(- half-down-y
-			   (contour-offset (contour-index elevation bottom)
-					   (contours-range bottom)
-					   half-down-y)))
-		      (top-cathetus-offset
-			(contour-offset (contour-index elevation top)
-					(contours-range top)
-					half-r))
-		      (xy0
-			(crd long-cathetus-offset
-			     0))
-		      (xy1
-			(crd long-cathetus-offset
-			     (* 0.36 long-cathetus-offset)))
-
-		      (angle-diff (/ +sf-pi+ -3))
-		      (sin-diff (sin angle-diff))
-		      (cos-diff (cos angle-diff))
-
-		      (xy2
-			(rotate (crd (- half-down-y
-					(* long-cathetus-offset 0.5 *soft*))
-				     (- top-cathetus-offset half-r))
-				() sin-diff cos-diff))
-		      (xy3
-			(rotate (crd half-down-y
-				     (- top-cathetus-offset half-r))
-				() sin-diff cos-diff))
-		      
-		      (angle (* 5/6 +sf-pi+))
-		      (sin (sin angle))
-		      (cos (cos angle)))
-		 
-		 (rotate xy0 () sin cos hex-centre-x hex-centre-y)
-		 (rotate xy1 () sin cos hex-centre-x hex-centre-y)
-		 (rotate xy2 () sin cos hex-centre-x hex-centre-y)
-		 (rotate xy3 () sin cos hex-centre-x hex-centre-y)
-
-		 (cairo:move-to (x xy0) (y xy0))
-		 (cairo:curve-to (x xy1) (y xy1)
-		   (x xy2) (y xy2)
-		   (x xy3) (y xy3))
-		 '(progn
-		   (cairo:line-to (x xy1) (y xy1))
-		   (cairo:line-to (x xy2) (y xy2))
-		   (cairo:line-to (x xy3) (y xy3)))
-		   ))
-	      ))
-	  (dolist (elevation (contours-list right))
-	    (cond
-	      ((member elevation (contours-list left))
-	       (extract-contour elevation right)
-	       (extract-contour elevation left)
-	       (let* ((right-cathetus-offset
-			(- half-down-y
-			   (contour-offset (contour-index elevation right)
-					   (contours-range right)
-					   half-down-y)))
-		      (left-cathetus-offset
-			(contour-offset (contour-index elevation left)
-					(contours-range left)
-					half-r))
-
-		      (angle-diff (/ +sf-pi+ -3))
-		      (sin-diff (sin angle-diff))
-		      (cos-diff (cos angle-diff))
-		      (xy0
-			(rotate (crd right-cathetus-offset
-				     0)
-				() sin-diff cos-diff))
-		      (xy1
-			(rotate (crd right-cathetus-offset
-				     (* -0.36 right-cathetus-offset))
-				() sin-diff cos-diff))
-
-		      (xy2
-			(crd (- half-down-y
-				(* right-cathetus-offset 0.5 *soft*))
-			     left-cathetus-offset))
-		      (xy3
-			(crd half-down-y
-			     left-cathetus-offset))
-		      
-		      (angle (* 5/6 +sf-pi+))
-		      (sin (sin angle))
-		      (cos (cos angle)))
-
-	     	 (rotate xy0 () sin cos hex-centre-x hex-centre-y)
-		 (rotate xy1 () sin cos hex-centre-x hex-centre-y)
-		 (rotate xy2 () sin cos hex-centre-x hex-centre-y)
-		 (rotate xy3 () sin cos hex-centre-x hex-centre-y)
-
-		 (cairo:move-to (x xy0) (y xy0))
-		 (cairo:curve-to (x xy1) (y xy1)
-				 (x xy2) (y xy2)
-				 (x xy3) (y xy3))
-
-		 '(progn
-		   (cairo:line-to (x xy1) (y xy1))
-		   (cairo:line-to (x xy2) (y xy2))
-		   (cairo:line-to (x xy3) (y xy3)))
-		 
-		 ))
-	      
-	      ))
-	  (cairo:stroke))
-	
-	))
+      (let ((top (record-contours hex :sw :ssw 1))
+	    (left (record-contours hex :ssw :s 1))
+	    (bottom (record-contours hex :s :cen 1))
+	    (right (record-contours hex :cen :sw 1))
+	    (angle (* 9/6 +sf-pi+)))
+	(draw-kite-contours top left bottom right
+			    angle hex-centre-x hex-centre-y
+			    (hex-r view-state) cairo-context))
+      
+      (let ((top (record-contours hex :nw :w 1))
+	    (left (record-contours hex :w :sw 1))
+	    (bottom (record-contours hex :sw :cen 1))
+	    (right (record-contours hex :cen :nw 1))
+	    (angle (* 7/6 +sf-pi+)))
+	(draw-kite-contours top left bottom right
+			    angle hex-centre-x hex-centre-y
+			    (hex-r view-state) cairo-context))
+      )
     (cairo:destroy cairo-context)
     (cairo:destroy cairo-surface)))
 
@@ -419,3 +259,568 @@
 		       (* sin (x crd)))
 		    y+))
   crd)
+
+(defun draw-kite-contours (top left bottom right
+			   angle hex-centre-x hex-centre-y
+			   hex-radius cairo-context)
+  (let* (;; Angle to rotate top & right contours:
+	 (angle-diff ;(+ angle
+			(/ +sf-pi+ -3));)
+	 (sin-diff (sin angle-diff))
+	 (cos-diff (cos angle-diff))
+	 
+	 (sin (sin angle))
+	 (cos (cos angle))
+
+	 (half-down-y (* +sin60+ hex-radius))
+	 (half-r (/ hex-radius 2.0)))
+
+    (cairo:with-context (cairo-context)
+      (cairo:set-source-rgb 0.5 0.5 0.5)
+      (cairo:set-line-width 0.5)
+      
+      (probe-contours (left bottom) elevation
+	;;CONFIRMED USEFUL
+	;;(format t "1. probe-contours (left bottom) IS NOT USELESS~%")
+	(let* ((bottom-offset
+		 (- half-down-y
+		    (contour-offset (contour-index elevation bottom)
+				    (contours-range bottom)
+				    half-down-y)))
+	       (left-offset
+		 (- half-r 
+		    (contour-offset (contour-index elevation left)
+				    (contours-range left)
+				    half-r)))
+	       (xy0
+		 (crd bottom-offset
+		      0))
+	       (xy1
+		 (crd bottom-offset
+		      (* left-offset *soft*)))
+	       (xy2
+		 (crd (+ bottom-offset
+			 (* *soft* (- half-down-y
+				      bottom-offset)))
+		      left-offset))
+	       (xy3
+		 (crd half-down-y
+		      left-offset)))
+
+	  (rotate xy0 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy1 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy2 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy3 () sin cos hex-centre-x hex-centre-y)
+
+	  (cairo:move-to (x xy0) (y xy0))
+	  (cairo:curve-to (x xy1) (y xy1)
+			  (x xy2) (y xy2)
+			  (x xy3) (y xy3))
+
+	  '(progn
+	    (cairo:line-to (x xy1) (y xy1))
+	    (cairo:line-to (x xy2) (y xy2))
+	    (cairo:line-to (x xy3) (y xy3)))
+	  ))
+      
+      (probe-contours (top bottom) elevation
+	;;CONFIRMED USEFUL
+	;;(format t "2. probe-contours (top bottom) IS NOT USELESS~%")
+	(let* ((bottom-offset
+		 (- half-down-y
+		    (contour-offset (contour-index elevation bottom)
+				    (contours-range bottom)
+				    half-down-y)))
+	       (top-offset
+		 (contour-offset (contour-index elevation top)
+				 (contours-range top)
+				 (- half-r)))
+	       (xy0
+		 (crd bottom-offset
+		      0))
+	       (xy1
+		 (crd bottom-offset
+		      (* 0.36 bottom-offset)))
+	       (xy2
+		 (rotate (crd (+ bottom-offset
+				 (* *soft*
+				    0.5
+				    (- half-down-y
+				       bottom-offset)))
+			      top-offset)
+			 () sin-diff cos-diff))
+	       (xy3
+		 (rotate (crd half-down-y
+			      top-offset)
+			 () sin-diff cos-diff)))
+
+	  (rotate xy0 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy1 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy2 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy3 () sin cos hex-centre-x hex-centre-y)
+
+	  (cairo:move-to (x xy0) (y xy0))
+	  (cairo:curve-to (x xy1) (y xy1)
+			  (x xy2) (y xy2)
+			  (x xy3) (y xy3))
+
+	  '(progn
+	    (cairo:line-to (x xy1) (y xy1))
+	    (cairo:line-to (x xy2) (y xy2))
+	    (cairo:line-to (x xy3) (y xy3)))
+	  )
+	)
+      
+      (probe-contours (right bottom) elevation
+	;;CONFIRMED USEFUL
+	;;(format t "3. probe-contours (right bottom) IS NOT USELESS~%")
+	(let* ((bottom-offset
+		 (- half-down-y
+		    (contour-offset (contour-index elevation bottom)
+				    (contours-range bottom)
+				    half-down-y)))
+	       (right-offset
+		 (contour-offset (contour-index elevation right)
+				 (contours-range right)
+				 half-down-y))
+
+	       (xy0 (crd bottom-offset
+			 0))
+	       (xy1 (crd bottom-offset
+			 (* 0.36 bottom-offset)))
+	       (xy2 (rotate (crd right-offset
+				 (* -0.36 right-offset))
+			    () sin-diff cos-diff))
+	       (xy3 (rotate (crd right-offset
+				 0)
+			    () sin-diff cos-diff)))
+
+	  (rotate xy0 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy1 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy2 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy3 () sin cos hex-centre-x hex-centre-y)
+
+	  (cairo:move-to (x xy0) (y xy0))
+	  (cairo:curve-to (x xy1) (y xy1)
+			  (x xy2) (y xy2)
+			  (x xy3) (y xy3))
+	  '(progn
+	    (cairo:line-to (x xy1) (y xy1))
+	    (cairo:line-to (x xy2) (y xy2))
+	    (cairo:line-to (x xy3) (y xy3)))))
+      
+      (probe-contours (top left) elevation
+	;;CONFIRMED USEFUL
+	;;(format t "4. probe-contours (top left) IS NOT USELESS~%")
+	(let* ((left-offset
+		 (- half-r 
+		    (contour-offset (contour-index elevation left)
+				    (contours-range left)
+				    half-r)))
+	       (top-offset
+		 (contour-offset (contour-index elevation top)
+				 (contours-range top)
+				 (- half-r)))
+
+	       (xy0 (crd half-down-y
+			 left-offset))
+	       (xy1 (crd (- half-down-y
+			    (* 0.67 ;?
+			       (- half-r
+				  left-offset)))
+			 left-offset))
+	       
+	       (xy2 (rotate (crd (+ half-down-y
+				    (* 0.67 top-offset))
+				 top-offset)
+			    () sin-diff cos-diff))
+	       (xy3 (rotate (crd half-down-y
+				 top-offset)
+			    () sin-diff cos-diff)))
+	  (rotate xy0 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy1 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy2 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy3 () sin cos hex-centre-x hex-centre-y)
+
+	  (cairo:move-to (x xy0) (y xy0))
+	  (cairo:curve-to (x xy1) (y xy1)
+			  (x xy2) (y xy2)
+			  (x xy3) (y xy3))
+	  '(progn
+	    (cairo:line-to (x xy1) (y xy1))
+	    (cairo:line-to (x xy2) (y xy2))
+	    (cairo:line-to (x xy3) (y xy3)))
+	  ))
+
+      (probe-contours (right left) elevation
+	;;CONFIRMED USEFUL
+	;;(format t "5. probe-contours (right left) IS NOT USELESS~%")
+	(let* ((left-offset
+		 (- half-r 
+		    (contour-offset (contour-index elevation left)
+				    (contours-range left)
+				    half-r)))
+	       (right-offset
+		 (contour-offset (contour-index elevation right)
+				 (contours-range right)
+				 half-down-y))
+
+	       (xy0
+		 (crd half-down-y
+		      left-offset))
+	       (xy1
+		 (crd (- half-down-y
+			 (* *soft*
+			    0.5
+			    right-offset))
+		      left-offset))
+
+	       (xy2
+		 (rotate (crd right-offset
+			      (* -0.36 right-offset))
+			 () sin-diff cos-diff))
+	       (xy3
+		 (rotate (crd right-offset
+			      0)
+			 () sin-diff cos-diff)))
+
+	  (rotate xy0 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy1 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy2 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy3 () sin cos hex-centre-x hex-centre-y)
+
+	  (cairo:move-to (x xy0) (y xy0))
+	  (cairo:curve-to (x xy1) (y xy1)
+			  (x xy2) (y xy2)
+			  (x xy3) (y xy3))
+
+	  '(progn
+	    (cairo:line-to (x xy1) (y xy1))
+	    (cairo:line-to (x xy2) (y xy2))
+	    (cairo:line-to (x xy3) (y xy3)))
+	  
+	  ))
+
+      
+      (probe-contours (bottom left) elevation
+	;;useless?
+	(format t "6. probe-contours (bottom left) IS NOT USELESS~%")
+	#|(let* ((bottom-offset
+	(- half-down-y
+	(contour-offset (contour-index elevation bottom)
+	(contours-range bottom)
+	half-down-y)))
+	(left-offset
+	(- half-r 
+	(contour-offset (contour-index elevation left)
+	(contours-range left)
+	half-r)))
+	(xy0
+	(crd bottom-offset
+	0))
+	(xy1
+	(crd bottom-offset
+	(* left-offset *soft*)))
+	(xy2
+	(crd (+ bottom-offset
+	(* *soft* (- half-down-y
+	bottom-offset)))
+	left-offset))
+	(xy3
+	(crd half-down-y
+	left-offset))
+	(angle (* 5/6 +sf-pi+))
+	(sin (sin angle))
+	(cos (cos angle)))
+
+	;; If this ever prints these procedures will be redeemed
+	(format t "Probe-contours (bottom left) IS NOT USELESS!~%")
+
+	(rotate xy0 () sin cos hex-centre-x hex-centre-y)
+	(rotate xy1 () sin cos hex-centre-x hex-centre-y)
+	(rotate xy2 () sin cos hex-centre-x hex-centre-y)
+	(rotate xy3 () sin cos hex-centre-x hex-centre-y)
+
+	(cairo:move-to (x xy0) (y xy0))
+	(cairo:curve-to (x xy1) (y xy1)
+	(x xy2) (y xy2)
+	(x xy3) (y xy3))
+
+	'(progn
+	(cairo:line-to (x xy1) (y xy1))
+	(cairo:line-to (x xy2) (y xy2))
+	(cairo:line-to (x xy3) (y xy3)))
+	)|#
+	)
+      
+      (probe-contours (right top) elevation
+	;;CONFIRMED USEFUL
+	;;(format t "7. probe-contours (right top) IS NOT USELESS~%")
+	(let* ((top-offset
+		 (contour-offset (contour-index elevation top)
+				 (contours-range top)
+				 (- half-r)))
+	       (right-offset
+		 (contour-offset (contour-index elevation right)
+				 (contours-range right)
+				 half-down-y))
+
+	       (xy0 (rotate (crd half-down-y
+				 top-offset)
+			    () sin-diff cos-diff))
+	       (xy1 (rotate (crd
+			     (+ right-offset
+				(* *soft*
+				   (- half-down-y
+				      right-offset)))
+			     top-offset)
+			    () sin-diff cos-diff))
+	       (xy2 (rotate (crd right-offset
+				 (* *soft* top-offset))
+			    () sin-diff cos-diff))
+	       (xy3 (rotate (crd right-offset
+				 0)
+			    () sin-diff cos-diff)))
+	  
+	  (rotate xy0 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy1 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy2 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy3 () sin cos hex-centre-x hex-centre-y)
+
+	  (cairo:move-to (x xy0) (y xy0))
+	  (cairo:curve-to (x xy1) (y xy1)
+			  (x xy2) (y xy2)
+			  (x xy3) (y xy3))
+
+	  '(progn
+	    (cairo:line-to (x xy1) (y xy1))
+	    (cairo:line-to (x xy2) (y xy2))
+	    (cairo:line-to (x xy3) (y xy3)))
+	  
+	  )
+	)
+      (probe-contours (bottom top) elevation
+	;;CONFIRMED USEFUL
+	;;(format t "8. probe-contours (bottom top) IS NOT USELESS~%")
+	(let* ((bottom-offset
+		 (- half-down-y
+		    (contour-offset (contour-index elevation bottom)
+				    (contours-range bottom)
+				    half-down-y)))
+	       (top-offset
+		 (contour-offset (contour-index elevation top)
+				 (contours-range top)
+				 (- half-r)))
+	       (xy0
+		 (crd bottom-offset
+		      0))
+	       (xy1
+		 (crd bottom-offset
+		      (* 0.36 bottom-offset)))
+	       (xy2
+		 (rotate (crd (+ bottom-offset
+				 (* *soft*
+				    0.5
+				    (- half-down-y
+				       bottom-offset)))
+			      top-offset)
+			 () sin-diff cos-diff))
+	       (xy3
+		 (rotate (crd half-down-y
+			      top-offset)
+			 () sin-diff cos-diff)))
+
+	  (rotate xy0 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy1 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy2 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy3 () sin cos hex-centre-x hex-centre-y)
+
+	  (cairo:move-to (x xy0) (y xy0))
+	  (cairo:curve-to (x xy1) (y xy1)
+			  (x xy2) (y xy2)
+			  (x xy3) (y xy3))
+
+	  '(progn
+	    (cairo:line-to (x xy1) (y xy1))
+	    (cairo:line-to (x xy2) (y xy2))
+	    (cairo:line-to (x xy3) (y xy3)))
+	  ))
+      
+      (probe-contours (left top) elevation
+	;; This one tries the exact same stuff as (top left)
+	    ;;; If we can't connect on the inside corner of the neighbours
+	    ;;; there's surely no way to connect on the outside either
+	(format t "9. probe-contours (left top) IS NOT USELESS~%"))
+
+      (probe-contours (bottom right) elevation
+	;;CONFIRMED USEFUL
+	;;(format t "10. probe-contours (bottom right) IS NOT USELESS~%")
+	;; same code as (right bottom)
+	(let* ((bottom-offset
+		 (- half-down-y
+		    (contour-offset (contour-index elevation bottom)
+				    (contours-range bottom)
+				    half-down-y)))
+	       (right-offset
+		 (contour-offset (contour-index elevation right)
+				 (contours-range right)
+				 half-down-y))
+
+	       (xy0 (crd bottom-offset
+			 0))
+	       (xy1 (crd bottom-offset
+			 (* 0.36 bottom-offset)))
+	       (xy2 (rotate (crd right-offset
+				 (* -0.36 right-offset))
+			    () sin-diff cos-diff))
+	       (xy3 (rotate (crd right-offset
+				 0)
+			    () sin-diff cos-diff)))
+
+	  (rotate xy0 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy1 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy2 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy3 () sin cos hex-centre-x hex-centre-y)
+
+	  (cairo:move-to (x xy0) (y xy0))
+	  (cairo:curve-to (x xy1) (y xy1)
+			  (x xy2) (y xy2)
+			  (x xy3) (y xy3))
+	  '(progn
+	    (cairo:line-to (x xy1) (y xy1))
+	    (cairo:line-to (x xy2) (y xy2))
+	    (cairo:line-to (x xy3) (y xy3))))
+	
+	)
+
+      (probe-contours (left right) elevation
+	;;CONFIRMED USEFUL
+	;;(format t "11. probe-contours (left right) IS NOT USELESS~%")
+	;; same code as (right left)
+	(let* ((left-offset
+		 (- half-r 
+		    (contour-offset (contour-index elevation left)
+				    (contours-range left)
+				    half-r)))
+	       (right-offset
+		 (contour-offset (contour-index elevation right)
+				 (contours-range right)
+				 half-down-y))
+
+	       (xy0
+		 (crd half-down-y
+		      left-offset))
+	       (xy1
+		 (crd (- half-down-y
+			 (* *soft*
+			    0.5
+			    right-offset))
+		      left-offset))
+
+	       (xy2
+		 (rotate (crd right-offset
+			      (* -0.36 right-offset))
+			 () sin-diff cos-diff))
+	       (xy3
+		 (rotate (crd right-offset
+			      0)
+			 () sin-diff cos-diff)))
+
+	  (rotate xy0 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy1 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy2 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy3 () sin cos hex-centre-x hex-centre-y)
+
+	  (cairo:move-to (x xy0) (y xy0))
+	  (cairo:curve-to (x xy1) (y xy1)
+			  (x xy2) (y xy2)
+			  (x xy3) (y xy3))
+
+	  '(progn
+	    (cairo:line-to (x xy1) (y xy1))
+	    (cairo:line-to (x xy2) (y xy2))
+	    (cairo:line-to (x xy3) (y xy3)))
+	  
+	  )
+	)
+      (probe-contours (top right) elevation
+	;; same as (right top)
+	(format t "12. probe-contours (top right) IS NOT USELESS~%"))
+
+      ;; more test:
+      (probe-contours (right top) elevation
+	(format t "13. probe-contours (right top) IS NOT USELESS~%"))
+
+      
+      (probe-contours (bottom top) elevation
+	;;CONFIRMED USEFUL
+	;;(format t "14. probe-contours (bottom top) IS NOT USELESS~%")
+	(let* ((bottom-offset
+		 (- half-down-y
+		    (contour-offset (contour-index elevation bottom)
+				    (contours-range bottom)
+				    half-down-y)))
+	       (top-offset
+		 (contour-offset (contour-index elevation top)
+				 (contours-range top)
+				 (- half-r)))
+	       (xy0
+		 (crd bottom-offset
+		      0))
+	       (xy1
+		 (crd bottom-offset
+		      (* 0.36 bottom-offset)))
+	       (xy2
+		 (rotate (crd (+ bottom-offset
+				 (* *soft*
+				    0.5
+				    (- half-down-y
+				       bottom-offset)))
+			      top-offset)
+			 () sin-diff cos-diff))
+	       (xy3
+		 (rotate (crd half-down-y
+			      top-offset)
+			 () sin-diff cos-diff)))
+
+	  (rotate xy0 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy1 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy2 () sin cos hex-centre-x hex-centre-y)
+	  (rotate xy3 () sin cos hex-centre-x hex-centre-y)
+
+	  (cairo:move-to (x xy0) (y xy0))
+	  (cairo:curve-to (x xy1) (y xy1)
+			  (x xy2) (y xy2)
+			  (x xy3) (y xy3))
+
+	  '(progn
+	    (cairo:line-to (x xy1) (y xy1))
+	    (cairo:line-to (x xy2) (y xy2))
+	    (cairo:line-to (x xy3) (y xy3)))
+	  )
+	)
+      
+      (probe-contours (left top) elevation
+	(format t "15. probe-contours (left top) IS NOT USELESS~%"))
+
+      (probe-contours (top left) elevation
+	(format t "16. probe-contours (top left) IS NOT USELESS~%"))
+      (probe-contours (right left) elevation
+	(format t "17. probe-contours (rightleft) IS NOT USELESS~%"))
+      (probe-contours (bottom left) elevation
+	(format t "18. probe-contours (bottom left) IS NOT USELESS~%"))
+
+      (probe-contours (left bottom) elevation
+	(format t "19. probe-contours (left bottom) IS NOT USELESS~%"))
+      (probe-contours (top bottom) elevation
+	(format t "20. probe-contours (top bottom) IS NOT USELESS~%"))
+      (probe-contours (right bottom) elevation
+	(format t "21. probe-contours (right bottom) IS NOT USELESS~%"))
+
+      (and (linkage-leftmost (contours-deque bottom))
+	   (linkage-leftmost (contours-deque left))
+	   (linkage-leftmost (contours-deque top))
+	   (linkage-leftmost (contours-deque right))
+	   (format t "STILL NOT EMPTY!!!~%"))
+
+      (cairo:stroke))))

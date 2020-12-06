@@ -3,6 +3,7 @@
 (ql:quickload :cl-cairo2)
 
 (load "package.lisp")
+(load "util.lisp")
 (load "graphics.lisp")
 (load "map.lisp")
 (load "hex.lisp")
