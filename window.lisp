@@ -828,4 +828,6 @@
 	   (linkage-leftmost (contours-deque right))
 	   (format t "STILL NOT EMPTY!!!~%"))
 
-      (cairo:stroke))))
+      ;;stroke at the end of each probe loop allows different line attributes:
+      ;;(cairo:stroke)
+      )))

@@ -99,7 +99,12 @@
 		     (peek-right (contours-deque ,at-left))))))
        (progn (pop-left (contours-deque ,at-right))
 	      (pop-right (contours-deque ,at-left)))
+       ;; Example thickness change:
+       (if (= (mod ,var 10) 0)
+	   (cairo:set-line-width 1.0)
+	   (cairo:set-line-width 0.5))
        ,@body
+       (cairo:stroke)
        )))
 
 
