@@ -34,7 +34,7 @@
     (:SE '(yofs :SW))))
 
 (defun contour-offset (contour-index contour-count edge-vector-pix)
-  "Pixels to the right (or down) from this contour edge's left (or high) vertex"
+  "Returns contour's position on edge in pixels clockwise."
   (let* ((margin (/ edge-vector-pix 4))
 	 (width (/ (- edge-vector-pix
 		      (* 2 margin))
