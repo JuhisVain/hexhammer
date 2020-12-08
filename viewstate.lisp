@@ -24,10 +24,29 @@
   (let ((old-r (hex-r view-state)))
     (call-next-method)
     (with-slots (centre-x centre-y hex-r) view-state
-      (format t "setf hex-r around: ~a ~a ~a~%" centre-x centre-y hex-r)
       (setf centre-x (* (/ centre-x old-r) hex-r)
 	    centre-y (* (/ centre-y old-r) hex-r)))))
 
 (defmethod (setf hex-r) :after (new-r view-state)
   (when (<= (hex-r view-state) 0)
     (setf (slot-value view-state 'hex-r) 1.0)))
+
+(defun hex-x-at-pix (pixel view-state)
+  (/ (+ pixel
+	(- (centre-x view-state)
+	   (/ (width view-state) 2))
+	(* 1.5 (hex-r view-state)))))
+
+(defmacro do-visible ((x-var y-var view-state) &body body)
+  `(loop for ,x-var
+	 from (/ (- (centre-x ,view-state)
+		    (/ (width ,view-state) 2))
+		 (* 1.5 (hex-r ,view-state)))
+	   to (/ (+ (width ,view-state)
+		    (- (centre-x ,view-state)
+		       (/ (width ,view-state) 2)))
+		 (* 1.5 (hex-r ,view-state)))
+	 do
+	    
+	 ,@body))
+	 

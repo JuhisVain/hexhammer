@@ -25,6 +25,8 @@
 	      (defparameter *world* test-world)
 	      (generate-map 100 50 test-world)
 
+	      
+
 	      (dotimes (x 100)
 		(dotimes (y 50)
 		  (draw-hex-borders (crd x y) test-state)
@@ -45,12 +47,17 @@
 					    (centre-x test-state)
 					    (centre-y test-state))
 				    (clear-all test-state)
+				    (do-visible (xxx yyy test-state)
+				      (format t "Doing xxx:~a~%" xxx))
 				    (dotimes (x 100)
 				      (dotimes (y 50)
 					(draw-hex-borders (crd x y) test-state)
 					(draw-contours (crd x y) test-world test-state)))
-				    
-				    ))
+				    )
+				  (when (= button 1)
+				    (format t "That's hex ~a~%"
+					    (hex-x-at-pix x test-state)))
+				  )
 
 		(:mousewheel (:y roll) ; 1 = away, -1 inwards, todo: test with non smooth wheel
 			     (incf (hex-r test-state) (* 10 roll))
