@@ -26,9 +26,8 @@
 	      (generate-map 100 50 test-world)
 
 	      
-
-	      (dotimes (x 100)
-		(dotimes (y 50)
+	      (do-visible (x y test-state)
+		(when (gethash (crd x y) (world-map test-world))
 		  (draw-hex-borders (crd x y) test-state)
 		  (draw-contours (crd x y) test-world test-state)))
 
@@ -47,10 +46,8 @@
 					    (centre-x test-state)
 					    (centre-y test-state))
 				    (clear-all test-state)
-				    (do-visible (xxx yyy test-state)
-				      (format t "Doing xxx:~a~%" xxx))
-				    (dotimes (x 100)
-				      (dotimes (y 50)
+				    (do-visible (x y test-state)
+				      (when (gethash (crd x y) (world-map test-world))
 					(draw-hex-borders (crd x y) test-state)
 					(draw-contours (crd x y) test-world test-state)))
 				    )
@@ -64,8 +61,8 @@
 			     (incf (hex-r test-state) (* 10 roll))
 
 			     (clear-all test-state)
-			     (dotimes (x 100)
-			       (dotimes (y 50)
+			     (do-visible (x y test-state)
+			       (when (gethash (crd x y) (world-map test-world))
 				 (draw-hex-borders (crd x y) test-state)
 				 (draw-contours (crd x y) test-world test-state)))
 			     

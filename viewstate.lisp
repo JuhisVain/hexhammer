@@ -50,15 +50,12 @@ when X coordinate is divisible by 2. If X is odd, reduce 0.5."
 
 
 (defmacro do-visible ((x-var y-var view-state) &body body)
+  "Iterates through currently visible hexses' coordinates."
   `(loop for ,x-var
-	 from (/ (- (centre-x ,view-state)
-		    (/ (width ,view-state) 2))
-		 (* 1.5 (hex-r ,view-state)))
-	   to (/ (+ (width ,view-state)
-		    (- (centre-x ,view-state)
-		       (/ (width ,view-state) 2)))
-		 (* 1.5 (hex-r ,view-state)))
-	 do
-	    
-	 ,@body))
+	 from (1- (floor (hex-x-at-pix 0 ,view-state)))
+	   to (ceiling (hex-x-at-pix (width ,view-state) ,view-state))
+	 do (loop for ,y-var
+		  from (1- (floor (hex-y-at-pix (height ,view-state) ,view-state)))
+		    to (ceiling (hex-y-at-pix 0 ,view-state))
+		  do ,@body)))
 	 
