@@ -95,7 +95,7 @@
 		(peek-left (contours-deque ,at-right))))
 	 ((or
 	   (null (peek-left (contours-deque ,at-right)))
-	   (not (eql (peek-left (contours-deque ,at-right))
+	   (not (eql (peek-left (contours-deque ,at-right)) ; check null instead?
 		     (peek-right (contours-deque ,at-left))))))
        (progn (pop-left (contours-deque ,at-right))
 	      (pop-right (contours-deque ,at-left)))
