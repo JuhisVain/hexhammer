@@ -32,10 +32,22 @@
     (setf (slot-value view-state 'hex-r) 1.0)))
 
 (defun hex-x-at-pix (pixel view-state)
+  "Returns floating point number as X coordinate of hex below this x PIXEL."
   (/ (+ pixel
 	(- (centre-x view-state)
-	   (/ (width view-state) 2))
-	(* 1.5 (hex-r view-state)))))
+	   (/ (width view-state) 2)))
+     (* 1.5 (hex-r view-state))))
+
+(defun hex-y-at-pix (pixel view-state)
+  "Returns floating point number as Y coordinate of hex below this y PIXEL
+when X coordinate is divisible by 2. If X is odd, reduce 0.5."
+  (+ -0.5
+   (/ (- (height view-state)
+	 (+ pixel
+	    (- (/ (height view-state) 2)
+	       (centre-y view-state))))
+      (* +sin60+ 2 (hex-r view-state)))))
+
 
 (defmacro do-visible ((x-var y-var view-state) &body body)
   `(loop for ,x-var
