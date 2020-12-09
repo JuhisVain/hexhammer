@@ -52,9 +52,8 @@
 					(draw-contours (crd x y) test-world test-state)))
 				    )
 				  (when (= button 1)
-				    (format t "That's hex ~a;~a~%"
-					    (hex-x-at-pix x test-state)
-					    (hex-y-at-pix y test-state)))
+				    (format t "That's hex ~a~%"
+					    (hex-xy-at-pix x y test-state)))
 				  )
 
 		(:mousewheel (:y roll) ; 1 = away, -1 inwards, todo: test with non smooth wheel

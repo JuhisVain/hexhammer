@@ -48,6 +48,39 @@ when X coordinate is divisible by 2. If X is odd, reduce 0.5."
 	       (centre-y view-state))))
       (* +sin60+ 2 (hex-r view-state)))))
 
+(defun hex-xy-at-pix (pixel-x pixel-y view-state)
+  "Returns coordinate of hex when screen clicked at (pixel-x,pixel-y)."
+  (let* ((x-crd (hex-x-at-pix pixel-x view-state))
+	 (y-crd (+ (hex-y-at-pix pixel-y view-state)
+		   (if (zerop (rem (floor x-crd) 2))
+		       0 -0.5)))
+	 (internal-x (mod x-crd 1))
+	 (internal-y (mod y-crd 1))
+	 ;;;(v1.x - v0.x)*(v2.y - v0.y) - (v2.x - v0.x)*(v1.y - v0.y)
+	 ;;  => Will return positive if v2 to the left of line (v0-v1)
+	 (left-of-nw-edge (- (* (float 1/3)
+				(- internal-y 0.5))
+			     (* internal-x
+				0.5)))
+	 (left-of-sw-edge (- (* (- (float 1/3))
+				internal-y)
+			     (* (- internal-x
+				   (float 1/3))
+				0.5)))
+	 (preliminary-x (floor x-crd)))
+    (cond ((> left-of-nw-edge 0)
+	   (crd (1- preliminary-x)
+		(+ (floor y-crd)
+		   (if (evenp preliminary-x)
+		       0 1))))
+	  ((> left-of-sw-edge 0)
+	   (crd (1- preliminary-x)
+		(+ (floor y-crd)
+		   (if (oddp preliminary-x)
+		       0 -1))))
+	  (t
+	   (crd preliminary-x
+		(floor y-crd))))))
 
 (defmacro do-visible ((x-var y-var view-state) &body body)
   "Iterates through currently visible hexses' coordinates."
