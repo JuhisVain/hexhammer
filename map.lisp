@@ -71,8 +71,8 @@
 	     (:SW (crd (1- x) (+ y xodd-)))
 	     (:NW (crd (1- x) (+ y xodd+))))))))
 
-(defun generate-map (width height world)
-  (let* ((source-data (read-pgm "mhmap.pgm"))
+(defun generate-map (width height filename world)
+  (let* ((source-data (read-pgm filename))
 	 (float-hex-width (float (/ width))) ; maybe 1+ ?
 	 (float-hex-height (float (/ height))))
     (macrolet ((read-data (direction)

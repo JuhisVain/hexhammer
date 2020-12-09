@@ -23,7 +23,10 @@
 		  (test-world
 		    (make-world)))
 	      (defparameter *world* test-world)
-	      (generate-map 100 50 test-world)
+	      (generate-map 100 100
+			    ;;"mhmap.pgm" ;; mini mars
+			    "getty.pgm" ;; huge gettysburg
+			    test-world)
 
 	      
 	      (do-visible (x y test-state)
