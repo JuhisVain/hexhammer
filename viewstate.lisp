@@ -76,8 +76,8 @@ when X coordinate is divisible by 2. If X is odd, reduce 0.5."
 	  ((> left-of-sw-edge 0)
 	   (crd (1- preliminary-x)
 		(+ (floor y-crd)
-		   (if (oddp preliminary-x)
-		       0 -1))))
+		   (if (evenp preliminary-x)
+		       -1 0))))
 	  (t
 	   (crd preliminary-x
 		(floor y-crd))))))

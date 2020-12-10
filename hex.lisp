@@ -89,14 +89,16 @@
 
 (defmacro probe-contours ((at-left at-right) var
 			  &body body)
-  `(when (eql (peek-left (contours-deque ,at-right))
-	      (peek-right (contours-deque ,at-left)))
-     (do ((,var (peek-left (contours-deque ,at-right))
-		(peek-left (contours-deque ,at-right))))
+  `(when (eql (the (or fixnum null) (peek-left (contours-deque ,at-right)))
+	      (the (or fixnum null) (peek-right (contours-deque ,at-left))))
+     (do ((,var (the (or fixnum null) (peek-left (contours-deque ,at-right)))
+		(the (or fixnum null) (peek-left (contours-deque ,at-right)))))
 	 ((or
 	   (null (peek-left (contours-deque ,at-right)))
-	   (not (eql (peek-left (contours-deque ,at-right)) ; check null instead?
-		     (peek-right (contours-deque ,at-left))))))
+	   (null (peek-right (contours-deque ,at-left)))
+	   ;(not (eql (peek-left (contours-deque ,at-right)) ; check null instead?
+	;	     (peek-right (contours-deque ,at-left))))
+	   ))
        (progn (pop-left (contours-deque ,at-right))
 	      (pop-right (contours-deque ,at-left)))
        ;; Example thickness change:

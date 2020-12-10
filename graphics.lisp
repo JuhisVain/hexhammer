@@ -35,6 +35,8 @@
 
 (defun contour-offset (contour-index contour-count edge-vector-pix)
   "Returns contour's position on edge in pixels clockwise."
+  (declare (fixnum contour-index contour-count)
+	   (single-float edge-vector-pix))
   (let* ((margin (/ edge-vector-pix 4))
 	 (width (/ (- edge-vector-pix
 		      (* 2 margin))
