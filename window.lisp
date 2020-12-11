@@ -157,6 +157,45 @@
 (defconstant +sin30+ (coerce (sin (/ pi 6)) 'single-float))
 (defconstant +sf-pi+ (coerce pi 'single-float))
 
+
+;;should be used with normie coordinate space:
+(defun surface-normal (point-0 ele-0 point-1 ele-1 point-2 ele-2)
+  (let ((vector-01 (list (- (x point-1) (x point-0))
+			 (- (y point-1) (y point-0))
+			 (- ele-1 ele-0)))
+	(vector-02 (list (- (x point-2) (x point-0))
+			 (- (y point-2) (y point-0))
+			 (- ele-2 ele-0))))
+    (format t "~a // ~a~%" vector-01 vector-02)
+    (list (- (* (second vector-01)
+		(third vector-02))
+	     (* (third vector-01)
+		(second vector-02)))
+	  (- (* (third vector-01)
+		(first vector-02))
+	     (* (first vector-01)
+		(third vector-02)))
+	  (- (* (first vector-01)
+		(second vector-02))
+	     (* (second vector-01)
+		(first vector-02))))))
+
+(defun draw-shading (crd map view-state)
+  (let (hex (gethash crd (world-map map)))
+    (unless hex (return-from draw-contours))
+    (let* ((cairo-surface
+	     (cairo:create-image-surface-for-data
+	      (buffer view-state) :argb32
+	      (width view-state) (height view-state)
+	      (* 4 (width view-state))))
+	   (cairo-context (cairo:create-context cairo-surface)))
+      
+      
+      
+      ;; Wrap up
+      (cairo:destroy cairo-context)
+      (cairo:destroy cairo-surface))))
+
 (defun draw-contours (crd map view-state)
   (let ((hex (gethash crd (world-map map))))
     (unless hex (return-from draw-contours))
