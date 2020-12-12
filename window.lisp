@@ -53,6 +53,7 @@
 				     (do-visible (x y test-state)
 				       (when (gethash (crd x y) (world-map test-world))
 					 (draw-hex-borders (crd x y) test-state)
+					 (draw-shading (crd x y) test-world test-state)
 					 (draw-contours (crd x y) test-world test-state))))
 				    )
 				  (when (= button 1)
@@ -156,9 +157,10 @@
 (defconstant +cos30+ (coerce (cos (/ pi 6)) 'single-float))
 (defconstant +sin30+ (coerce (sin (/ pi 6)) 'single-float))
 (defconstant +sf-pi+ (coerce pi 'single-float))
-
+(defparameter *light-vector* (surface-normal (crd 0 0) 0 (crd 0.1 1) 0 (crd 0.1 1) 1))
 
 ;;should be used with normie coordinate space:
+;; X is east, Y is north, Z is up
 (defun surface-normal (point-0 ele-0 point-1 ele-1 point-2 ele-2)
   (let ((vector-01 (list (- (x point-1) (x point-0))
 			 (- (y point-1) (y point-0))
@@ -166,7 +168,6 @@
 	(vector-02 (list (- (x point-2) (x point-0))
 			 (- (y point-2) (y point-0))
 			 (- ele-2 ele-0))))
-    (format t "~a // ~a~%" vector-01 vector-02)
     (list (- (* (second vector-01)
 		(third vector-02))
 	     (* (third vector-01)
@@ -180,17 +181,233 @@
 	     (* (second vector-01)
 		(first vector-02))))))
 
+(defun vector-angle (vector-1 vector-2)
+  (acos (/ (+ (* (first vector-1) (first vector-2))
+	      (* (second vector-1) (second vector-2))
+	      (* (third vector-1) (third vector-2)))
+	   (* (sqrt (+ (expt (first vector-1) 2)
+		       (expt (second vector-1) 2)
+		       (expt (third vector-1) 2)))
+	      (sqrt (+ (expt (first vector-2) 2)
+		       (expt (second vector-2) 2)
+		       (expt (third vector-2) 2)))))))
+
 (defun draw-shading (crd map view-state)
-  (let (hex (gethash crd (world-map map)))
-    (unless hex (return-from draw-contours))
+  (let ((hex (gethash crd (world-map map))))
+    (unless hex (return-from draw-shading))
     (let* ((cairo-surface
 	     (cairo:create-image-surface-for-data
 	      (buffer view-state) :argb32
 	      (width view-state) (height view-state)
 	      (* 4 (width view-state))))
 	   (cairo-context (cairo:create-context cairo-surface)))
-      
-      
+      (let* ((window-centre-x-pix (/ (width view-state) 2))
+	     (window-centre-y-pix (/ (height view-state) 2))
+
+	     (origin-x (- window-centre-x-pix (centre-x view-state)))
+	     (origin-y (- window-centre-y-pix (centre-y view-state)))
+
+	     (r (hex-r view-state))
+	     (half-down-y (* +sin60+ r))
+	     (quarter-down-y (/ half-down-y 2))
+	     (full-down-y (* half-down-y 2))
+	     (half-r (* 0.5 r))
+	     (three-halfs-r (* 1.5 r))
+	     (quarter-r (* 0.25 r))
+	     (three-quarters-r (* 0.75 r))
+	     (seven-eights-r (* 0.875 r))
+
+	     (hex-centre-x (+ origin-x
+			      r
+			      (* (x crd) three-halfs-r)))
+	     (hex-centre-y (+ (- window-centre-y-pix
+				 (+ origin-y
+				    (* (y crd) full-down-y)))
+			      (- half-down-y)
+			      window-centre-y-pix
+			      (* -1 full-down-y)
+			      (* (mod (1- (x crd)) 2)
+				 half-down-y))))
+
+	(cairo:with-context (cairo-context)
+	  (cairo:set-line-width 1.0)
+	  
+	  (let ((lightness
+		  (/ (vector-angle
+		      *light-vector*
+		      (surface-normal (crd 0 0) (hex-vertex hex :cen) ; elevation unscaled!!!
+				      (crd 1 0) (hex-vertex hex :e)
+				      (crd 0.75 0.5) (hex-vertex hex :ne)))
+		     +sf-pi+)))
+	    ;; vectors use normal crd space & cairo uses screen crds
+	    (cairo:set-source-rgb lightness lightness lightness)
+	    (cairo:move-to hex-centre-x hex-centre-y)
+	    (cairo:rel-line-to r 0)
+	    (cairo:rel-line-to (- quarter-r) (- quarter-down-y))
+	    (cairo:close-path)
+	    (cairo:stroke-preserve)
+	    (cairo:fill-path))
+	  (let ((lightness
+		  (/ (vector-angle
+		      *light-vector*
+		      (surface-normal (crd 0 0) (hex-vertex hex :cen)
+				      (crd 0.75 -0.5) (hex-vertex hex :se)
+				      (crd 1 0) (hex-vertex hex :e)))
+		     +sf-pi+)))
+	    (cairo:set-source-rgb lightness lightness lightness)
+	    (cairo:move-to hex-centre-x hex-centre-y)
+	    (cairo:rel-line-to r 0)
+	    (cairo:rel-line-to (- quarter-r) quarter-down-y)
+	    (cairo:close-path)
+	    (cairo:stroke-preserve)
+	    (cairo:fill-path))
+
+	  (let ((lightness
+		  (/ (vector-angle
+		      *light-vector*
+		      (surface-normal (crd 0 0) (hex-vertex hex :cen)
+				      (crd 0.75 (* +sin60+ 0.5)) (hex-vertex hex :ne)
+				      (crd 0.5 +sin60+) (hex-vertex hex :nne)))
+		     +sf-pi+)))
+	    (cairo:set-source-rgb lightness lightness lightness)
+	    (cairo:move-to hex-centre-x hex-centre-y)
+	    (cairo:rel-line-to half-r (- half-down-y))
+	    (cairo:rel-line-to quarter-r quarter-down-y)
+	    (cairo:close-path)
+	    (cairo:stroke-preserve)
+	    (cairo:fill-path))
+	  (let ((lightness
+		  (/ (vector-angle
+		      *light-vector*
+		      (surface-normal (crd 0 0) (hex-vertex hex :cen)
+				      (crd 0.5 +sin60+) (hex-vertex hex :nne)
+				      (crd 0 +sin60+) (hex-vertex hex :n)))
+		     +sf-pi+)))
+	    (cairo:set-source-rgb lightness lightness lightness)
+	    (cairo:move-to hex-centre-x hex-centre-y)
+	    (cairo:rel-line-to 0 (- half-down-y))
+	    (cairo:rel-line-to half-r 0)
+	    (cairo:close-path)
+	    (cairo:stroke-preserve)
+	    (cairo:fill-path))
+
+	  (let ((lightness
+		  (/ (vector-angle
+		      *light-vector*
+		      (surface-normal (crd 0 0) (hex-vertex hex :cen)
+				      (crd 0 +sin60+) (hex-vertex hex :n)
+				      (crd -0.5 +sin60+) (hex-vertex hex :nnw)))
+		     +sf-pi+)))
+	    (cairo:set-source-rgb lightness lightness lightness)
+	    (cairo:move-to hex-centre-x hex-centre-y)
+	    (cairo:rel-line-to 0 (- half-down-y))
+	    (cairo:rel-line-to (- half-r) 0)
+	    (cairo:close-path)
+	    (cairo:stroke-preserve)
+	    (cairo:fill-path))
+	  (let ((lightness
+		  (/ (vector-angle
+		      *light-vector*
+		      (surface-normal (crd 0 0) (hex-vertex hex :cen)
+				      (crd -0.5 +sin60+) (hex-vertex hex :nnw)
+				      (crd -0.75 (* +sin60+ 0.5)) (hex-vertex hex :nw)))
+		     +sf-pi+)))
+	    (cairo:set-source-rgb lightness lightness lightness)
+	    (cairo:move-to hex-centre-x hex-centre-y)
+	    (cairo:rel-line-to (- half-r) (- half-down-y))
+	    (cairo:rel-line-to (- quarter-r) quarter-down-y)
+	    (cairo:close-path)
+	    (cairo:stroke-preserve)
+	    (cairo:fill-path))
+
+	  (let ((lightness
+		  (/ (vector-angle
+		      *light-vector*
+		      (surface-normal (crd 0 0) (hex-vertex hex :cen)
+				      (crd -0.75 (* +sin60+ 0.5)) (hex-vertex hex :nw)
+				      (crd -1 0) (hex-vertex hex :w)))
+		     +sf-pi+)))
+	    (cairo:set-source-rgb lightness lightness lightness)
+	    (cairo:move-to hex-centre-x hex-centre-y)
+	    (cairo:rel-line-to (- three-quarters-r) (- quarter-down-y))
+	    (cairo:rel-line-to (- quarter-r) quarter-down-y)
+	    (cairo:close-path)
+	    (cairo:stroke-preserve)
+	    (cairo:fill-path))
+	  (let ((lightness
+		  (/ (vector-angle
+		      *light-vector*
+		      (surface-normal (crd 0 0) (hex-vertex hex :cen)
+				      (crd -1 0) (hex-vertex hex :w)
+				      (crd -0.75 (* +sin60+ -0.5)) (hex-vertex hex :sw)))
+		     +sf-pi+)))
+	    (cairo:set-source-rgb lightness lightness lightness)
+	    (cairo:move-to hex-centre-x hex-centre-y)
+	    (cairo:rel-line-to (- r) 0)
+	    (cairo:rel-line-to quarter-r quarter-down-y)
+	    (cairo:close-path)
+	    (cairo:stroke-preserve)
+	    (cairo:fill-path))
+
+	  (let ((lightness
+		  (/ (vector-angle
+		      *light-vector*
+		      (surface-normal (crd 0 0) (hex-vertex hex :cen)
+				      (crd -0.75 (* +sin60+ -0.5)) (hex-vertex hex :sw)
+				      (crd -0.5 (- +sin60+)) (hex-vertex hex :ssw)))
+		     +sf-pi+)))
+	    (cairo:set-source-rgb lightness lightness lightness)
+	    (cairo:move-to hex-centre-x hex-centre-y)
+	    (cairo:rel-line-to (- three-quarters-r) quarter-down-y)
+	    (cairo:rel-line-to quarter-r quarter-down-y)
+	    (cairo:close-path)
+	    (cairo:stroke-preserve)
+	    (cairo:fill-path))
+	  (let ((lightness
+		  (/ (vector-angle
+		      *light-vector*
+		      (surface-normal (crd 0 0) (hex-vertex hex :cen)
+				      (crd -0.5 (- +sin60+)) (hex-vertex hex :ssw)
+				      (crd 0 (- +sin60+)) (hex-vertex hex :s)))
+		     +sf-pi+)))
+	    (cairo:set-source-rgb lightness lightness lightness)
+	    (cairo:move-to hex-centre-x hex-centre-y)
+	    (cairo:rel-line-to (- half-r) half-down-y)
+	    (cairo:rel-line-to half-r 0)
+	    (cairo:close-path)
+	    (cairo:stroke-preserve)
+	    (cairo:fill-path))
+
+	  (let ((lightness
+		  (/ (vector-angle
+		      *light-vector*
+		      (surface-normal (crd 0 0) (hex-vertex hex :cen)
+				      (crd 0 (- +sin60+)) (hex-vertex hex :s)
+				      (crd 0.5 (- +sin60+)) (hex-vertex hex :sse)))
+		     +sf-pi+)))
+	    (cairo:set-source-rgb lightness lightness lightness)
+	    (cairo:move-to hex-centre-x hex-centre-y)
+	    (cairo:rel-line-to 0 half-down-y)
+	    (cairo:rel-line-to half-r 0)
+	    (cairo:close-path)
+	    (cairo:stroke-preserve)
+	    (cairo:fill-path))
+	  (let ((lightness
+		  (/ (vector-angle
+		      *light-vector*
+		      (surface-normal (crd 0 0) (hex-vertex hex :cen)
+				      (crd 0.5 (- +sin60+)) (hex-vertex hex :sse)
+				      (crd 0.75 (* +sin60+ -0.5)) (hex-vertex hex :se)))
+		     +sf-pi+)))
+	    (cairo:set-source-rgb lightness lightness lightness)
+	    (cairo:move-to hex-centre-x hex-centre-y)
+	    (cairo:rel-line-to half-r half-down-y)
+	    (cairo:rel-line-to quarter-r (- quarter-down-y))
+	    (cairo:close-path)
+	    (cairo:stroke-preserve)
+	    (cairo:fill-path))
+
+	  ))
       
       ;; Wrap up
       (cairo:destroy cairo-context)
