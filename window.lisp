@@ -52,8 +52,8 @@
 				    (time
 				     (do-visible (x y test-state)
 				       (when (gethash (crd x y) (world-map test-world))
-					 (draw-hex-borders (crd x y) test-state)
 					 (draw-shading (crd x y) test-world test-state)
+					 (draw-hex-borders (crd x y) test-state)
 					 (draw-contours (crd x y) test-world test-state))))
 				    )
 				  (when (= button 1)
@@ -139,7 +139,7 @@
 	(if (= (x crd) (y crd) 0)
 	    (cairo:set-source-rgb 0.6 0.6 0.6) ;; (0 . 0) gray
 	    (cairo:set-source-rgb 0.1 0.1 0.1))
-	(cairo:set-line-width 1)
+	(cairo:set-line-width 0.25)
 	(cairo:move-to (+ top-left-x half-r) top-left-y) ;; NW
 	(cairo:line-to top-left-x (+ top-left-y half-down-y)) ;; W
 	(cairo:line-to (+ top-left-x half-r) (+ top-left-y full-down-y)) ;; SW
@@ -212,6 +212,7 @@
 					        ',a-crd (hex-vertex hex ,dira)
 					        ',b-crd (hex-vertex hex ,dirb)))
 			       +sf-pi+)))
+		      ;; Needs height/hex-r scaling:
 		      (cairo:set-source-rgb ,lightness ,lightness ,lightness)
 		      (cairo:move-to hex-centre-x hex-centre-y)
 		      (cairo:line-to (+ hex-centre-x (* ,(car a-crd) r))
@@ -219,8 +220,9 @@
 		      (cairo:line-to (+ hex-centre-x (* ,(car b-crd) r))
 				     (+ hex-centre-y (* -1 ,(cdr b-crd) r)))
 		      (cairo:close-path)
-		      (cairo:set-line-width 0.5)
-		      (cairo:stroke-preserve)
+		      ;;;; with antialias :none lines don't need to be stroked
+		      ;;(cairo:set-line-width 0.5)
+		      ;;(cairo:stroke-preserve)
 		      (cairo:set-line-width 0.0)
 		      (cairo:fill-path)))))
       
@@ -260,6 +262,7 @@
 
 	  (cairo:with-context (cairo-context)
 	    (cairo:set-line-width 0.0)
+	    (cairo:set-antialias :none)
 
 	    (flat-half-kite :e :ne)
 	    (flat-half-kite :ne :nne)
