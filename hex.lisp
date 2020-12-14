@@ -109,6 +109,8 @@
        (cairo:stroke)
        )))
 
+(defun hex-at (crd world)
+  (gethash crd (world-map world)))
 
 (defun hex-edge (hex direction)
   (declare (type (or hex null) hex)
