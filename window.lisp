@@ -52,7 +52,8 @@
 				    (time
 				     (do-visible (x y test-state)
 				       (when (gethash (crd x y) (world-map test-world))
-					 (draw-shading (crd x y) test-world test-state)
+					 ;;(draw-shading (crd x y) test-world test-state)
+					 (draw-gouraud-shading (crd x y) test-world test-state)
 					 (draw-hex-borders (crd x y) test-state)
 					 (draw-contours (crd x y) test-world test-state))))
 				    )
@@ -219,10 +220,11 @@
   (macrolet ((list-tris (dira dirb count hex)
 	       (let ((a (gensym "dira"))
 		     (b (gensym "dirb")))
-		 `(mapcar #'(lambda (,a ,b)
-			      (form-normal ,a ,b ,hex))
-			  (dir-list ,dira ,count)
-			  (dir-list ,dirb ,count)))))
+		 `(when ,hex
+		    (mapcar #'(lambda (,a ,b)
+				(form-normal ,a ,b ,hex))
+			    (dir-list ,dira ,count)
+			    (dir-list ,dirb ,count))))))
     (let ((hex (hex-at crd world)))
       (case dir
 	(:CEN (list-tris :s :sse 12 hex))
@@ -274,6 +276,139 @@
 		(append (list-tris :ne :nne 2 hex)
 			(list-tris :nw :w 2 ne-hex)
 			(list-tris :s :sse 2 n-hex))))))))
+
+(defun light-value (vector)
+  (/ (vector-angle *light-vector* vector)
+     +sf-pi+))
+
+(defun vertex-light-value (crd dir world &optional (scaler 1.0))
+  (* scaler
+     (light-value
+      (vertex-normal
+       (vertex-triangle-normals crd dir world)))))
+
+(defun draw-gouraud-shading (crd world view-state)
+  (let ((hex (gethash crd (world-map world))))
+    (unless hex (return-from draw-gouraud-shading))
+    (let* ((cen (vertex-light-value crd :cen world))
+	   (n (vertex-light-value crd :n world))
+	   (nnw (vertex-light-value crd :nnw world))
+	   (nw (vertex-light-value crd :nw world))
+	   (w (vertex-light-value crd :w world))
+	   (sw (vertex-light-value crd :sw world))
+	   (ssw (vertex-light-value crd :ssw world))
+	   (s (vertex-light-value crd :s world))
+	   (sse (vertex-light-value crd :sse world))
+	   (se (vertex-light-value crd :se world))
+	   (e (vertex-light-value crd :e world))
+	   (ne (vertex-light-value crd :ne world))
+	   (nne (vertex-light-value crd :nne world))
+
+	   (cairo-surface
+	     (cairo:create-image-surface-for-data
+	      (buffer view-state) :argb32
+	      (width view-state) (height view-state)
+	      (* 4 (width view-state))))
+	   (cairo-context (cairo:create-context cairo-surface))
+
+	   (window-centre-x-pix (/ (width view-state) 2))
+	   (window-centre-y-pix (/ (height view-state) 2))
+
+	   (origin-x (- window-centre-x-pix (centre-x view-state)))
+	   (origin-y (- window-centre-y-pix (centre-y view-state)))
+
+	   (r (hex-r view-state))
+	   (half-down-y (* +sin60+ r))
+	   (quarter-down-y (/ half-down-y 2))
+	   (full-down-y (* half-down-y 2))
+	   (half-r (* 0.5 r))
+	   (three-halfs-r (* 1.5 r))
+	   (quarter-r (* 0.25 r))
+	   (three-quarters-r (* 0.75 r))
+	   (seven-eights-r (* 0.875 r))
+
+	   (hex-centre-x (+ origin-x
+			    r
+			    (* (x crd) three-halfs-r)))
+	   (hex-centre-y (+ (- window-centre-y-pix
+			       (+ origin-y
+				  (* (y crd) full-down-y)))
+			    (- half-down-y)
+			    window-centre-y-pix
+			    (* -1 full-down-y)
+			    (* (mod (1- (x crd)) 2)
+			       half-down-y)))
+	   )
+
+      (macrolet ((kite-bounds ((dira dirb) &body body)
+		   (let ((a-crd (unit-hex-crd dira))
+			 (b-crd (unit-hex-crd dirb)))
+		     `(progn
+			(cairo:move-to hex-centre-x hex-centre-y)
+			(cairo:line-to (+ hex-centre-x (* ,(car a-crd) r))
+				       (+ hex-centre-y (* -1 ,(cdr a-crd) r)))
+			(cairo:line-to (+ hex-centre-x (* ,(car b-crd) r))
+				       (+ hex-centre-y (* -1 ,(cdr b-crd) r)))
+			(cairo:close-path)
+			,@body
+			(cairo:fill-path)))))
+
+	(cairo:with-context (cairo-context)
+	  (cairo:set-line-width 0.0)
+	  (cairo:set-antialias :none)
+	  
+	  (kite-bounds
+	   (:s :sse)
+	   (let* ((0a (- s cen)) ; edges' value differences
+		  (ab (- sse s))
+		  (b0 (- cen sse))
+		  (abs-0a (abs 0a))
+		  (abs-ab (abs ab))
+		  (abs-b0 (abs b0)))
+	     (cond ((and (>= abs-0a (max abs-ab abs-b0))
+			 (>= 0a 0))
+		    ;; if edge from origin(CEN) to A(S) is greatest
+		    ;; then draw line from mid-value(SSE) to mid-value's offset
+		    ;; on edge origin-A and compute it's function ax+by+c=0
+		    ;; move the line function to pass through minimum vertex
+		    ;; - in this case b=-1 and c=0
+		    ;; Find the point on this line closest to maximum vertex
+		    ;;; Let's use an unrotated unit-hex
+		    (let* ((x0 +sin60+)
+			   (y0 0)
+			   (ax (/ (- 0.5 0)
+				  (* (/ +sin60+ 0a)
+				     sse)))
+			   ;; this is (/ x0 (1+ (* ax ax)))
+			   (target-x (/ (- (* -1 (- (* -1 x0)
+						    (* ax y0)))
+					   (* ax 0))
+					(+ (* ax ax)
+					   (* -1 -1))))
+			   ;; this is (/ (* ax x0) (1+ (* ax ax)))
+			   (target-y (/ (- (* ax (+ (- (* -1 x0))
+						    (* ax y0)))
+					   (* -1 0))
+					(+ (* ax ax)
+					   (* -1 -1))))
+			   (target-xy (rotate (crd target-x target-y)
+					      (/ +sf-pi+ -2)))
+			   (gradient (cairo:create-linear-pattern
+				      hex-centre-x
+				      (+ hex-centre-y (* r +sin60+))
+				      (+ hex-centre-x (* r (x target-xy)))
+				      (+ hex-centre-y (* r (y target-xy))))))
+		      
+		      (cairo:pattern-add-color-stop-rgb
+		       gradient 0.0 s s s)
+		      (cairo:pattern-add-color-stop-rgb
+		       gradient 1.0 cen cen cen)
+		      (cairo:set-source gradient)
+		      (cairo:fill-path)))
+		   )
+	     ))
+	  
+	  )))))
 
 (defun draw-shading (crd map view-state)
   (let ((hex (gethash crd (world-map map))))
