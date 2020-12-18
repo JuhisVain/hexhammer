@@ -340,10 +340,12 @@
 			       half-down-y)))
 	   )
 
-      (macrolet ((kite-bounds ((dira dirb) &body body)
+      (macrolet ((triangle-bounds ((dira dirb) &body body)
+		   ;;Right triangle where (origin)-(dirb) edge is hypothenuse
 		   (let ((a-crd (unit-hex-crd dira))
 			 (b-crd (unit-hex-crd dirb)))
 		     `(progn
+			(cairo:new-path)
 			(cairo:move-to hex-centre-x hex-centre-y)
 			(cairo:line-to (+ hex-centre-x (* ,(car a-crd) r))
 				       (+ hex-centre-y (* -1 ,(cdr a-crd) r)))
@@ -351,64 +353,173 @@
 				       (+ hex-centre-y (* -1 ,(cdr b-crd) r)))
 			(cairo:close-path)
 			,@body
-			(cairo:fill-path)))))
+			;(cairo:fill-path)
+			))))
 
 	(cairo:with-context (cairo-context)
 	  (cairo:set-line-width 0.0)
 	  (cairo:set-antialias :none)
 	  
-	  (kite-bounds
+	  (triangle-bounds
 	   (:s :sse)
-	   (let* ((0a (- s cen)) ; edges' value differences
-		  (ab (- sse s))
-		  (b0 (- cen sse))
-		  (abs-0a (abs 0a))
-		  (abs-ab (abs ab))
-		  (abs-b0 (abs b0)))
-	     (cond ((and (>= abs-0a (max abs-ab abs-b0))
-			 (>= 0a 0))
-		    ;; if edge from origin(CEN) to A(S) is greatest
-		    ;; then draw line from mid-value(SSE) to mid-value's offset
-		    ;; on edge origin-A and compute it's function ax+by+c=0
-		    ;; move the line function to pass through minimum vertex
-		    ;; - in this case b=-1 and c=0
-		    ;; Find the point on this line closest to maximum vertex
-		    ;;; Let's use an unrotated unit-hex
-		    (let* ((x0 +sin60+)
-			   (y0 0)
-			   (ax (/ (- 0.5 0)
-				  (* (/ +sin60+ 0a)
-				     sse)))
-			   ;; this is (/ x0 (1+ (* ax ax)))
-			   (target-x (/ (- (* -1 (- (* -1 x0)
-						    (* ax y0)))
-					   (* ax 0))
-					(+ (* ax ax)
-					   (* -1 -1))))
-			   ;; this is (/ (* ax x0) (1+ (* ax ax)))
-			   (target-y (/ (- (* ax (+ (- (* -1 x0))
-						    (* ax y0)))
-					   (* -1 0))
-					(+ (* ax ax)
-					   (* -1 -1))))
-			   (target-xy (rotate (crd target-x target-y)
-					      (/ +sf-pi+ -2)))
-			   (gradient (cairo:create-linear-pattern
-				      hex-centre-x
-				      (+ hex-centre-y (* r +sin60+))
-				      (+ hex-centre-x (* r (x target-xy)))
-				      (+ hex-centre-y (* r (y target-xy))))))
-		      
-		      (cairo:pattern-add-color-stop-rgb
-		       gradient 0.0 s s s)
-		      (cairo:pattern-add-color-stop-rgb
-		       gradient 1.0 cen cen cen)
-		      (cairo:set-source gradient)
-		      (cairo:fill-path)))
-		   )
-	     ))
+	   (draw-gouraud-counter-tri
+	    cen s sse (* +sf-pi+ 3/6) ; #'rotate rotates clockwise 
+	    r hex-centre-x hex-centre-y cairo-context))
+
+	  (triangle-bounds
+	   (:se :e)
+	   (draw-gouraud-counter-tri
+	    cen se e (* +sf-pi+ 1/6)
+	    r hex-centre-x hex-centre-y cairo-context))
+
+	  (triangle-bounds
+	   (:ne :nne)
+	   (draw-gouraud-counter-tri
+	    cen ne nne (* +sf-pi+ -1/6)
+	    r hex-centre-x hex-centre-y cairo-context))
+
+	  (triangle-bounds
+	   (:n :nnw)
+	   (draw-gouraud-counter-tri
+	    cen n nnw (* +sf-pi+ -3/6)
+	    r hex-centre-x hex-centre-y cairo-context))
+
+	  (triangle-bounds
+	   (:nw :w)
+	   (draw-gouraud-counter-tri
+	    cen nw w (* +sf-pi+ -5/6)
+	    r hex-centre-x hex-centre-y cairo-context))
+
+	  (triangle-bounds
+	   (:sw :ssw)
+	   (draw-gouraud-counter-tri
+	    cen sw ssw (* +sf-pi+ -7/6)
+	    r hex-centre-x hex-centre-y cairo-context))
 	  
 	  )))))
+
+(defun draw-gouraud-counter-tri (o-value a-value b-value rotation
+				 r hex-centre-x hex-centre-y context)
+  (let* ((0a (- a-value o-value)) ; edges' value differences
+	 (ab (- b-value a-value))
+	 (b0 (- o-value b-value))
+	 (abs-0a (abs 0a))
+	 (abs-ab (abs ab))
+	 (abs-b0 (abs b0)))
+    (cond ((and (> abs-0a (max abs-ab abs-b0))
+		;(>= 0a 0)
+		)
+	   ;; if edge from origin to A is greatest
+	   ;; then draw line from mid-value corner to mid-value's offset
+	   ;; on edge origin-A and compute it's function ax+by+c=0
+	   ;; move the line function to pass through minimum vertex
+	   ;; - in this case b=-1 and c=0
+	   ;; Find the point on this line closest to maximum vertex
+		    ;;; Let's use an unrotated unit-hex
+	   (let* ((x0 +sin60+)
+		  (y0 0)
+		  (k-mb (/ (- 0.5 0)
+			   ;(if (>= 0a 0)
+			       (- +sin60+
+				  (* (/ (- b-value o-value)
+					(- a-value o-value))
+				     +sin60+))))
+			       
+			       ;(* (/ (- o-value b-value)
+				;     (- a-value o-value))
+				 ; +sin60+)));)
+		  (b -1)
+		  (c-mb 0)
+
+		  (target-x (/ +sin60+
+			       (1+ (* k-mb k-mb))))
+
+		  (target-y (* target-x k-mb))
+		  
+		  (target-xy (rotate (crd target-x target-y)
+				     rotation))
+		  (a-xy (rotate (crd x0 y0)
+				rotation))
+		  (gradient (cairo:create-linear-pattern
+			     (+ hex-centre-x (* r (x a-xy)))
+			     (+ hex-centre-y (* r -1 (y a-xy)))
+			     (+ hex-centre-x (* r (x target-xy)))
+			     (+ hex-centre-y (* r -1 (y target-xy))))))
+	     
+	     (cairo:pattern-add-color-stop-rgb
+	      gradient 0.0 a-value a-value a-value)
+	     (cairo:pattern-add-color-stop-rgb
+	      gradient 1.0 o-value o-value o-value)
+	     (cairo:set-source gradient context)
+	     (cairo:fill-path context)
+#|
+	     (when (= rotation (/ +sf-pi+ 2))
+	       (format t "centre-x:~a centre-y:~a  r:~a~%--from (~a ; ~a)~%----to (~a;~a)~%"
+		       hex-centre-x hex-centre-y r
+		       (+ hex-centre-x (* r (x a-xy)))
+		       (+ hex-centre-y (* r 1 (y a-xy)))
+		       (+ hex-centre-x (* r (x target-xy)))
+		       (+ hex-centre-y (* r 1 (y target-xy))))
+	     |#
+	     ;(cairo:set-source-rgb 0.1 0.1 0.1)
+	     (cairo:new-path context)
+	     ;(cairo:stroke context)
+					;(cairo:set-antialias :default)
+	     (cairo:set-source-rgb 1 0 0)
+	     (cairo:set-line-width 1 context)
+	     (cairo:move-to (+ hex-centre-x (* r (x a-xy)))
+			    (+ hex-centre-y (* r -1 (y a-xy)))
+			    context)
+	     (cairo:line-to (+ hex-centre-x (* r (x target-xy)))
+			    (+ hex-centre-y (* r -1 (y target-xy)))
+			    context)
+	     (cairo:line-to (+ hex-centre-x )
+			    (+ hex-centre-y )
+			    context)
+	     (cairo:stroke context)
+					;)
+	     
+	     
+	     (cairo:destroy gradient)))
+	  #|((>= abs-ab abs-b0) ; mid value at unit-hex origin
+	   ;; TODO: everything's wrong here
+	   '(let* ((x0 +sin60+)
+		  (y0 0)
+		  (a (/ (if (>= ab 0)
+			    (* (/ 0.5 ab)
+			       o-value)
+			    (- 0.5 (* (/ 0.5 ab)
+				      o-value)))
+			+sin60+))
+		  (c (- 0.5 a))
+		  (b -1)
+		  (target-x (/ (- (* b (- (* b x0)
+					  (* a y0)))
+				  (* a c))
+			       (+ (* a a) (* b b))))
+		  (target-y (/ (- (* a (+ (- (* b x0))
+					  (* a y0)))
+				  (* b c))
+			       (+ (* a a) (* b b))))
+		  (target-xy (rotate (crd target-x target-y)
+				     rotation))
+		  (a-xy (rotate (crd x0 y0)
+				rotation))
+		  (gradient (cairo:create-linear-pattern
+			     (+ hex-centre-x (* r (x a-xy)))
+			     (+ hex-centre-y (* r (y a-xy)))
+			     (+ hex-centre-x (* r (x target-xy)))
+			     (+ hex-centre-y (* r (y target-xy))))))
+	     (cairo:pattern-add-color-stop-rgb
+	      gradient 0.0 a-value a-value a-value)
+	     (cairo:pattern-add-color-stop-rgb
+	      gradient 1.0 b-value b-value b-value)
+	     (cairo:set-source gradient context)
+	     (cairo:fill-path context)
+	     (cairo:destroy gradient)
+	     )
+	   )|#
+	  )))
 
 (defun draw-shading (crd map view-state)
   (let ((hex (gethash crd (world-map map))))
