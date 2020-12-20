@@ -406,30 +406,60 @@
 	 (abs-0a (abs 0a))
 	 (abs-ab (abs ab))
 	 (abs-b0 (abs b0)))
-    (cond ((and (> abs-0a (max abs-ab abs-b0))
-		;(>= 0a 0)
-		)
+    (cond ((= abs-0a abs-ab abs-b0)
+	   (cairo:set-source-rgb o-value o-value o-value context)
+	   (cairo:fill-path context))
+
+	  ((= a-value b-value)
+	   (let* ((o-xy (crd 0 0))
+		  (target-xy (rotate (crd +sin60+ 0) rotation)) ; A point
+		  (gradient (cairo:create-linear-pattern
+			     (+ hex-centre-x (* r (x o-xy)))
+			     (+ hex-centre-y (* r -1 (y o-xy)))
+			     (+ hex-centre-x (* r (x target-xy)))
+			     (+ hex-centre-y (* r -1 (y target-xy))))))
+	     (cairo:pattern-add-color-stop-rgb
+	      gradient 0.0 o-value o-value o-value)
+	     (cairo:pattern-add-color-stop-rgb
+	      gradient 1.0 a-value a-value a-value)
+	     (cairo:set-source gradient context)
+	     (cairo:fill-path context)
+	     (cairo:destroy gradient)))
+
+	  #|((= o-value a-value) ;; handled by (> abs-0a (min abs-ab abs-b0)) ???
+	   (let* ((o-xy (crd 0 0))
+		  (target-xy (rotate (crd 0 0.5) rotation))
+		  (gradient (cairo:create-linear-pattern
+			     (+ hex-centre-x (* r (x o-xy)))
+			     (+ hex-centre-y (* r -1 (y o-xy)))
+			     (+ hex-centre-x (* r (x target-xy)))
+			     (+ hex-centre-y (* r -1 (y target-xy))))))
+	     (cairo:pattern-add-color-stop-rgb
+	      gradient 0.0 o-value o-value o-value)
+	     (cairo:pattern-add-color-stop-rgb
+	      gradient 1.0 b-value b-value b-value)
+	     (cairo:set-source gradient context)
+	     (cairo:fill-path context)
+	     (cairo:destroy gradient)))|#
+
+	  ;;((= o-value b-value)) Handled by (> abs-ab (min abs-0a abs-b0))
+	  ;; Why does it handle it? I don't know
+	  
+	  ((or (> abs-0a (min abs-ab abs-b0))
+	       (> abs-ab (min abs-0a abs-b0)));; Slope does not intersect AB, but results OK
 	   ;; if edge from origin to A is greatest
 	   ;; then draw line from mid-value corner to mid-value's offset
 	   ;; on edge origin-A and compute it's function ax+by+c=0
 	   ;; move the line function to pass through minimum vertex
 	   ;; - in this case b=-1 and c=0
 	   ;; Find the point on this line closest to maximum vertex
-		    ;;; Let's use an unrotated unit-hex
 	   (let* ((x0 +sin60+)
 		  (y0 0)
 		  (k-mb (/ (- 0.5 0)
-			   ;(if (>= 0a 0)
-			       (- +sin60+
-				  (* (/ (- b-value o-value)
-					(- a-value o-value))
-				     +sin60+))))
-			       
-			       ;(* (/ (- o-value b-value)
-				;     (- a-value o-value))
-				 ; +sin60+)));)
-		  (b -1)
-		  (c-mb 0)
+			   (- +sin60+
+			      (* (/ (- b-value o-value)
+				    (- a-value o-value))
+				 +sin60+))))
 
 		  (target-x (/ +sin60+
 			       (1+ (* k-mb k-mb))))
@@ -481,44 +511,63 @@
 	     
 	     
 	     (cairo:destroy gradient)))
-	  #|((>= abs-ab abs-b0) ; mid value at unit-hex origin
-	   ;; TODO: everything's wrong here
-	   '(let* ((x0 +sin60+)
+	  ((or (> abs-b0 (max abs-0a abs-ab))
+	       (and (> abs-0a (max abs-ab abs-b0))
+		    (progn (format t "I am not useless if I print~%")
+			   t)))
+	   ;;If point A is the mid point, can't start gradient from there.
+	   (let* ((x0 0)
 		  (y0 0)
-		  (a (/ (if (>= ab 0)
-			    (* (/ 0.5 ab)
-			       o-value)
-			    (- 0.5 (* (/ 0.5 ab)
-				      o-value)))
-			+sin60+))
-		  (c (- 0.5 a))
-		  (b -1)
-		  (target-x (/ (- (* b (- (* b x0)
-					  (* a y0)))
-				  (* a c))
-			       (+ (* a a) (* b b))))
-		  (target-y (/ (- (* a (+ (- (* b x0))
-					  (* a y0)))
-				  (* b c))
-			       (+ (* a a) (* b b))))
+		  (b-o (- b-value o-value))
+		  (a-o (- a-value o-value))
+		  (aobo-rat (/ a-o b-o))
+		  (k-ma (/ (* aobo-rat -0.5)
+			   (- +sin60+
+			      (* +sin60+ aobo-rat))))
+		  (c-ma (/ (* 0.5 aobo-rat)
+			   (- 1 aobo-rat)))
+		  (target-x (/ (* (- k-ma) (+ c-ma 0.5))
+			       (+ (* k-ma k-ma) 1)))
+		  (target-y (/ (- target-x) k-ma))
 		  (target-xy (rotate (crd target-x target-y)
 				     rotation))
-		  (a-xy (rotate (crd x0 y0)
-				rotation))
 		  (gradient (cairo:create-linear-pattern
-			     (+ hex-centre-x (* r (x a-xy)))
-			     (+ hex-centre-y (* r (y a-xy)))
+			     (+ hex-centre-x x0)
+			     (+ hex-centre-y y0)
 			     (+ hex-centre-x (* r (x target-xy)))
-			     (+ hex-centre-y (* r (y target-xy))))))
+			     (+ hex-centre-y (* r -1 (y target-xy))))))
+	     
 	     (cairo:pattern-add-color-stop-rgb
-	      gradient 0.0 a-value a-value a-value)
+	      gradient 0.0 o-value o-value o-value)
 	     (cairo:pattern-add-color-stop-rgb
 	      gradient 1.0 b-value b-value b-value)
 	     (cairo:set-source gradient context)
 	     (cairo:fill-path context)
+
+					;(cairo:set-source-rgb 0.1 0.1 0.1)
+	     (cairo:new-path context)
+					;(cairo:stroke context)
+					;(cairo:set-antialias :default)
+	     (cairo:set-source-rgb 1 0 0)
+	     (cairo:set-line-width 1 context)
+	     (cairo:move-to (+ hex-centre-x )
+			    (+ hex-centre-y )
+			    context)
+	     (cairo:line-to (+ hex-centre-x (* r (x target-xy)))
+			    (+ hex-centre-y (* r -1 (y target-xy)))
+			    context)
+	     (let ((b-crd (rotate (crd +sin60+ 0.5)
+				  rotation)))
+	       (cairo:line-to (+ hex-centre-x (* r (x b-crd)))
+			      (+ hex-centre-y (* r -1 (y b-crd)))
+			      context))
+	     (cairo:stroke context)
+					;)
+	     
+	     
 	     (cairo:destroy gradient)
-	     )
-	   )|#
+	     ))
+	  
 	  )))
 
 (defun draw-shading (crd map view-state)
