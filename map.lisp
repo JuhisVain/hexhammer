@@ -18,7 +18,8 @@
 
 (setf (fdefinition 'crd) #'cons
       (fdefinition 'x) #'car
-      (fdefinition 'y) #'cdr)
+      (fdefinition 'y) #'cdr
+      (fdefinition 'copy-crd) #'copy-list)
 
 (defsetf x rplaca)
 (defsetf y rplacd)

@@ -319,13 +319,8 @@
 
 	   (r (hex-r view-state))
 	   (half-down-y (* +sin60+ r))
-	   (quarter-down-y (/ half-down-y 2))
 	   (full-down-y (* half-down-y 2))
-	   (half-r (* 0.5 r))
 	   (three-halfs-r (* 1.5 r))
-	   (quarter-r (* 0.25 r))
-	   (three-quarters-r (* 0.75 r))
-	   (seven-eights-r (* 0.875 r))
 
 	   (hex-centre-x (+ origin-x
 			    r
@@ -337,8 +332,7 @@
 			    window-centre-y-pix
 			    (* -1 full-down-y)
 			    (* (mod (1- (x crd)) 2)
-			       half-down-y)))
-	   )
+			       half-down-y))))
 
       (macrolet ((triangle-bounds ((dira dirb) &body body)
 		   ;;Right triangle where (origin)-(dirb) edge is hypothenuse
@@ -352,223 +346,211 @@
 			(cairo:line-to (+ hex-centre-x (* ,(car b-crd) r))
 				       (+ hex-centre-y (* -1 ,(cdr b-crd) r)))
 			(cairo:close-path)
-			,@body
-			;(cairo:fill-path)
-			))))
+			,@body))))
 
 	(cairo:with-context (cairo-context)
 	  (cairo:set-line-width 0.0)
 	  (cairo:set-antialias :none)
+
+	  (let ((dull-y 0.5))
+	    (triangle-bounds
+	     (:s :sse)
+	     (draw-gouraud-tri
+	      dull-y sse s cen
+	      r hex-centre-x hex-centre-y (* +sf-pi+ 3/6) cairo-context))
+	    (triangle-bounds
+	     (:se :e)
+	     (draw-gouraud-tri
+	      dull-y e se cen
+	      r hex-centre-x hex-centre-y (* +sf-pi+ 1/6) cairo-context))
+	    (triangle-bounds
+	     (:ne :nne)
+	     (draw-gouraud-tri
+	      dull-y nne ne cen
+	      r hex-centre-x hex-centre-y (* +sf-pi+ -1/6) cairo-context))
+	    (triangle-bounds
+	     (:n :nnw)
+	     (draw-gouraud-tri
+	      dull-y nnw n cen
+	      r hex-centre-x hex-centre-y (* +sf-pi+ -3/6) cairo-context))
+	    (triangle-bounds
+	     (:nw :w)
+	     (draw-gouraud-tri
+	      dull-y w nw cen
+	      r hex-centre-x hex-centre-y (* +sf-pi+ -5/6) cairo-context))
+	    (triangle-bounds
+	     (:sw :ssw)
+	     (draw-gouraud-tri
+	      dull-y ssw sw cen
+	      r hex-centre-x hex-centre-y (* +sf-pi+ -7/6) cairo-context)))
 	  
-	  (triangle-bounds
-	   (:s :sse)
-	   (draw-gouraud-counter-tri
-	    cen s sse (* +sf-pi+ 3/6) ; #'rotate rotates clockwise 
-	    r hex-centre-x hex-centre-y cairo-context))
-
-	  (triangle-bounds
-	   (:se :e)
-	   (draw-gouraud-counter-tri
-	    cen se e (* +sf-pi+ 1/6)
-	    r hex-centre-x hex-centre-y cairo-context))
-
-	  (triangle-bounds
-	   (:ne :nne)
-	   (draw-gouraud-counter-tri
-	    cen ne nne (* +sf-pi+ -1/6)
-	    r hex-centre-x hex-centre-y cairo-context))
-
-	  (triangle-bounds
-	   (:n :nnw)
-	   (draw-gouraud-counter-tri
-	    cen n nnw (* +sf-pi+ -3/6)
-	    r hex-centre-x hex-centre-y cairo-context))
-
-	  (triangle-bounds
-	   (:nw :w)
-	   (draw-gouraud-counter-tri
-	    cen nw w (* +sf-pi+ -5/6)
-	    r hex-centre-x hex-centre-y cairo-context))
-
-	  (triangle-bounds
-	   (:sw :ssw)
-	   (draw-gouraud-counter-tri
-	    cen sw ssw (* +sf-pi+ -7/6)
-	    r hex-centre-x hex-centre-y cairo-context))
-	  
+	  (let ((dull-y -0.5))
+	    (triangle-bounds
+	     (:ssw :s)
+	     (draw-gouraud-tri
+	      dull-y ssw s cen
+	      r hex-centre-x hex-centre-y (* +sf-pi+ 3/6) cairo-context))
+	    (triangle-bounds
+	     (:sse :se)
+	     (draw-gouraud-tri
+	      dull-y sse se cen
+	      r hex-centre-x hex-centre-y (* +sf-pi+ 1/6) cairo-context))
+	    (triangle-bounds
+	     (:e :ne)
+	     (draw-gouraud-tri
+	      dull-y e ne cen
+	      r hex-centre-x hex-centre-y (* +sf-pi+ -1/6) cairo-context))
+	    (triangle-bounds
+	     (:nne :n)
+	     (draw-gouraud-tri
+	      dull-y nne n cen
+	      r hex-centre-x hex-centre-y (* +sf-pi+ -3/6) cairo-context))
+	    (triangle-bounds
+	     (:nnw :nw)
+	     (draw-gouraud-tri
+	      dull-y nnw nw cen
+	      r hex-centre-x hex-centre-y (* +sf-pi+ -5/6) cairo-context))
+	    (triangle-bounds
+	     (:w :sw)
+	     (draw-gouraud-tri
+	      dull-y w sw cen
+	      r hex-centre-x hex-centre-y (* +sf-pi+ 5/6) cairo-context)))
 	  )))))
 
-(defun draw-gouraud-counter-tri (o-value a-value b-value rotation
-				 r hex-centre-x hex-centre-y context)
-  (let* ((0a (- a-value o-value)) ; edges' value differences
-	 (ab (- b-value a-value))
-	 (b0 (- o-value b-value))
-	 (abs-0a (abs 0a))
-	 (abs-ab (abs ab))
-	 (abs-b0 (abs b0)))
-    (cond ((= abs-0a abs-ab abs-b0)
-	   (cairo:set-source-rgb o-value o-value o-value context)
+
+(defun draw-gouraud-tri (dull-y dull-value right-value origin-value
+			 r hex-centre-x hex-centre-y rotation context)
+  (let* ((rx +sin60+)
+	 (0r-edge (- right-value origin-value))
+	 (rd-edge (- dull-value right-value))
+	 (d0-edge (- origin-value dull-value))
+	 (abs-0r (abs 0r-edge))
+	 (abs-rd (abs rd-edge))
+	 (abs-d0 (abs d0-edge)))
+
+    ;; We have right triangles with corners O origin(sharp), R right and D dull.
+    ;; Points have values associated with them. These are max, min and middle.
+    ;; Draw line from middle point to it's value's offset on min-max edge to get
+    ;; slope k.
+    ;; Perpendicular to this slope draw line from either dull or right corner,
+    ;; whichever is NOT the middle corner. This is the gradient's line.
+    ;; From the remaining corner draw a line with slope k to intersect with
+    ;; previous to find target.
+    
+    (cond ((= dull-value right-value origin-value)
+	   (cairo:set-source-rgb dull-value right-value origin-value context)
 	   (cairo:fill-path context))
 
-	  ((= a-value b-value)
-	   (let* ((o-xy (crd 0 0))
-		  (target-xy (rotate (crd +sin60+ 0) rotation)) ; A point
+	  ((= dull-value right-value)
+	   (let* ((right-xy (rotate (crd rx 0) rotation))
 		  (gradient (cairo:create-linear-pattern
-			     (+ hex-centre-x (* r (x o-xy)))
-			     (+ hex-centre-y (* r -1 (y o-xy)))
-			     (+ hex-centre-x (* r (x target-xy)))
-			     (+ hex-centre-y (* r -1 (y target-xy))))))
+			     (+ hex-centre-x (* r (x right-xy)))
+			     (+ hex-centre-y (* r -1 (y right-xy)))
+			     hex-centre-x
+			     hex-centre-y)))
 	     (cairo:pattern-add-color-stop-rgb
-	      gradient 0.0 o-value o-value o-value)
+	      gradient 0.0 right-value right-value right-value)
 	     (cairo:pattern-add-color-stop-rgb
-	      gradient 1.0 a-value a-value a-value)
+	      gradient 1.0 origin-value origin-value origin-value)
 	     (cairo:set-source gradient context)
 	     (cairo:fill-path context)
 	     (cairo:destroy gradient)))
 
-	  #|((= o-value a-value) ;; handled by (> abs-0a (min abs-ab abs-b0)) ???
-	   (let* ((o-xy (crd 0 0))
-		  (target-xy (rotate (crd 0 0.5) rotation))
+	  ((= right-value origin-value)
+	   (let* ((right-xy (rotate (crd rx 0) rotation))
+		  (target-xy (rotate (crd rx dull-y) rotation))
 		  (gradient (cairo:create-linear-pattern
-			     (+ hex-centre-x (* r (x o-xy)))
-			     (+ hex-centre-y (* r -1 (y o-xy)))
+			     (+ hex-centre-x (* r (x right-xy)))
+			     (+ hex-centre-y (* r -1 (y right-xy)))
 			     (+ hex-centre-x (* r (x target-xy)))
 			     (+ hex-centre-y (* r -1 (y target-xy))))))
 	     (cairo:pattern-add-color-stop-rgb
-	      gradient 0.0 o-value o-value o-value)
+	      gradient 0.0 right-value right-value right-value)
 	     (cairo:pattern-add-color-stop-rgb
-	      gradient 1.0 b-value b-value b-value)
+	      gradient 1.0 dull-value dull-value dull-value)
 	     (cairo:set-source gradient context)
 	     (cairo:fill-path context)
-	     (cairo:destroy gradient)))|#
-
-	  ;;((= o-value b-value)) Handled by (> abs-ab (min abs-0a abs-b0))
-	  ;; Why does it handle it? I don't know
-	  
-	  ((or (> abs-0a (min abs-ab abs-b0))
-	       (> abs-ab (min abs-0a abs-b0)));; Slope does not intersect AB, but results OK
-	   ;; if edge from origin to A is greatest
-	   ;; then draw line from mid-value corner to mid-value's offset
-	   ;; on edge origin-A and compute it's function ax+by+c=0
-	   ;; move the line function to pass through minimum vertex
-	   ;; - in this case b=-1 and c=0
-	   ;; Find the point on this line closest to maximum vertex
-	   (let* ((x0 +sin60+)
-		  (y0 0)
-		  (k-mb (/ (- 0.5 0)
-			   (- +sin60+
-			      (* (/ (- b-value o-value)
-				    (- a-value o-value))
-				 +sin60+))))
-
-		  (target-x (/ +sin60+
-			       (1+ (* k-mb k-mb))))
-
-		  (target-y (* target-x k-mb))
-		  
-		  (target-xy (rotate (crd target-x target-y)
-				     rotation))
-		  (a-xy (rotate (crd x0 y0)
-				rotation))
-		  (gradient (cairo:create-linear-pattern
-			     (+ hex-centre-x (* r (x a-xy)))
-			     (+ hex-centre-y (* r -1 (y a-xy)))
-			     (+ hex-centre-x (* r (x target-xy)))
-			     (+ hex-centre-y (* r -1 (y target-xy))))))
-	     
-	     (cairo:pattern-add-color-stop-rgb
-	      gradient 0.0 a-value a-value a-value)
-	     (cairo:pattern-add-color-stop-rgb
-	      gradient 1.0 o-value o-value o-value)
-	     (cairo:set-source gradient context)
-	     (cairo:fill-path context)
-#|
-	     (when (= rotation (/ +sf-pi+ 2))
-	       (format t "centre-x:~a centre-y:~a  r:~a~%--from (~a ; ~a)~%----to (~a;~a)~%"
-		       hex-centre-x hex-centre-y r
-		       (+ hex-centre-x (* r (x a-xy)))
-		       (+ hex-centre-y (* r 1 (y a-xy)))
-		       (+ hex-centre-x (* r (x target-xy)))
-		       (+ hex-centre-y (* r 1 (y target-xy))))
-	     |#
-	     ;(cairo:set-source-rgb 0.1 0.1 0.1)
-	     (cairo:new-path context)
-	     ;(cairo:stroke context)
-					;(cairo:set-antialias :default)
-	     (cairo:set-source-rgb 1 0 0)
-	     (cairo:set-line-width 1 context)
-	     (cairo:move-to (+ hex-centre-x (* r (x a-xy)))
-			    (+ hex-centre-y (* r -1 (y a-xy)))
-			    context)
-	     (cairo:line-to (+ hex-centre-x (* r (x target-xy)))
-			    (+ hex-centre-y (* r -1 (y target-xy)))
-			    context)
-	     (cairo:line-to (+ hex-centre-x )
-			    (+ hex-centre-y )
-			    context)
-	     (cairo:stroke context)
-					;)
-	     
-	     
 	     (cairo:destroy gradient)))
-	  ((or (> abs-b0 (max abs-0a abs-ab))
-	       (and (> abs-0a (max abs-ab abs-b0))
-		    (progn (format t "I am not useless if I print~%")
-			   t)))
-	   ;;If point A is the mid point, can't start gradient from there.
-	   (let* ((x0 0)
-		  (y0 0)
-		  (b-o (- b-value o-value))
-		  (a-o (- a-value o-value))
-		  (aobo-rat (/ a-o b-o))
-		  (k-ma (/ (* aobo-rat -0.5)
-			   (- +sin60+
-			      (* +sin60+ aobo-rat))))
-		  (c-ma (/ (* 0.5 aobo-rat)
-			   (- 1 aobo-rat)))
-		  (target-x (/ (* (- k-ma) (+ c-ma 0.5))
-			       (+ (* k-ma k-ma) 1)))
-		  (target-y (/ (- target-x) k-ma))
+
+	  ;((= dull-value origin-value))
+
+	  ((>= abs-0r (max abs-rd abs-d0)) ; rv/=0v , dv/=rv
+	   (let* ((k (/ dull-y
+		       (- rx (* (/ (- dull-value origin-value)
+				   (- right-value origin-value))
+				rx))))
+		  (right-xy (rotate (crd rx 0) rotation))
+		  (target-x (/ rx (+ 1 (* k k))))
+		  (target-y (* k target-x))
 		  (target-xy (rotate (crd target-x target-y)
 				     rotation))
 		  (gradient (cairo:create-linear-pattern
-			     (+ hex-centre-x x0)
-			     (+ hex-centre-y y0)
+			     (+ hex-centre-x (* r (x right-xy)))
+			     (+ hex-centre-y (* r -1 (y right-xy)))
 			     (+ hex-centre-x (* r (x target-xy)))
 			     (+ hex-centre-y (* r -1 (y target-xy))))))
-	     
 	     (cairo:pattern-add-color-stop-rgb
-	      gradient 0.0 o-value o-value o-value)
+	      gradient 0.0 right-value right-value right-value)
 	     (cairo:pattern-add-color-stop-rgb
-	      gradient 1.0 b-value b-value b-value)
+	      gradient 1.0 origin-value origin-value origin-value)
 	     (cairo:set-source gradient context)
 	     (cairo:fill-path context)
+	     (cairo:destroy gradient)))
 
-					;(cairo:set-source-rgb 0.1 0.1 0.1)
-	     (cairo:new-path context)
-					;(cairo:stroke context)
-					;(cairo:set-antialias :default)
-	     (cairo:set-source-rgb 1 0 0)
-	     (cairo:set-line-width 1 context)
-	     (cairo:move-to (+ hex-centre-x )
-			    (+ hex-centre-y )
-			    context)
-	     (cairo:line-to (+ hex-centre-x (* r (x target-xy)))
-			    (+ hex-centre-y (* r -1 (y target-xy)))
-			    context)
-	     (let ((b-crd (rotate (crd +sin60+ 0.5)
-				  rotation)))
-	       (cairo:line-to (+ hex-centre-x (* r (x b-crd)))
-			      (+ hex-centre-y (* r -1 (y b-crd)))
-			      context))
-	     (cairo:stroke context)
-					;)
-	     
-	     
-	     (cairo:destroy gradient)
-	     ))
-	  
-	  )))
+	  ((> abs-d0 (max abs-rd abs-0r))
+	   ;; dv/=0v, rv/=0v
+	   (let* ((value-ratio (/ (- right-value origin-value)
+				  (- dull-value origin-value)))
+		  (k (/ (- (* dull-y value-ratio))
+			(- rx (* rx value-ratio))))
+		  (dull-xy (rotate (crd rx dull-y) rotation))
+		  (target-x (/ (+ (* k dull-y)
+				  rx)
+			       (+ 1 (* k k))))
+		  (target-y (* k target-x))
+		  (target-xy (rotate (crd target-x target-y)
+				     rotation))
+		  (gradient (cairo:create-linear-pattern
+			     (+ hex-centre-x (* r (x dull-xy)))
+			     (+ hex-centre-y (* r -1 (y dull-xy)))
+			     (+ hex-centre-x (* r (x target-xy)))
+			     (+ hex-centre-y (* r -1 (y target-xy))))))
+	     (cairo:pattern-add-color-stop-rgb
+	      gradient 0.0 dull-value dull-value dull-value)
+	     (cairo:pattern-add-color-stop-rgb
+	      gradient 1.0 origin-value origin-value origin-value)
+	     (cairo:set-source gradient context)
+	     (cairo:fill-path context)
+	     (cairo:destroy gradient)))
+
+	  ((> abs-rd (max abs-d0 abs-0r))
+	   ;; this one could be moved to after (= dull-value right-value)
+	   ;; dv/=rv
+	   (let* ((value-ratio (/ (- origin-value right-value)
+				  (- dull-value right-value)))
+		  (k (/ (* dull-y value-ratio)
+			rx))
+		  (right-xy (rotate (crd rx 0) rotation))
+		  (target-x (/ (- (* rx (+ 1 (* k k)))
+				  (* k dull-y))
+			       (+ 1 (* k k))))
+		  (target-y (+ (- (/ target-x k))
+			       (/ rx k)))
+		  (target-xy (rotate (crd target-x target-y)
+				     rotation))
+		  (gradient (cairo:create-linear-pattern
+			     (+ hex-centre-x (* r (x right-xy)))
+			     (+ hex-centre-y (* r -1 (y right-xy)))
+			     (+ hex-centre-x (* r (x target-xy)))
+			     (+ hex-centre-y (* r -1 (y target-xy))))))
+	     (cairo:pattern-add-color-stop-rgb
+	      gradient 0.0 right-value right-value right-value)
+	     (cairo:pattern-add-color-stop-rgb
+	      gradient 1.0 dull-value dull-value dull-value)
+	     (cairo:set-source gradient context)
+	     (cairo:fill-path context)
+	     (cairo:destroy gradient))))))
+
 
 (defun draw-shading (crd map view-state)
   (let ((hex (gethash crd (world-map map))))
