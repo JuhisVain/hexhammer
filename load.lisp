@@ -10,4 +10,6 @@
   (load "hex.lisp")
   (load "pgmread.lisp")
   (load "viewstate.lisp")
+  (load "vectors.lisp")
+  (load "shading.lisp")
   (load "window.lisp"))

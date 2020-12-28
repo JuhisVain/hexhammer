@@ -1,5 +1,12 @@
 (in-package :hexhammer)
 
+(defconstant +sin60+ (sqrt (/ 3 4)))
+(defconstant +cos60+ 0.5)
+(defconstant +tan60+ (coerce (tan (/ pi 3)) 'single-float))
+(defconstant +cos30+ (coerce (cos (/ pi 6)) 'single-float))
+(defconstant +sin30+ (coerce (sin (/ pi 6)) 'single-float))
+(defconstant +sf-pi+ (coerce pi 'single-float))
+
 ;; Doubly linked integer list:
 (defstruct (link (:print-object link-printer))
   (left nil :type (or null link))
