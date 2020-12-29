@@ -10,52 +10,24 @@
 ;;should be used with normie coordinate space:
 ;; X is east, Y is north, Z is up
 (defun surface-normal (point-0 ele-0 point-1 ele-1 point-2 ele-2)
-  (let ((vector-01 (list (- (x point-1) (x point-0))
-			 (- (y point-1) (y point-0))
-			 (- ele-1 ele-0)))
-	(vector-02 (list (- (x point-2) (x point-0))
-			 (- (y point-2) (y point-0))
-			 (- ele-2 ele-0))))
-    (list (- (* (second vector-01)
-		(third vector-02))
-	     (* (third vector-01)
-		(second vector-02)))
-	  (- (* (third vector-01)
-		(first vector-02))
-	     (* (first vector-01)
-		(third vector-02)))
-	  (- (* (first vector-01)
-		(second vector-02))
-	     (* (second vector-01)
-		(first vector-02))))))
+  (let ((vector-01 (3d-vectors:vec (- (x point-1) (x point-0))
+				   (- (y point-1) (y point-0))
+				   (- ele-1 ele-0)))
+	(vector-02 (3d-vectors:vec (- (x point-2) (x point-0))
+				   (- (y point-2) (y point-0))
+				   (- ele-2 ele-0))))
+    (3d-vectors:vc vector-01 vector-02)))
 
 (defun form-normal (dir-a dir-b hex)
   (surface-normal (unit-hex-crd :cen) (hex-vertex hex :cen)
 		  (unit-hex-crd dir-a) (hex-vertex hex dir-a)
 		  (unit-hex-crd dir-b) (hex-vertex hex dir-b)))
 
-
-
 (defun vector-angle (vector-1 vector-2)
-  (acos (/ (+ (* (first vector-1) (first vector-2))
-	      (* (second vector-1) (second vector-2))
-	      (* (third vector-1) (third vector-2)))
-	   (* (sqrt (+ (expt (first vector-1) 2)
-		       (expt (second vector-1) 2)
-		       (expt (third vector-1) 2)))
-	      (sqrt (+ (expt (first vector-2) 2)
-		       (expt (second vector-2) 2)
-		       (expt (third vector-2) 2)))))))
+  (3d-vectors:vangle vector-1 vector-2))
 
 (defun vertex-normal (normals)
-  (let ((count (length normals)))
-    (loop for (x y z) in normals
-	  sum x into x-sum
-	  sum y into y-sum
-	  sum z into z-sum
-	  finally (return (list (/ x-sum count)
-				(/ y-sum count)
-				(/ z-sum count))))))
+  (apply #'3d-vectors:v+ normals))
 
 (defun vertex-triangle-normals (crd dir world)
   (macrolet ((list-tris (dira dirb count hex)

@@ -1,6 +1,7 @@
 (ql:quickload :serapeum)
 (ql:quickload :sdl2)
 (ql:quickload :cl-cairo2)
+(ql:quickload :3d-vectors)
 
 (with-compilation-unit ()
   (load "package.lisp")
