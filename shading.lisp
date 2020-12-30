@@ -132,6 +132,28 @@
 	      r hex-centre-x hex-centre-y (* +sf-pi+ 5/6) cairo-context)))
 	  )))))
 
+(defun value-alpha-value (value)
+  (* (abs (- value 0.5)) 2))
+
+(defun shading-color-stop (gradient offset value)
+  (let ((value-color (fround value)))
+    (cairo:pattern-add-color-stop-rgba
+     gradient offset value-color value-color value-color
+     (value-alpha-value value))))
+
+(defun construct-gradient (value-0 value-1 gradient)
+  (shading-color-stop gradient 0.0 value-0)
+  (shading-color-stop gradient 1.0 value-1)
+  (when (or (< value-0 0.5 value-1)
+	    (> value-0 0.5 value-1))
+
+    (cairo:pattern-add-color-stop-rgba
+     gradient
+     (/ (- 0.5 value-0)
+	(- value-1 value-0))
+     0 0 0 ;; TODO: when using only white and black this will need computing
+     (value-alpha-value 0.5))))
+
 (defun draw-gouraud-tri (dull-y dull-value right-value origin-value
 			 r hex-centre-x hex-centre-y rotation context)
   (let* ((rx +sin60+)
@@ -152,7 +174,8 @@
     ;; previous to find target.
     
     (cond ((= dull-value right-value origin-value)
-	   (cairo:set-source-rgb dull-value right-value origin-value context)
+	   (cairo:set-source-rgb ;; TODO: add alpha
+	    dull-value right-value origin-value context)
 	   (cairo:fill-path context))
 
 	  ((= dull-value right-value)
@@ -162,10 +185,8 @@
 			     (+ hex-centre-y (* r -1 (y right-xy)))
 			     hex-centre-x
 			     hex-centre-y)))
-	     (cairo:pattern-add-color-stop-rgb
-	      gradient 0.0 right-value right-value right-value)
-	     (cairo:pattern-add-color-stop-rgb
-	      gradient 1.0 origin-value origin-value origin-value)
+	     (shading-color-stop gradient 0.0 right-value)
+	     (shading-color-stop gradient 1.0 origin-value)
 	     (cairo:set-source gradient context)
 	     (cairo:fill-path context)
 	     (cairo:destroy gradient)))
@@ -178,10 +199,9 @@
 			     (+ hex-centre-y (* r -1 (y right-xy)))
 			     (+ hex-centre-x (* r (x target-xy)))
 			     (+ hex-centre-y (* r -1 (y target-xy))))))
-	     (cairo:pattern-add-color-stop-rgb
-	      gradient 0.0 right-value right-value right-value)
-	     (cairo:pattern-add-color-stop-rgb
-	      gradient 1.0 dull-value dull-value dull-value)
+	     (construct-gradient right-value dull-value gradient)
+	     ;(shading-color-stop gradient 0.0 right-value)
+	     ;(shading-color-stop gradient 1.0 dull-value)
 	     (cairo:set-source gradient context)
 	     (cairo:fill-path context)
 	     (cairo:destroy gradient)))
@@ -203,10 +223,9 @@
 			     (+ hex-centre-y (* r -1 (y right-xy)))
 			     (+ hex-centre-x (* r (x target-xy)))
 			     (+ hex-centre-y (* r -1 (y target-xy))))))
-	     (cairo:pattern-add-color-stop-rgb
-	      gradient 0.0 right-value right-value right-value)
-	     (cairo:pattern-add-color-stop-rgb
-	      gradient 1.0 origin-value origin-value origin-value)
+	     (construct-gradient right-value origin-value gradient)
+	     ;(shading-color-stop gradient 0.0 right-value)
+	     ;(shading-color-stop gradient 1.0 origin-value)
 	     (cairo:set-source gradient context)
 	     (cairo:fill-path context)
 	     (cairo:destroy gradient)))
@@ -229,10 +248,9 @@
 			     (+ hex-centre-y (* r -1 (y dull-xy)))
 			     (+ hex-centre-x (* r (x target-xy)))
 			     (+ hex-centre-y (* r -1 (y target-xy))))))
-	     (cairo:pattern-add-color-stop-rgb
-	      gradient 0.0 dull-value dull-value dull-value)
-	     (cairo:pattern-add-color-stop-rgb
-	      gradient 1.0 origin-value origin-value origin-value)
+	     (construct-gradient dull-value origin-value gradient)
+	     ;(shading-color-stop gradient 0.0 dull-value)
+	     ;(shading-color-stop gradient 1.0 origin-value)
 	     (cairo:set-source gradient context)
 	     (cairo:fill-path context)
 	     (cairo:destroy gradient)))
@@ -257,10 +275,9 @@
 			     (+ hex-centre-y (* r -1 (y right-xy)))
 			     (+ hex-centre-x (* r (x target-xy)))
 			     (+ hex-centre-y (* r -1 (y target-xy))))))
-	     (cairo:pattern-add-color-stop-rgb
-	      gradient 0.0 right-value right-value right-value)
-	     (cairo:pattern-add-color-stop-rgb
-	      gradient 1.0 dull-value dull-value dull-value)
+	     (construct-gradient right-value dull-value gradient)
+	     ;(shading-color-stop gradient 0.0 right-value)
+	     ;(shading-color-stop gradient 1.0 dull-value)
 	     (cairo:set-source gradient context)
 	     (cairo:fill-path context)
 	     (cairo:destroy gradient))))))

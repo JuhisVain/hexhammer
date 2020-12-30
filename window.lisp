@@ -98,7 +98,8 @@
 	    (* 4 (width view-state))))
 	 (cairo-context (cairo:create-context cairo-surface)))
     (cairo:with-context (cairo-context)
-      (cairo:set-source-rgb 0 0 0)
+      ;; Default background color testing
+      (cairo:set-source-rgb 0.08 0.5 0.02)
       (cairo:paint))
     (cairo:destroy cairo-context)
     (cairo:destroy cairo-surface)))
