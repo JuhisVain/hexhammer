@@ -133,26 +133,17 @@
 	  )))))
 
 (defun value-alpha-value (value)
-  (* (abs (- value 0.5)) 2))
+  (- 1.0 value))
 
 (defun shading-color-stop (gradient offset value)
-  (let ((value-color (fround value)))
-    (cairo:pattern-add-color-stop-rgba
-     gradient offset value-color value-color value-color
-     (value-alpha-value value))))
+  (cairo:pattern-add-color-stop-rgba
+   gradient offset
+   0 0 0 ; Shading is always black, just like real life.
+   (value-alpha-value value))) ; white light reveals true color
 
 (defun construct-gradient (value-0 value-1 gradient)
   (shading-color-stop gradient 0.0 value-0)
-  (shading-color-stop gradient 1.0 value-1)
-  (when (or (< value-0 0.5 value-1)
-	    (> value-0 0.5 value-1))
-
-    (cairo:pattern-add-color-stop-rgba
-     gradient
-     (/ (- 0.5 value-0)
-	(- value-1 value-0))
-     0 0 0 ;; TODO: when using only white and black this will need computing
-     (value-alpha-value 0.5))))
+  (shading-color-stop gradient 1.0 value-1))
 
 (defun draw-gouraud-tri (dull-y dull-value right-value origin-value
 			 r hex-centre-x hex-centre-y rotation context)
@@ -174,8 +165,8 @@
     ;; previous to find target.
     
     (cond ((= dull-value right-value origin-value)
-	   (cairo:set-source-rgb ;; TODO: add alpha
-	    dull-value right-value origin-value context)
+	   (cairo:set-source-rgba
+	    0 0 0 (value-alpha-value dull-value) context)
 	   (cairo:fill-path context))
 
 	  ((= dull-value right-value)
