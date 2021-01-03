@@ -133,6 +133,7 @@
 	  )))))
 
 (defun value-alpha-value (value)
+  ;; 0 = no shadow, 1 = total shadow
   (- 1.0 value))
 
 (defun shading-color-stop (gradient offset value)
