@@ -258,8 +258,9 @@
 		  (target-x (/ (- (* rx (+ 1 (* k k)))
 				  (* k dull-y))
 			       (+ 1 (* k k))))
-		  (target-y (+ (- (/ target-x k))
-			       (/ rx k)))
+		  (target-y
+		    ;;(+ (- (/ target-x k)) (/ rx k)) ; This one breaks more often
+		    (+ (* k target-x) dull-y (- (* k rx))))
 		  (target-xy (rotate (crd target-x target-y)
 				     rotation))
 		  (gradient (cairo:create-linear-pattern
