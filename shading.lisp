@@ -146,6 +146,14 @@
   (shading-color-stop gradient 0.0 value-0)
   (shading-color-stop gradient 1.0 value-1))
 
+(defun relevant-trunc (num)
+  (ffloor num 0.000001)) ; ffloor appears to be the fastest of these functions
+
+(defun rf= (number &rest more-numbers)
+  (apply #'=
+	 (mapcar #'relevant-trunc
+		 (cons number more-numbers))))
+
 (defun draw-gouraud-tri (dull-y dull-value right-value origin-value
 			 r hex-centre-x hex-centre-y rotation context)
   (let* ((rx +sin60+)
@@ -165,12 +173,12 @@
     ;; From the remaining corner draw a line with slope k to intersect with
     ;; previous to find target.
     
-    (cond ((= dull-value right-value origin-value)
+    (cond ((rf= dull-value right-value origin-value)
 	   (cairo:set-source-rgba
 	    0 0 0 (value-alpha-value dull-value) context)
 	   (cairo:fill-path context))
 
-	  ((= dull-value right-value)
+	  ((rf= dull-value right-value)
 	   (let* ((right-xy (rotate (crd rx 0) rotation))
 		  (gradient (cairo:create-linear-pattern
 			     (+ hex-centre-x (* r (x right-xy)))
@@ -183,7 +191,7 @@
 	     (cairo:fill-path context)
 	     (cairo:destroy gradient)))
 
-	  ((= right-value origin-value)
+	  ((rf= right-value origin-value)
 	   (let* ((right-xy (rotate (crd rx 0) rotation))
 		  (target-xy (rotate (crd rx dull-y) rotation))
 		  (gradient (cairo:create-linear-pattern
@@ -198,7 +206,7 @@
 	     (cairo:fill-path context)
 	     (cairo:destroy gradient)))
 
-	  ;((= dull-value origin-value))
+	  ;((rf= dull-value origin-value))
 
 	  ((>= abs-0r (max abs-rd abs-d0)) ; rv/=0v , dv/=rv
 	   (let* ((k (/ dull-y
@@ -259,7 +267,6 @@
 				  (* k dull-y))
 			       (+ 1 (* k k))))
 		  (target-y
-		    ;;(+ (- (/ target-x k)) (/ rx k)) ; This one breaks more often
 		    (+ (* k target-x) dull-y (- (* k rx))))
 		  (target-xy (rotate (crd target-x target-y)
 				     rotation))
