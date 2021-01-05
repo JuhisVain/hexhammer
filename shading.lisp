@@ -200,13 +200,11 @@
 			     (+ hex-centre-x (* r (x target-xy)))
 			     (+ hex-centre-y (* r -1 (y target-xy))))))
 	     (construct-gradient right-value dull-value gradient)
-	     ;(shading-color-stop gradient 0.0 right-value)
-	     ;(shading-color-stop gradient 1.0 dull-value)
 	     (cairo:set-source gradient context)
 	     (cairo:fill-path context)
 	     (cairo:destroy gradient)))
 
-	  ;((rf= dull-value origin-value))
+	  ;;((rf= dull-value origin-value))
 
 	  ((>= abs-0r (max abs-rd abs-d0)) ; rv/=0v , dv/=rv
 	   (let* ((k (/ dull-y
@@ -224,8 +222,6 @@
 			     (+ hex-centre-x (* r (x target-xy)))
 			     (+ hex-centre-y (* r -1 (y target-xy))))))
 	     (construct-gradient right-value origin-value gradient)
-	     ;(shading-color-stop gradient 0.0 right-value)
-	     ;(shading-color-stop gradient 1.0 origin-value)
 	     (cairo:set-source gradient context)
 	     (cairo:fill-path context)
 	     (cairo:destroy gradient)))
@@ -249,8 +245,6 @@
 			     (+ hex-centre-x (* r (x target-xy)))
 			     (+ hex-centre-y (* r -1 (y target-xy))))))
 	     (construct-gradient dull-value origin-value gradient)
-	     ;(shading-color-stop gradient 0.0 dull-value)
-	     ;(shading-color-stop gradient 1.0 origin-value)
 	     (cairo:set-source gradient context)
 	     (cairo:fill-path context)
 	     (cairo:destroy gradient)))
@@ -276,8 +270,6 @@
 			     (+ hex-centre-x (* r (x target-xy)))
 			     (+ hex-centre-y (* r -1 (y target-xy))))))
 	     (construct-gradient right-value dull-value gradient)
-	     ;(shading-color-stop gradient 0.0 right-value)
-	     ;(shading-color-stop gradient 1.0 dull-value)
 	     (cairo:set-source gradient context)
 	     (cairo:fill-path context)
 	     (cairo:destroy gradient))))))
