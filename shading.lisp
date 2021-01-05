@@ -185,8 +185,7 @@
 			     (+ hex-centre-y (* r -1 (y right-xy)))
 			     hex-centre-x
 			     hex-centre-y)))
-	     (shading-color-stop gradient 0.0 right-value)
-	     (shading-color-stop gradient 1.0 origin-value)
+	     (construct-gradient right-value origin-value gradient)
 	     (cairo:set-source gradient context)
 	     (cairo:fill-path context)
 	     (cairo:destroy gradient)))
