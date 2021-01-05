@@ -79,15 +79,21 @@
 			  (defvar *vector-wall* (crd 0.2 1))
 			  (setf *light-vector*
 				(surface-normal (crd 0 0) 0
-						(rotate *vector-wall* (* 0.01 +sf-pi+)) 0
+						(rotate *vector-wall* (* 0.1 +sf-pi+)) 0
 						*vector-wall* 1))
 			  (clear-all test-state)
 			  (do-visible (x y test-state)
 			    (when (gethash (crd x y) (world-map test-world))
-			      ;;(draw-shading (crd x y) test-world test-state)
 			      (draw-gouraud-shading (crd x y) test-world test-state)
 			      (draw-hex-borders (crd x y) test-state)
 			      (draw-contours (crd x y) test-world test-state)))
+			  
+			  (sdl2:update-texture texture nil
+					    buffer
+					    (* 4 1000)) ; ARGB8888 size * texture width
+			  (sdl2:render-clear renderer)
+			  (sdl2:render-copy renderer texture)
+			  (sdl2:render-present renderer)
 
 
 			  )
