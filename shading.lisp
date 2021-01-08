@@ -154,6 +154,13 @@
 	 (mapcar #'relevant-trunc
 		 (cons number more-numbers))))
 
+(defun fill-path-with-gouraud (g0x g0y g0v g1x g1y g1v context)
+  (let ((gradient (cairo:create-linear-pattern g0x g0y g1x g1y)))
+    (construct-gradient g0v g1v gradient)
+    (cairo:set-source gradient context)
+    (cairo:fill-preserve context)
+    (cairo:destroy gradient)))
+
 (defun draw-gouraud-tri (dull-y dull-value right-value origin-value
 			 r hex-centre-x hex-centre-y rotation context)
   (let* ((rx +sin60+)
@@ -172,107 +179,99 @@
     ;; whichever is NOT the middle corner. This is the gradient's line.
     ;; From the remaining corner draw a line with slope k to intersect with
     ;; previous to find target.
-    
-    (cond ((rf= dull-value right-value origin-value)
-	   (cairo:set-source-rgba
-	    0 0 0 (value-alpha-value dull-value) context)
-	   (cairo:fill-path context))
 
-	  ((rf= dull-value right-value)
-	   (let* ((right-xy (rotate (crd rx 0) rotation))
-		  (gradient (cairo:create-linear-pattern
-			     (+ hex-centre-x (* r (x right-xy)))
-			     (+ hex-centre-y (* r -1 (y right-xy)))
-			     hex-centre-x
-			     hex-centre-y)))
-	     (construct-gradient right-value origin-value gradient)
-	     (cairo:set-source gradient context)
-	     (cairo:fill-path context)
-	     (cairo:destroy gradient)))
+    (let ((dull-xy (rotate (crd rx dull-y) rotation))
+	  (right-xy (rotate (crd rx 0) rotation)))
+      
+      (cond ((rf= dull-value right-value origin-value)
+	     (cairo:set-source-rgba
+	      0 0 0 (value-alpha-value dull-value) context)
+	     (cairo:fill-path context))
 
-	  ((rf= right-value origin-value)
-	   (let* ((right-xy (rotate (crd rx 0) rotation))
-		  (target-xy (rotate (crd rx dull-y) rotation))
-		  (gradient (cairo:create-linear-pattern
-			     (+ hex-centre-x (* r (x right-xy)))
-			     (+ hex-centre-y (* r -1 (y right-xy)))
-			     (+ hex-centre-x (* r (x target-xy)))
-			     (+ hex-centre-y (* r -1 (y target-xy))))))
-	     (construct-gradient right-value dull-value gradient)
-	     (cairo:set-source gradient context)
-	     (cairo:fill-path context)
-	     (cairo:destroy gradient)))
+	    ((rf= dull-value right-value)
+	     (fill-path-with-gouraud (+ hex-centre-x (* r (x right-xy)))
+				     (+ hex-centre-y (* r -1 (y right-xy)))
+				     right-value
+				     hex-centre-x
+				     hex-centre-y
+				     origin-value
+				     context))
 
-	  ;;((rf= dull-value origin-value))
+	    ((rf= right-value origin-value)
+	     (let* ((target-xy (rotate (crd rx dull-y) rotation)))
 
-	  ((>= abs-0r (max abs-rd abs-d0)) ; rv/=0v , dv/=rv
-	   (let* ((k (/ dull-y
-		       (- rx (* (/ (- dull-value origin-value)
-				   (- right-value origin-value))
-				rx))))
-		  (right-xy (rotate (crd rx 0) rotation))
-		  (target-x (/ rx (+ 1 (* k k))))
-		  (target-y (* k target-x))
-		  (target-xy (rotate (crd target-x target-y)
-				     rotation))
-		  (gradient (cairo:create-linear-pattern
-			     (+ hex-centre-x (* r (x right-xy)))
-			     (+ hex-centre-y (* r -1 (y right-xy)))
-			     (+ hex-centre-x (* r (x target-xy)))
-			     (+ hex-centre-y (* r -1 (y target-xy))))))
-	     (construct-gradient right-value origin-value gradient)
-	     (cairo:set-source gradient context)
-	     (cairo:fill-path context)
-	     (cairo:destroy gradient)))
+	       (fill-path-with-gouraud (+ hex-centre-x (* r (x right-xy)))
+				       (+ hex-centre-y (* r -1 (y right-xy)))
+				       right-value
+				       (+ hex-centre-x (* r (x target-xy)))
+				       (+ hex-centre-y (* r -1 (y target-xy)))
+				       dull-value
+				       context)))
 
-	  ((> abs-d0 (max abs-rd abs-0r))
-	   ;; dv/=0v, rv/=0v
-	   (let* ((value-ratio (/ (- right-value origin-value)
-				  (- dull-value origin-value)))
-		  (k (/ (- (* dull-y value-ratio))
-			(- rx (* rx value-ratio))))
-		  (dull-xy (rotate (crd rx dull-y) rotation))
-		  (target-x (/ (+ (* k dull-y)
-				  rx)
-			       (+ 1 (* k k))))
-		  (target-y (* k target-x))
-		  (target-xy (rotate (crd target-x target-y)
-				     rotation))
-		  (gradient (cairo:create-linear-pattern
-			     (+ hex-centre-x (* r (x dull-xy)))
-			     (+ hex-centre-y (* r -1 (y dull-xy)))
-			     (+ hex-centre-x (* r (x target-xy)))
-			     (+ hex-centre-y (* r -1 (y target-xy))))))
-	     (construct-gradient dull-value origin-value gradient)
-	     (cairo:set-source gradient context)
-	     (cairo:fill-path context)
-	     (cairo:destroy gradient)))
+	    ;;((rf= dull-value origin-value))
 
-	  ((> abs-rd (max abs-d0 abs-0r))
-	   ;; this one could be moved to after (= dull-value right-value)
-	   ;; dv/=rv
-	   (let* ((value-ratio (/ (- origin-value right-value)
-				  (- dull-value right-value)))
-		  (k (/ (* dull-y value-ratio)
-			rx))
-		  (right-xy (rotate (crd rx 0) rotation))
-		  (target-x (/ (- (* rx (+ 1 (* k k)))
-				  (* k dull-y))
-			       (+ 1 (* k k))))
-		  (target-y
-		    (+ (* k target-x) dull-y (- (* k rx))))
-		  (target-xy (rotate (crd target-x target-y)
-				     rotation))
-		  (gradient (cairo:create-linear-pattern
-			     (+ hex-centre-x (* r (x right-xy)))
-			     (+ hex-centre-y (* r -1 (y right-xy)))
-			     (+ hex-centre-x (* r (x target-xy)))
-			     (+ hex-centre-y (* r -1 (y target-xy))))))
-	     (construct-gradient right-value dull-value gradient)
-	     (cairo:set-source gradient context)
-	     (cairo:fill-path context)
-	     (cairo:destroy gradient))))))
+	    ((>= abs-0r (max abs-rd abs-d0)) ; rv/=0v , dv/=rv
+	     (let* ((k (/ dull-y
+			  (- rx (* (/ (- dull-value origin-value)
+				      (- right-value origin-value))
+				   rx))))
+		    (right-xy (rotate (crd rx 0) rotation))
+		    (target-x (/ rx (+ 1 (* k k))))
+		    (target-y (* k target-x))
+		    (target-xy (rotate (crd target-x target-y)
+				       rotation)))
 
+	       (fill-path-with-gouraud (+ hex-centre-x (* r (x right-xy)))
+				       (+ hex-centre-y (* r -1 (y right-xy)))
+				       right-value
+				       (+ hex-centre-x (* r (x target-xy)))
+				       (+ hex-centre-y (* r -1 (y target-xy)))
+				       origin-value
+				       context)))
+
+	    ((> abs-d0 (max abs-rd abs-0r))
+	     ;; dv/=0v, rv/=0v
+	     (let* ((value-ratio (/ (- right-value origin-value)
+				    (- dull-value origin-value)))
+		    (k (/ (- (* dull-y value-ratio))
+			  (- rx (* rx value-ratio))))
+		    (target-x (/ (+ (* k dull-y)
+				    rx)
+				 (+ 1 (* k k))))
+		    (target-y (* k target-x))
+		    (target-xy (rotate (crd target-x target-y)
+				       rotation)))
+
+	       (fill-path-with-gouraud (+ hex-centre-x (* r (x dull-xy)))
+				       (+ hex-centre-y (* r -1 (y dull-xy)))
+				       dull-value
+				       (+ hex-centre-x (* r (x target-xy)))
+				       (+ hex-centre-y (* r -1 (y target-xy)))
+				       origin-value
+				       context)))
+
+	    ((> abs-rd (max abs-d0 abs-0r))
+	     ;; this one could be moved to after (= dull-value right-value)
+	     ;; dv/=rv
+	     (let* ((value-ratio (/ (- origin-value right-value)
+				    (- dull-value right-value)))
+		    (k (/ (* dull-y value-ratio)
+			  rx))
+		    (target-x (/ (- (* rx (+ 1 (* k k)))
+				    (* k dull-y))
+				 (+ 1 (* k k))))
+		    (target-y
+		      (+ (* k target-x) dull-y (- (* k rx))))
+		    (target-xy (rotate (crd target-x target-y)
+				       rotation)))
+
+	       (fill-path-with-gouraud (+ hex-centre-x (* r (x right-xy)))
+				       (+ hex-centre-y (* r -1 (y right-xy)))
+				       right-value
+				       (+ hex-centre-x (* r (x target-xy)))
+				       (+ hex-centre-y (* r -1 (y target-xy)))
+				       dull-value
+				       context)))))))
 
 ;; flat shading:
 (defun draw-shading (crd map view-state)
