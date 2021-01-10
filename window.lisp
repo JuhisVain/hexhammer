@@ -79,7 +79,7 @@
 			  (defvar *vector-wall* (crd 0.2 1))
 			  (setf *light-vector*
 				(surface-normal (crd 0 0) 0
-						(rotate *vector-wall* (* 0.1 +sf-pi+)) 0
+						(nrotate *vector-wall* (* 0.1 +sf-pi+)) 0
 						*vector-wall* 1))
 			  (clear-all test-state)
 			  (do-visible (x y test-state)
@@ -269,6 +269,18 @@
 	       &optional
 		 (sin (sin angle)) (cos (cos angle))
 		 (x+ 0) (y+ 0))
+  "Rotates CRD around origin using up is down coordinates."
+  (cons (+ (* cos (x crd))
+	   (* sin (y crd))
+	   x+)
+	(+ (- (* cos (y crd))
+	      (* sin (x crd)))
+	   y+)))
+
+(defun nrotate (crd angle
+		&optional
+		  (sin (sin angle)) (cos (cos angle))
+		  (x+ 0) (y+ 0))
   "Destructively rotates CRD around origin using up is down coordinates."
   (psetf (x crd) (+ (* cos (x crd))
 		    (* sin (y crd))
