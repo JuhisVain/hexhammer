@@ -13,4 +13,5 @@
   (load "viewstate.lisp")
   (load "vectors.lisp")
   (load "shading.lisp")
+  (load "contours.lisp")
   (load "window.lisp"))
