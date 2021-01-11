@@ -10,15 +10,10 @@
   (NE-edge NIL :type (or edge null)))
 
 (defstruct edge
-  (feature nil :type (or null edge-feature))
   ;;; Vertex elevation:
-  (west 0 :type elevation)
+  (west 0 :type elevation) ;; TODO: west and east should be boxed
   (middle 0 :type elevation)
   (east 0 :type elevation))
-
-(defstruct edge-feature
-  )
-
 
 (defstruct contours
   (left 0 :type (signed-byte 8))
