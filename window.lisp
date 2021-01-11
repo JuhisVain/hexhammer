@@ -21,14 +21,16 @@
 				   :texture texture
 				   :buffer buffer))
 		  (test-world
-		    (if *world* *world* (make-world))))
-	      (defparameter *world* test-world)
-	      (if (zerop (hash-table-count (world-map test-world)))
-		  (format t "Generating new map~%")
-		  (generate-map 100 100
-				;;"mhmap.pgm" ;; mini mars
-				"getty.pgm" ;; huge gettysburg
-				test-world))
+		    (progn
+		      (defvar *world* test-world)
+		      (when (zerop (hash-table-count (world-map *world*)))
+			(format t "Generating new map~%")
+			(generate-map 100 100
+				      ;;"mhmap.pgm" ;; mini mars
+				      "getty.pgm" ;; huge gettysburg
+				      test-world);)
+			(format t "DONE~%"))
+		      *world*)))
 	      
 	      (do-visible (x y test-state)
 		(when (gethash (crd x y) (world-map test-world))
