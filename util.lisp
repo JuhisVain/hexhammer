@@ -7,6 +7,75 @@
 (defconstant +sin30+ (coerce (sin (/ pi 6)) 'single-float))
 (defconstant +sf-pi+ (coerce pi 'single-float))
 
+(defstruct range-deque
+  (initp nil :type boolean)
+  (left 0 :type fixnum) ; aka. start
+  (range 0 :type fixnum))
+
+(defun range-deque-right (ranged)
+  (+ (range-deque-left ranged)
+     (range-deque-range ranged)))
+
+(defun (setf range-deque-right) (new-right ranged)
+  (let ((diff (- new-right (range-deque-right ranged))))
+    (if (and (or (= (signum diff)
+		    (signum (range-deque-range ranged)))
+		 (zerop (range-deque-range ranged)))
+	     (= 1 (abs diff)))
+	(incf (range-deque-range ranged) diff)
+	(error "Bad values~%"))))
+
+(defun push-left (element ranged)
+  (let ((diff (- (range-deque-left ranged)
+		 element)))
+    (cond ((not (range-deque-initp ranged)) ;; Initialize
+	   (setf (range-deque-left ranged) element
+		 (range-deque-initp ranged) t))
+	  ((/= 1 (abs diff)) ;; Element does not follow LEFT by 1
+	   (error "Trying to push with bad interval ~a~%" diff))
+	  ((zerop (range-deque-range ranged)) ;; Initialize range sign
+	   (setf (range-deque-left ranged) element
+		 (range-deque-range ranged) diff))
+	  ((/= diff ;; Element follows in wrong direction
+	       (signum (range-deque-range ranged)))
+	   (error "Trying to push with bad sign ~a to ~a~%"
+		  diff (range-deque-range ranged)))
+	  (t
+	   (setf (range-deque-left ranged) element)
+	   (incf (range-deque-range ranged) diff)))
+    nil))
+
+(defun push-right (element ranged)
+  (cond ((not (range-deque-initp ranged)) ;; Initialize
+	 (setf (range-deque-left ranged) element
+	       (range-deque-initp ranged) t))
+	(t (setf (range-deque-right ranged) element))))
+
+(defun pop-left (ranged)
+  (cond ((zerop (range-deque-range ranged))
+	 (setf (range-deque-initp ranged) nil))
+	((range-deque-initp ranged)
+	 (let ((unit (signum (range-deque-range ranged))))
+	   (incf (range-deque-left ranged) unit)
+	   (decf (range-deque-range ranged) unit)))))
+
+(defun pop-right (ranged)
+  (cond ((zerop (range-deque-range ranged))
+	 (setf (range-deque-initp ranged) nil))
+	((range-deque-initp ranged)
+	 (let ((unit (signum (range-deque-range ranged))))
+	   (decf (range-deque-range ranged) unit)))))
+
+(defun peek-left (ranged)
+  (when (range-deque-initp ranged)
+    (range-deque-left ranged)))
+
+(defun peek-right (ranged)
+  (when (range-deque-initp ranged)
+    (range-deque-right ranged)))
+
+
+#|
 ;; Doubly linked integer list:
 (defstruct (link (:print-object link-printer))
   (left nil :type (or null link))
@@ -93,3 +162,4 @@
   (if (linkage-rightmost linkage)
       (link-this (linkage-rightmost linkage))
       nil))
+|#

@@ -18,7 +18,9 @@
 (defstruct contours
   (left 0 :type (signed-byte 8))
   (range 0 :type (signed-byte 8))
-  (deque nil :type linkage))
+  (deque nil :type range-deque
+   ;linkage
+   ))
 
 (defun record-contours (hex left right divisor)
   (let* ((left-ele (round (hex-vertex hex left)
@@ -30,7 +32,8 @@
 	   (make-contours
 	    :left left-ele
 	    :range difference
-	    :deque (make-linkage))))
+	    :deque (make-range-deque);(make-linkage)
+	    )))
     (cond ((> difference 0)
 	   (loop for elevation from (1+ left-ele) to right-ele
 		 do (push-right elevation (contours-deque contours))))
@@ -69,6 +72,12 @@
 	index)))
 
 (defun is-contour-of (elevation contours)
+  (or (= elevation
+	 (peek-left (contours-deque contours)))
+      (= elevation
+	 (peek-right (contours-deque contours)))))
+
+'(defun is-contour-of (elevation contours)
   (or (= elevation
 	(link-this (linkage-leftmost (contours-deque contours))))
       (= elevation
