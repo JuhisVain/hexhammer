@@ -22,14 +22,12 @@
 				   :buffer buffer))
 		  (test-world
 		    (progn
-		      (defvar *world* test-world)
+		      (defvar *world* (make-world))
 		      (when (zerop (hash-table-count (world-map *world*)))
-			(format t "Generating new map~%")
 			(generate-map 100 100
 				      ;;"mhmap.pgm" ;; mini mars
 				      "getty.pgm" ;; huge gettysburg
-				      test-world);)
-			(format t "DONE~%"))
+				      *world*))
 		      *world*)))
 	      
 	      (do-visible (x y test-state)
