@@ -18,9 +18,9 @@
 (defstruct contours
   (left 0 :type (signed-byte 8))
   (range 0 :type (signed-byte 8))
-  (deque nil :type range-deque
-   ;linkage
-   ))
+  (water-left 0 :type (signed-byte 8))
+  (water-right 0 :type (signed-byte 8))
+  (deque nil :type range-deque))
 
 (defun record-contours (hex left right divisor)
   (let* ((left-ele (round (hex-vertex hex left)
@@ -32,8 +32,9 @@
 	   (make-contours
 	    :left left-ele
 	    :range difference
-	    :deque (make-range-deque);(make-linkage)
-	    )))
+	    :water-left (vertex-underwater hex left)
+	    :water-right (vertex-underwater hex right)
+	    :deque (make-range-deque))))
     (cond ((> difference 0)
 	   (loop for elevation from (1+ left-ele) to right-ele
 		 do (push-right elevation (contours-deque contours))))
@@ -91,6 +92,47 @@
 	      (contours-left contours)
 (contours-range contours))))|#
 
+(defvar *vertex-underwater* (make-hash-table :test 'equal))
+;; Each underwater vert should have an integer water surface altitude
+(defun vertex-underwater (hex dir)
+  (or (gethash (list hex dir) *vertex-underwater*)
+      0))
+
+(defun sink (crd dir depth)
+  (let ((hex (hex-at crd *world*)))
+    (setf (gethash (list hex dir) *vertex-underwater*)
+	  (+ (hex-vertex hex dir)
+	     depth))))
+
+(defun sinktest ()
+  ;;Note to self: I've got 3 verts per edge, MORON!
+  (sink (crd 55 26) :e 0)
+  (sink (crd 55 26) :ne 0)
+  (sink (crd 55 26) :se 1)
+  (sink (crd 55 26) :ssw 0)
+  (sink (crd 55 26) :s 1)
+  (sink (crd 55 26) :sse 1)
+  
+  (sink (crd 54 26) :e 0)
+  (sink (crd 54 26) :se 1)
+  (sink (crd 54 26) :sse 0)
+  
+  (sink (crd 55 25) :cen 1)
+  (sink (crd 55 25) :sw 0)
+  (sink (crd 55 25) :w 0)
+  (sink (crd 55 25) :nw 1)
+  (sink (crd 55 25) :nnw 0)
+  (sink (crd 55 25) :n 1)
+  (sink (crd 55 25) :nne 1)
+  (sink (crd 55 25) :ne 0)
+  (sink (crd 55 25) :e 0)
+  (sink (crd 55 25) :se 0)
+  (sink (crd 55 25) :sse 0)
+  (sink (crd 55 25) :s 1)
+  (sink (crd 55 25) :ssw 1)
+  )
+
+
 (defmacro probe-contours ((at-left at-right) var
 			  &body body)
   `(when (eql (the (or fixnum null) (peek-left (contours-deque ,at-right)))
@@ -100,8 +142,6 @@
 	 ((or
 	   (null (peek-left (contours-deque ,at-right)))
 	   (null (peek-right (contours-deque ,at-left)))
-	   ;(not (eql (peek-left (contours-deque ,at-right)) ; check null instead?
-	;	     (peek-right (contours-deque ,at-left))))
 	   ))
        (progn (pop-left (contours-deque ,at-right))
 	      (pop-right (contours-deque ,at-left)))
