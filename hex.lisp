@@ -129,9 +129,17 @@
   (sink (crd 55 25) :se 0)
   (sink (crd 55 25) :sse 0)
   (sink (crd 55 25) :s 1)
-  (sink (crd 55 25) :ssw 1))
+  (sink (crd 55 25) :ssw 1)
 
+  (mapcar #'(lambda (dir dep)
+	      (sink (crd 54 25) dir dep))
+	  '(:ne :ne :e :se :sse :s)
+	  '(0 0 0 0 0 0))
 
+  (mapcar #'(lambda (dir dep)
+	      (sink (crd 56 27) dir dep))
+	  '(:sw :ssw :s :sse :se :e)
+	  '(0 0 0 0 1 0)))
 
 (defmacro probe-contours ((at-left at-right) var
 			  &body body)
