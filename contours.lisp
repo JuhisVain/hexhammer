@@ -4,7 +4,7 @@
 (declaim (single-float *soft*))
 
 (defun draw-contours (crd map view-state)
-  (let ((hex (gethash crd (world-map map))))
+  (let ((hex (hex-at crd map)))
     (unless hex (return-from draw-contours))
     (let* ((cairo-surface
 	     (cairo:create-image-surface-for-data

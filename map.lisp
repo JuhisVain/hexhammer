@@ -1,7 +1,7 @@
 (in-package :hexhammer)
 
 (defstruct world
-  (map (make-hash-table :test 'equal))
+  (map (make-hash-table :test 'equalp))
   )
 
 (defconstant +primary-directions+
@@ -14,30 +14,37 @@
 (deftype direction () (cons 'member +primary-directions+))
 (deftype hex-vertex () (cons 'member +vertex-directions+))
 (deftype elevation () '(signed-byte 32))
-(deftype crd () '(cons fixnum fixnum))
+;;(deftype crd () '(cons fixnum fixnum))
 
-(setf (fdefinition 'crd) #'cons
+(declaim (inline crd))
+(defstruct (crd (:conc-name nil)
+		(:constructor crd (x y)))
+  (x nil :type (or single-float fixnum))
+  (y nil :type (or single-float fixnum)))
+
+#|(setf (fdefinition 'crd) #'cons
       (fdefinition 'x) #'car
       (fdefinition 'y) #'cdr
       (fdefinition 'copy-crd) #'copy-list)
 
 (defsetf x rplaca)
 (defsetf y rplacd)
+|#
 
 (defun crd-hex (crd world)
   (declare (type crd crd))
-  (gethash crd (world-map world)))
+  (hex-at crd world))
 
 (defun crd-edge (crd direction world)
   (declare (type crd crd)
 	   (type direction direction))
-  (hex-edge (gethash crd (world-map world))
+  (hex-edge (hex-at crd world)
 	    direction))
 
 (defun crd-vertex (crd direction world)
   (declare (type crd crd)
 	   (type hex-vertex direction))
-  (hex-vertex (crd-hex crd world) direction))
+  (hex-vertex (hex-at crd world) direction))
 
 (defun opposite (direction)
   (declare (type hex-vertex direction))
@@ -88,7 +95,7 @@
 		 ))
       (dotimes (y height)
 	(dotimes (x width)
-	  (setf (gethash (crd x y) (world-map world))
+	  (setf (hex-at (crd x y) world)
 		(let* ((nnw (read-data :NNW))
 		       (nne (read-data :NNE))
 		       (w (read-data :w))
@@ -97,100 +104,100 @@
 		       (e (read-data :e))
 		       (hex (make-hex
 			     :elevation (read-data :CEN)
-			     :n-edge (or (hex-edge (crd-hex
+			     :n-edge (or (hex-edge (hex-at
 						    (crd-neighbour
 						     (crd x y) :N)
 						    world)
 						   :S)
 					 (make-edge
 					  :west (or ; this is a mess
-						 (hex-vertex (crd-hex
-							    (crd-neighbour
-							     (crd x y) :nw)
-							    world)
-							   :e)
-						 nnw)
+						    (hex-vertex (hex-at
+								 (crd-neighbour
+								  (crd x y) :nw)
+								 world)
+								:e)
+						    nnw)
 					  :middle (read-data :N)
 					  :east nne))
-			     :nw-edge (or (hex-edge (crd-hex
+			     :nw-edge (or (hex-edge (hex-at
 						     (crd-neighbour
 						      (crd x y) :NW)
 						     world)
 						    :SE)
 					  (make-edge
 					   :west (or
-						  (hex-vertex (crd-hex
-							     (crd-neighbour
-							      (crd x y) :sw)
-							     world)
-							    :nne)
+						  (hex-vertex (hex-at
+							       (crd-neighbour
+								(crd x y) :sw)
+							       world)
+							      :nne)
 						  w)
 					   :middle (read-data :NW)
 					   :east (or
-						  (hex-vertex (crd-hex
-							     (crd-neighbour
-							      (crd x y) :n)
-							     world)
-							    :ssw)
+						  (hex-vertex (hex-at
+							       (crd-neighbour
+								(crd x y) :n)
+							       world)
+							      :ssw)
 						  nnw)))
-			     :sw-edge (or (hex-edge (crd-hex
+			     :sw-edge (or (hex-edge (hex-at
 						     (crd-neighbour
 						      (crd x y) :SW)
 						     world)
 						    :NE)
 					  (make-edge
 					   :west (or
-						  (hex-vertex (crd-hex
-							     (crd-neighbour
-							      (crd x y) :nw)
-							     world)
-							    :sse)
+						  (hex-vertex (hex-at
+							       (crd-neighbour
+								(crd x y) :nw)
+							       world)
+							      :sse)
 						  w)
 					   :middle (read-data :SW)
 					   :east (or
-						  (hex-vertex (crd-hex
-							     (crd-neighbour
-							      (crd x y) :s)
-							     world)
-							    :nnw)
+						  (hex-vertex (hex-at
+							       (crd-neighbour
+								(crd x y) :s)
+							       world)
+							      :nnw)
 						  ssw)))
-			     :s-edge (or (hex-edge (crd-hex
+			     :s-edge (or (hex-edge (hex-at
 						    (crd-neighbour
 						     (crd x y) :S)
 						    world)
 						   :N)
 					 (make-edge
 					  :west (or
-						 (hex-vertex (crd-hex
-							     (crd-neighbour
-							      (crd x y) :sw)
-							     world)
-							    :e)
+						 (hex-vertex (hex-at
+							      (crd-neighbour
+							       (crd x y) :sw)
+							      world)
+							     :e)
 						 ssw)
 					  :middle (read-data :S)
 					  :east (or
-						 (hex-vertex (crd-hex
-							     (crd-neighbour
-							      (crd x y) :se)
-							     world)
-							    :w)
+						 (hex-vertex (hex-at
+							      (crd-neighbour
+							       (crd x y) :se)
+							      world)
+							     :w)
 						 sse)))
-			     :se-edge (or (hex-edge (crd-hex
+			     :se-edge (or (hex-edge (hex-at
 						     (crd-neighbour
 						      (crd x y) :SE)
 						     world)
 						    :NW)
 					  (make-edge
 					   :west (or
-						  (hex-vertex (crd-hex
-							     (crd-neighbour
-							      (crd x y) :s)
-							     world)
-							    :nne)
+						  (hex-vertex (hex-at
+							       (crd-neighbour
+								(crd x y) :s)
+							       world)
+							      :nne)
 						  sse)
 					   :middle (read-data :SE)
 					   :east e))
-			     :ne-edge (or (hex-edge (crd-hex
+			     :ne-edge (or (hex-edge (hex-at
 						     (crd-neighbour
 						      (crd x y) :NE)
 						     world)
@@ -199,18 +206,18 @@
 					   :west nne
 					   :middle (read-data :NE)
 					   :east (or
-						  (hex-vertex (crd-hex
-							     (crd-neighbour
-							      (crd x y) :se)
-							     world)
-							    :nnw)
+						  (hex-vertex (hex-at
+							       (crd-neighbour
+								(crd x y) :se)
+							       world)
+							      :nnw)
 						  e))))))
 		  hex)))))))
 
 (defun set-crd (crd hex world)
-  (setf (gethash crd (world-map world)) hex)
+  (setf (hex-at crd world) hex)
   (loop for direction in +primary-directions+
-	for neighbour = (crd-hex (crd-neighbour crd direction)
+	for neighbour = (hex-at (crd-neighbour crd direction)
 				 world)
 	when neighbour
 	  do (setf (hex-edge hex direction)

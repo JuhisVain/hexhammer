@@ -170,6 +170,9 @@
 (defun hex-at (crd world)
   (gethash crd (world-map world)))
 
+(defun (setf hex-at) (new-hex crd world)
+  (setf (gethash crd (world-map world)) new-hex))
+
 (defun hex-edge (hex direction)
   (declare (type (or hex null) hex)
 	   (type direction direction))

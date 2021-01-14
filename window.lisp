@@ -31,7 +31,7 @@
 		      *world*)))
 	      
 	      (do-visible (x y test-state)
-		(when (gethash (crd x y) (world-map test-world))
+		(when (hex-at (crd x y) test-world)
 		  (draw-hex-borders (crd x y) test-state)
 		  (draw-contours (crd x y) test-world test-state)))
 
@@ -52,7 +52,7 @@
 				    (clear-all test-state)
 				    (time
 				     (do-visible (x y test-state)
-				       (when (gethash (crd x y) (world-map test-world))
+				       (when (hex-at (crd x y) test-world)
 					 ;;(draw-shading (crd x y) test-world test-state)
 					 (draw-gouraud-shading (crd x y) test-world test-state)
 					 (draw-hex-borders (crd x y) test-state)
@@ -68,7 +68,7 @@
 
 			     (clear-all test-state)
 			     (do-visible (x y test-state)
-			       (when (gethash (crd x y) (world-map test-world))
+			       (when (hex-at (crd x y) test-world)
 				 (draw-hex-borders (crd x y) test-state)
 				 (draw-contours (crd x y) test-world test-state)))
 			     
@@ -84,7 +84,7 @@
 						*vector-wall* 1))
 			  (clear-all test-state)
 			  (do-visible (x y test-state)
-			    (when (gethash (crd x y) (world-map test-world))
+			    (when (hex-at (crd x y) test-world)
 			      (draw-gouraud-shading (crd x y) test-world test-state)
 			      (draw-hex-borders (crd x y) test-state)
 			      (draw-contours (crd x y) test-world test-state)))
@@ -179,12 +179,12 @@
 		 (sin (sin angle)) (cos (cos angle))
 		 (x+ 0) (y+ 0))
   "Rotates CRD around origin using up is down coordinates."
-  (cons (+ (* cos (x crd))
-	   (* sin (y crd))
-	   x+)
-	(+ (- (* cos (y crd))
-	      (* sin (x crd)))
-	   y+)))
+  (crd (+ (* cos (x crd))
+	  (* sin (y crd))
+	  x+)
+       (+ (- (* cos (y crd))
+	     (* sin (x crd)))
+	  y+)))
 
 (defun nrotate (crd angle
 		&optional

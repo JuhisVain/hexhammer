@@ -3,7 +3,7 @@
 (defparameter *light-vector* (surface-normal (crd 0 0) 0 (crd 0.2 1) 0 (crd 0.2 1) 1))
 
 (defun draw-gouraud-shading (crd world view-state)
-  (let ((hex (gethash crd (world-map world))))
+  (let ((hex (hex-at crd world)))
     (unless hex (return-from draw-gouraud-shading))
     (let* ((cen (vertex-light-value crd :cen world))
 	   (n (vertex-light-value crd :n world))
@@ -56,10 +56,10 @@
 		     `(progn
 			(cairo:new-path)
 			(cairo:move-to hex-centre-x hex-centre-y)
-			(cairo:line-to (+ hex-centre-x (* ,(car a-crd) r))
-				       (+ hex-centre-y (* -1 ,(cdr a-crd) r)))
-			(cairo:line-to (+ hex-centre-x (* ,(car b-crd) r))
-				       (+ hex-centre-y (* -1 ,(cdr b-crd) r)))
+			(cairo:line-to (+ hex-centre-x (* ,(x a-crd) r))
+				       (+ hex-centre-y (* -1 ,(y a-crd) r)))
+			(cairo:line-to (+ hex-centre-x (* ,(x b-crd) r))
+				       (+ hex-centre-y (* -1 ,(y b-crd) r)))
 			(cairo:close-path)
 			,@body))))
 
@@ -275,7 +275,7 @@
 
 ;; flat shading:
 (defun draw-shading (crd map view-state)
-  (let ((hex (gethash crd (world-map map))))
+  (let ((hex (hex-at crd map)))
     (unless hex (return-from draw-shading))
 
     (macrolet ((flat-half-kite (dira ; A vector of abstract surface
@@ -297,10 +297,10 @@
 		      ;; Needs height/hex-r scaling:
 		      (cairo:set-source-rgb ,lightness ,lightness ,lightness)
 		      (cairo:move-to hex-centre-x hex-centre-y)
-		      (cairo:line-to (+ hex-centre-x (* ,(car a-crd) r))
-				     (+ hex-centre-y (* -1 ,(cdr a-crd) r)))
-		      (cairo:line-to (+ hex-centre-x (* ,(car b-crd) r))
-				     (+ hex-centre-y (* -1 ,(cdr b-crd) r)))
+		      (cairo:line-to (+ hex-centre-x (* ,(x a-crd) r))
+				     (+ hex-centre-y (* -1 ,(y a-crd) r)))
+		      (cairo:line-to (+ hex-centre-x (* ,(x b-crd) r))
+				     (+ hex-centre-y (* -1 ,(y b-crd) r)))
 		      (cairo:close-path)
 		      ;;;; with antialias :none lines don't need to be stroked
 		      ;;(cairo:set-line-width 0.5)
