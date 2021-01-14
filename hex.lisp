@@ -129,8 +129,8 @@
   (sink (crd 55 25) :se 0)
   (sink (crd 55 25) :sse 0)
   (sink (crd 55 25) :s 1)
-  (sink (crd 55 25) :ssw 1)
-  )
+  (sink (crd 55 25) :ssw 1))
+
 
 
 (defmacro probe-contours ((at-left at-right) var
@@ -149,6 +149,12 @@
        (if (= (mod ,var 10) 0)
 	   (cairo:set-line-width 1.0)
 	   (cairo:set-line-width 0.5))
+       (if (<= ,var (1+ (max (contours-water-left ,at-right) ;; seems excessive
+			     (contours-water-right ,at-left)
+			     (contours-water-left ,at-left)
+			     (contours-water-right ,at-right))))
+	   (cairo:set-source-rgb 0.2 0.2 1.0)
+	   (cairo:set-source-rgb 0.5 0.5 0.5))
        ,@body
        (cairo:stroke)
        )))
