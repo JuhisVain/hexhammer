@@ -19,9 +19,10 @@
     (3d-vectors:vc vector-01 vector-02)))
 
 (defun form-normal (dir-a dir-b hex)
-  (surface-normal (unit-hex-crd :cen) (hex-vertex hex :cen)
-		  (unit-hex-crd dir-a) (hex-vertex hex dir-a)
-		  (unit-hex-crd dir-b) (hex-vertex hex dir-b)))
+  (surface-normal
+   (unit-hex-crd :cen) (point-elevation (hex-vertex hex :cen))
+   (unit-hex-crd dir-a) (point-elevation (hex-vertex hex dir-a))
+   (unit-hex-crd dir-b) (point-elevation (hex-vertex hex dir-b))))
 
 (defun vector-angle (vector-1 vector-2)
   (3d-vectors:vangle vector-1 vector-2))
