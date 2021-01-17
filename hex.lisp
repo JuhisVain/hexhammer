@@ -93,8 +93,37 @@
 	  (+ (hex-vertex hex dir)
 	     depth))))
 
-'(defun flood-fill ()
-  );; TODO: better rewrite verts to box everything
+(defvar *point-connections*
+  (make-hash-table :test 'eq :size 13))
+
+(defmacro defpointcon (pointdir (&rest connections))
+  `(setf (gethash ,pointdir *point-connections*) ',connections))
+
+(defun point-connections (crd dir)
+  (mapcar #'(lambda (pre-dir)
+	      (etypecase pre-dir
+		(keyword (list crd pre-dir))
+		(list (list (crd-neighbour crd (first pre-dir))
+			    (second pre-dir)))))
+	  (gethash dir *point-connections*)))
+
+;;          dir/dirs at this crd/go here, then this dir
+(defpointcon :N (:NNW :CEN :NNE (:N :CEN)))
+(defpointcon :NNE (:N :NE (:N :SE)))
+(defpointcon :NE (:NNE :CEN :E (:NE :CEN)))
+(defpointcon :E (:NE :SE (:NE :S)))
+(defpointcon :SE (:E :CEN :SSE (:SE :CEN)))
+(defpointcon :SSE (:SE :S (:SE :SW)))
+(defpointcon :S (:SSE :CEN :SSW (:S :CEN)))
+(defpointcon :SSW (:S :SW (:S :NW)))
+(defpointcon :SW (:SSW :CEN :W (:SW :CEN)))
+(defpointcon :W (:SW :NW (:SW :N)))
+(defpointcon :NW (:W :CEN :NNW (:NW :CEN)))
+(defpointcon :NNW (:NW :N (:NW :NE)))
+(defpointcon :CEN (:N :NE :SE :S :SW :NW))
+
+(defun flood-fill (crd dir water-level)
+  )
 
 (defun sinktest ()
   ;;Note to self: I've got 3 verts per edge, MORON!
