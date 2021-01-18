@@ -137,7 +137,7 @@
 					(second crd-dir)
 					*world*)))
 		(point-connections crd dir)))
-	;; Recursing may be RISKY
+	;; This WILL blow the stack:
 	(apply #'flood-fill water-level world con))
       NIL)))
 
