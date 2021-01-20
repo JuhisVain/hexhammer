@@ -40,9 +40,15 @@
 (defstruct contours
   (left 0 :type (signed-byte 8))
   (range 0 :type (signed-byte 8))
-  (water-left 0 :type (signed-byte 8))
-  (water-right 0 :type (signed-byte 8))
+  (water 0 :type (signed-byte 8))
+  ;(water-left 0 :type (signed-byte 8))
+  ;(water-right 0 :type (signed-byte 8))
   (deque nil :type range-deque))
+
+(defun contours-water-left (c)
+  (contours-water c))
+(defun contours-water-right (c)
+  (contours-water c))
 
 (defun record-contours (hex left right divisor)
   (let* ((left-point (hex-vertex hex left))
@@ -56,8 +62,8 @@
 	   (make-contours
 	    :left left-ele
 	    :range difference
-	    :water-left (point-water left-point)
-	    :water-right (point-water right-point)
+	    :water (point-water left-point)
+	    ;:water-right (point-water right-point)
 	    :deque (make-range-deque))))
     (cond ((> difference 0)
 	   (loop for elevation from (1+ left-ele) to right-ele
@@ -86,12 +92,6 @@
 (defun vertex-underwater (hex dir)
   (let ((point (hex-vertex hex dir)))
     (>= (point-water point) (point-elevation point))))
-
-'(defun sink (crd dir depth)
-  (let ((hex (hex-at crd *world*)))
-    (setf (gethash (list hex dir) *vertex-underwater*)
-	  (+ (hex-vertex hex dir)
-	     depth))))
 
 (defvar *point-connections*
   (make-hash-table :test 'eq :size 13))
