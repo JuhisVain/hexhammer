@@ -45,11 +45,6 @@
   ;(water-right 0 :type (signed-byte 8))
   (deque nil :type range-deque))
 
-(defun contours-water-left (c)
-  (contours-water c))
-(defun contours-water-right (c)
-  (contours-water c))
-
 (defun record-contours (hex left right divisor)
   (let* ((left-point (hex-vertex hex left))
 	 (right-point (hex-vertex hex right))
