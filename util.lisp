@@ -12,6 +12,11 @@
   (left 0 :type fixnum) ; aka. start
   (range 0 :type fixnum))
 
+(defun reset-range-deque (range-deque)
+  (setf (range-deque-initp range-deque) nil
+	(range-deque-left range-deque) 0
+	(range-deque-range range-deque) 0))
+
 (defun range-deque-right (ranged)
   (+ (range-deque-left ranged)
      (range-deque-range ranged)))

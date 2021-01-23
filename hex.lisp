@@ -182,20 +182,21 @@
 		(the (or fixnum null) (peek-left (contours-deque ,at-right)))))
 	 ((or
 	   (null (peek-left (contours-deque ,at-right)))
-	   (null (peek-right (contours-deque ,at-left)))
-	   ))
+	   (null (peek-right (contours-deque ,at-left)))))
        (progn (pop-left (contours-deque ,at-right))
 	      (pop-right (contours-deque ,at-left)))
+       
        ;; Example thickness change:
        (if (= (mod ,var 10) 0)
 	   (cairo:set-line-width 1.0)
 	   (cairo:set-line-width 0.5))
-       (if (<= ,var (1+ (max (contours-water-left ,at-right) ;; seems excessive
-			     (contours-water-right ,at-left)
-			     (contours-water-left ,at-left)
-			     (contours-water-right ,at-right))))
-	   (cairo:set-source-rgb 0.2 0.2 1.0)
-	   (cairo:set-source-rgb 0.5 0.5 0.5))
+       (cond ((= ,var (1+ (max (contours-water ,at-right)
+			       (contours-water ,at-left))))
+	      (cairo:set-source-rgb 0.2 0.2 1.0))
+	     ((< ,var (1+ (max (contours-water ,at-right)
+			       (contours-water ,at-left))))
+	      (cairo:set-source-rgb 0.0 0.0 0.0)) ; testing
+	     (t (cairo:set-source-rgb 0.5 0.5 0.5)))
        ,@body
        (cairo:stroke)
        )))
