@@ -73,6 +73,16 @@
   (+ (contours-left contours)
      (contours-range contours)))
 
+(defun set-all-contours (contours)
+  (cond ((plusp (contours-range contours))
+	 (loop for elevation from (1+ (contours-left contours))
+		 to (contours-right contours)
+	       do (push-right elevation (contours-deque contours))))
+	((minusp (contours-range contours))
+	 (loop for elevation from (contours-left contours)
+	       downto (1+ (contours-right contours))
+	       do (push-right elevation (contours-deque contours))))))
+
 (defun set-land-contours (contours)
   "Sets CONTOURS' range-deque to hold only land contours."
   (reset-range-deque (contours-deque contours))
@@ -87,6 +97,18 @@
 	   downto (1+ (max (contours-right contours)
 			   (1+ (contours-water contours))))
 	   do (push-right elevation (contours-deque contours))))))
+
+(defun set-surface-contours (contours)
+  "Sets CONTOURS' range-deque to hold only the water surface contour."
+  (reset-range-deque (contours-deque contours))
+  (if (or (>= (contours-left contours)
+	      (1+ (contours-water contours))
+	      (contours-right contours))
+	  (<= (contours-left contours)
+	      (1+ (contours-water contours))
+	      (contours-right contours)))
+      (push-right (1+ (contours-water contours))
+		  (contours-deque contours))))
 
 (defun set-water-contours (contours)
   "Sets CONTOURS' range-deque to hold only water contours."

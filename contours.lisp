@@ -101,9 +101,6 @@
 	   (cairo:context cairo-context)
 	   (dynamic-extent top left bottom right angle
 			   hex-centre-x hex-centre-y hex-radius))
-
-  (dolist (contours (list top left bottom right))
-    (set-land-contours contours))
   
   (let* (;; Angle to rotate top & right contours:
 	 (angle-d (+ angle
@@ -192,174 +189,216 @@
 				  left-high-corners)))
 			(cairo:close-path)
 			(cairo:fill-path)
-		      )))
-	       )
+			))))
       
       (cairo:with-context (cairo-context)
 	(cairo:set-source-rgb 0.5 0.5 0.5)
 	(cairo:set-line-width 0.5)
 
-	;;TODO set-water-contours and redo following:
 
-	(probe-contours (left bottom) elevation
-	  (let* ((bottom-offset (offset-bottom))
-		 (left-offset (offset-left))
-		 (xy0 (crd bottom-offset 0.0))
-		 (xy1 (crd bottom-offset
-			   (* left-offset *soft*)))
-		 (xy2 (crd (+ bottom-offset
-			      (* *soft* (- half-down-y
-					   bottom-offset)))
-			   left-offset))
-		 (xy3 (crd half-down-y left-offset)))
-	    (rotation (xy0 xy1 xy2 xy3) ())
-	    (move-curve)))
-	
-	(probe-contours (top bottom) elevation
-	  (let* ((bottom-offset (offset-bottom))
-		 (top-offset (offset-top))
-		 (xy0 (crd bottom-offset 0))
-		 (xy1 (crd bottom-offset
-			   (* 0.36 bottom-offset)))
-		 (xy2 (crd (+ bottom-offset
-			      (* *soft*
-				 0.5
-				 (- half-down-y bottom-offset)))
-			   top-offset))
-		 (xy3 (crd half-down-y top-offset)))
-	    
-	    (rotation (xy0 xy1) (xy2 xy3))
-	    (move-curve)))
-	
-	(probe-contours (right bottom) elevation
-	  (let* ((bottom-offset (offset-bottom))
-		 (right-offset (offset-right))
-		 (xy0 (crd bottom-offset 0))
-		 (xy1 (crd bottom-offset
-			   (* 0.36 bottom-offset)))
-		 (xy2 (crd right-offset
-			   (* -0.36 right-offset)))
-		 (xy3 (crd right-offset 0)))
-	    (rotation (xy0 xy1) (xy2 xy3))
-	    (move-curve)))
-	
-	(probe-contours (top left) elevation
-	  (let* ((left-offset (offset-left))
-		 (top-offset (offset-top))
-		 (xy0 (crd half-down-y left-offset))
-		 (xy1 (crd (- half-down-y
-			      (* 0.67 ;?
-				 (- half-r
-				    left-offset)))
-			   left-offset))
-		 (xy2 (crd (+ half-down-y
-			      (* 0.67 top-offset))
-			   top-offset))
-		 (xy3 (crd half-down-y top-offset)))
-	    (rotation (xy0 xy1) (xy2 xy3))
-	    (move-curve)))
+	(progn ;; quote me!
+	  (dolist (contours (list top left bottom right))
+	    (set-surface-contours contours))
+	  
+	  (probe-contours (left bottom) elevation
+	    (let* ((bottom-offset (offset-bottom))
+		   (left-offset (offset-left))
+		   (xy0 (crd bottom-offset 0.0))
+		   (xy1 (crd bottom-offset
+			     (* left-offset *soft*)))
+		   (xy2 (crd (+ bottom-offset
+				(* *soft* (- half-down-y
+					     bottom-offset)))
+			     left-offset))
+		   (xy3 (crd half-down-y left-offset)))
 
-	(probe-contours (right left) elevation
-	  (let* ((left-offset (offset-left))
-		 (right-offset (offset-right))
-		 (xy0 (crd half-down-y left-offset))
-		 (xy1 (crd (- half-down-y
-			      (* *soft*
-				 0.5
-				 right-offset))
-			   left-offset))
-		 (xy2 (crd right-offset
-			   (* -0.36 right-offset)))
-		 (xy3 (crd right-offset 0)))
-	    (rotation (xy0 xy1) (xy2 xy3))
-	    (move-curve)))
+	      (rotation (xy0 xy1 xy2 xy3) ())
+	      (move-curve)
 
-	(probe-contours (right top) elevation
-	  (let* ((top-offset (offset-top))
-		 (right-offset (offset-right))
-		 (xy0 (crd half-down-y top-offset))
-		 (xy1 (crd
-		       (+ right-offset
-			  (* *soft*
-			     (- half-down-y
-				right-offset)))
-		       top-offset))
-		 (xy2 (crd right-offset
-			   (* *soft* top-offset)))
-		 (xy3 (crd right-offset 0)))
-	    (rotation () (xy0 xy1 xy2 xy3))
-	    (move-curve)))
-	
-	(probe-contours (bottom top) elevation
-	  (let* ((bottom-offset (offset-bottom))
-		 (top-offset (offset-top))
-		 (xy0 (crd bottom-offset 0))
-		 (xy1 (crd bottom-offset
-			   (* 0.36 bottom-offset)))
-		 (xy2 (crd (+ bottom-offset
-			      (* *soft*
-				 0.5
-				 (- half-down-y
-				    bottom-offset)))
-			   top-offset))
-		 (xy3 (crd half-down-y top-offset)))
-	    (rotation (xy0 xy1) (xy2 xy3))
-	    (move-curve)))
-	
-	(probe-contours (bottom right) elevation
-	  ;; same code as (right bottom)
-	  (let* ((bottom-offset (offset-bottom))
-		 (right-offset (offset-right))
-		 (xy0 (crd bottom-offset 0))
-		 (xy1 (crd bottom-offset
-			   (* 0.36 bottom-offset)))
-		 (xy2 (crd right-offset
-			   (* -0.36 right-offset)))
-		 (xy3 (crd right-offset 0)))
-	    (rotation (xy0 xy1) (xy2 xy3))
-	    (move-curve)))
-	
-	(probe-contours (left right) elevation
-	  ;; same code as (right left)
-	  (let* ((left-offset (offset-left))
-		 (right-offset (offset-right))
-		 (xy0 (crd half-down-y left-offset))
-		 (xy1 (crd (- half-down-y
-			      (* *soft*
-				 0.5
-				 right-offset))
-			   left-offset))
-		 (xy2 (crd right-offset
-			   (* -0.36 right-offset)))
-		 (xy3 (crd right-offset 0)))
-	    (rotation (xy0 xy1) (xy2 xy3))
-	    (move-curve)))
-	
-	(probe-contours (bottom top) elevation
-	  (let* ((bottom-offset (offset-bottom))
-		 (top-offset (offset-top))
-		 (xy0
-		   (crd bottom-offset
-			0))
-		 (xy1
-		   (crd bottom-offset
-			(* 0.36 bottom-offset)))
-		 (xy2 (crd (+ bottom-offset
-			      (* *soft*
-				 0.5
-				 (- half-down-y
-				    bottom-offset)))
-			   top-offset))
-		 (xy3 (crd half-down-y
-			   top-offset)))
-	    (rotation (xy0 xy1) (xy2 xy3))
-	    (move-curve)))
+	      (water-fill (left bottom)
+			  (l-b-corner)
+			  (t-l-corner b-r-corner))))
+	  
+	  (probe-contours (top bottom) elevation
+	    (let* ((bottom-offset (offset-bottom))
+		   (top-offset (offset-top))
+		   (xy0 (crd bottom-offset 0))
+		   (xy1 (crd bottom-offset
+			     (* 0.36 bottom-offset)))
+		   (xy2 (crd (+ bottom-offset
+				(* *soft*
+				   0.5
+				   (- half-down-y bottom-offset)))
+			     top-offset))
+		   (xy3 (crd half-down-y top-offset)))
+	      
+	      (rotation (xy0 xy1) (xy2 xy3))
+	      (move-curve)
 
+	      (water-fill (top bottom)
+			  (t-l-corner l-b-corner)
+			  (r-t-corner b-r-corner))))
+	  
+	  (probe-contours (right bottom) elevation
+	    (let* ((bottom-offset (offset-bottom))
+		   (right-offset (offset-right))
+		   (xy0 (crd bottom-offset 0))
+		   (xy1 (crd bottom-offset
+			     (* 0.36 bottom-offset)))
+		   (xy2 (crd right-offset
+			     (* -0.36 right-offset)))
+		   (xy3 (crd right-offset 0)))
+	      (rotation (xy0 xy1) (xy2 xy3))
+	      (move-curve)
 
+	      (water-fill (right bottom)
+			  (r-t-corner t-l-corner l-b-corner)
+			  (b-r-corner))))
+	  
+	  (probe-contours (top left) elevation
+	    (let* ((left-offset (offset-left))
+		   (top-offset (offset-top))
+		   (xy0 (crd half-down-y left-offset))
+		   (xy1 (crd (- half-down-y
+				(* 0.67 ;?
+				   (- half-r
+				      left-offset)))
+			     left-offset))
+		   (xy2 (crd (+ half-down-y
+				(* 0.67 top-offset))
+			     top-offset))
+		   (xy3 (crd half-down-y top-offset)))
+	      (rotation (xy0 xy1) (xy2 xy3))
+	      (move-curve)
+
+	      (water-fill (top left)
+			  (t-l-corner)
+			  (r-t-corner b-r-corner l-b-corner))))
+
+	  (probe-contours (right left) elevation
+	    (let* ((left-offset (offset-left))
+		   (right-offset (offset-right))
+		   (xy0 (crd half-down-y left-offset))
+		   (xy1 (crd (- half-down-y
+				(* *soft*
+				   0.5
+				   right-offset))
+			     left-offset))
+		   (xy2 (crd right-offset
+			     (* -0.36 right-offset)))
+		   (xy3 (crd right-offset 0)))
+	      (rotation (xy0 xy1) (xy2 xy3))
+	      (move-curve)
+
+	      (water-fill (right left)
+			  (r-t-corner t-l-corner)
+			  (b-r-corner l-b-corner))))
+
+	  (probe-contours (right top) elevation
+	    (let* ((top-offset (offset-top))
+		   (right-offset (offset-right))
+		   (xy0 (crd half-down-y top-offset))
+		   (xy1 (crd
+			 (+ right-offset
+			    (* *soft*
+			       (- half-down-y
+				  right-offset)))
+			 top-offset))
+		   (xy2 (crd right-offset
+			     (* *soft* top-offset)))
+		   (xy3 (crd right-offset 0)))
+	      (rotation () (xy0 xy1 xy2 xy3))
+	      (move-curve)
+
+	      (water-fill (right top)
+			  (r-t-corner)
+			  (b-r-corner t-l-corner))))
+	  
+	  (probe-contours (bottom top) elevation
+	    (let* ((bottom-offset (offset-bottom))
+		   (top-offset (offset-top))
+		   (xy0 (crd bottom-offset 0))
+		   (xy1 (crd bottom-offset
+			     (* 0.36 bottom-offset)))
+		   (xy2 (crd (+ bottom-offset
+				(* *soft*
+				   0.5
+				   (- half-down-y
+				      bottom-offset)))
+			     top-offset))
+		   (xy3 (crd half-down-y top-offset)))
+	      (rotation (xy0 xy1) (xy2 xy3))
+	      (move-curve)
+
+	      (water-fill (bottom top)
+			  (t-l-corner l-b-corner b-r-corner)
+			  (r-t-corner))))
+	  
+	  (probe-contours (bottom right) elevation
+	    ;; same code as (right bottom)
+	    (let* ((bottom-offset (offset-bottom))
+		   (right-offset (offset-right))
+		   (xy0 (crd bottom-offset 0))
+		   (xy1 (crd bottom-offset
+			     (* 0.36 bottom-offset)))
+		   (xy2 (crd right-offset
+			     (* -0.36 right-offset)))
+		   (xy3 (crd right-offset 0)))
+	      (rotation (xy0 xy1) (xy2 xy3))
+	      (move-curve)
+
+	      (water-fill (bottom right)
+			  (b-r-corner)
+			  (r-t-corner t-l-corner l-b-corner))))
+	  
+	  (probe-contours (left right) elevation
+	    ;; same code as (right left)
+	    (let* ((left-offset (offset-left))
+		   (right-offset (offset-right))
+		   (xy0 (crd half-down-y left-offset))
+		   (xy1 (crd (- half-down-y
+				(* *soft*
+				   0.5
+				   right-offset))
+			     left-offset))
+		   (xy2 (crd right-offset
+			     (* -0.36 right-offset)))
+		   (xy3 (crd right-offset 0)))
+	      (rotation (xy0 xy1) (xy2 xy3))
+	      (move-curve)
+
+	      (water-fill (left right)
+			  (b-r-corner l-b-corner)
+			  (r-t-corner t-l-corner))))
+	  
+	  (probe-contours (bottom top) elevation
+	    (let* ((bottom-offset (offset-bottom))
+		   (top-offset (offset-top))
+		   (xy0
+		     (crd bottom-offset
+			  0))
+		   (xy1
+		     (crd bottom-offset
+			  (* 0.36 bottom-offset)))
+		   (xy2 (crd (+ bottom-offset
+				(* *soft*
+				   0.5
+				   (- half-down-y
+				      bottom-offset)))
+			     top-offset))
+		   (xy3 (crd half-down-y
+			     top-offset)))
+	      (rotation (xy0 xy1) (xy2 xy3))
+	      (move-curve)
+
+	      (water-fill (bottom top)
+			  (r-t-corner b-r-corner)
+			  (t-l-corner l-b-corner))))
+	  )
+	
 	(dolist (contours (list top left bottom right))
-	  (set-water-contours contours))
+	  (set-all-contours contours))
 
-	
 	(probe-contours (left bottom) elevation
 	  (let* ((bottom-offset (offset-bottom))
 		 (left-offset (offset-left))
@@ -371,13 +410,8 @@
 					   bottom-offset)))
 			   left-offset))
 		 (xy3 (crd half-down-y left-offset)))
-
 	    (rotation (xy0 xy1 xy2 xy3) ())
-	    (move-curve)
-
-	    (water-fill (left bottom)
-			(l-b-corner)
-			(t-l-corner b-r-corner))))
+	    (move-curve)))
 	
 	(probe-contours (top bottom) elevation
 	  (let* ((bottom-offset (offset-bottom))
@@ -393,11 +427,7 @@
 		 (xy3 (crd half-down-y top-offset)))
 	    
 	    (rotation (xy0 xy1) (xy2 xy3))
-	    (move-curve)
-
-	    (water-fill (top bottom)
-			(t-l-corner l-b-corner)
-			(r-t-corner b-r-corner))))
+	    (move-curve)))
 	
 	(probe-contours (right bottom) elevation
 	  (let* ((bottom-offset (offset-bottom))
@@ -409,11 +439,7 @@
 			   (* -0.36 right-offset)))
 		 (xy3 (crd right-offset 0)))
 	    (rotation (xy0 xy1) (xy2 xy3))
-	    (move-curve)
-
-	    (water-fill (right bottom)
-			(r-t-corner t-l-corner l-b-corner)
-			(b-r-corner))))
+	    (move-curve)))
 	
 	(probe-contours (top left) elevation
 	  (let* ((left-offset (offset-left))
@@ -429,11 +455,7 @@
 			   top-offset))
 		 (xy3 (crd half-down-y top-offset)))
 	    (rotation (xy0 xy1) (xy2 xy3))
-	    (move-curve)
-
-	    (water-fill (top left)
-			(t-l-corner)
-			(r-t-corner b-r-corner l-b-corner))))
+	    (move-curve)))
 
 	(probe-contours (right left) elevation
 	  (let* ((left-offset (offset-left))
@@ -448,11 +470,7 @@
 			   (* -0.36 right-offset)))
 		 (xy3 (crd right-offset 0)))
 	    (rotation (xy0 xy1) (xy2 xy3))
-	    (move-curve)
-
-	    (water-fill (right left)
-			(r-t-corner t-l-corner)
-			(b-r-corner l-b-corner))))
+	    (move-curve)))
 
 	(probe-contours (right top) elevation
 	  (let* ((top-offset (offset-top))
@@ -468,11 +486,7 @@
 			   (* *soft* top-offset)))
 		 (xy3 (crd right-offset 0)))
 	    (rotation () (xy0 xy1 xy2 xy3))
-	    (move-curve)
-
-	    (water-fill (right top)
-			(r-t-corner)
-			(b-r-corner t-l-corner))))
+	    (move-curve)))
 	
 	(probe-contours (bottom top) elevation
 	  (let* ((bottom-offset (offset-bottom))
@@ -488,11 +502,7 @@
 			   top-offset))
 		 (xy3 (crd half-down-y top-offset)))
 	    (rotation (xy0 xy1) (xy2 xy3))
-	    (move-curve)
-
-	    (water-fill (bottom top)
-			(t-l-corner l-b-corner b-r-corner)
-			(r-t-corner))))
+	    (move-curve)))
 	
 	(probe-contours (bottom right) elevation
 	  ;; same code as (right bottom)
@@ -505,11 +515,7 @@
 			   (* -0.36 right-offset)))
 		 (xy3 (crd right-offset 0)))
 	    (rotation (xy0 xy1) (xy2 xy3))
-	    (move-curve)
-
-	    (water-fill (bottom right)
-			(b-r-corner)
-			(r-t-corner t-l-corner l-b-corner))))
+	    (move-curve)))
 	
 	(probe-contours (left right) elevation
 	  ;; same code as (right left)
@@ -525,11 +531,7 @@
 			   (* -0.36 right-offset)))
 		 (xy3 (crd right-offset 0)))
 	    (rotation (xy0 xy1) (xy2 xy3))
-	    (move-curve)
-
-	    (water-fill (left right)
-			(b-r-corner l-b-corner)
-			(r-t-corner t-l-corner))))
+	    (move-curve)))
 	
 	(probe-contours (bottom top) elevation
 	  (let* ((bottom-offset (offset-bottom))
@@ -549,10 +551,8 @@
 		 (xy3 (crd half-down-y
 			   top-offset)))
 	    (rotation (xy0 xy1) (xy2 xy3))
-	    (move-curve)
+	    (move-curve)))
 
-	    (water-fill (bottom top)
-			(r-t-corner b-r-corner)
-			(t-l-corner l-b-corner))))
+	
 	
 	))))
