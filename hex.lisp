@@ -74,6 +74,7 @@
      (contours-range contours)))
 
 (defun set-all-contours (contours)
+  (reset-range-deque (contours-deque contours))
   (cond ((plusp (contours-range contours))
 	 (loop for elevation from (1+ (contours-left contours))
 		 to (contours-right contours)
@@ -97,6 +98,16 @@
 	   downto (1+ (max (contours-right contours)
 			   (1+ (contours-water contours))))
 	   do (push-right elevation (contours-deque contours))))))
+
+(defun surface-level (contours)
+  (let ((surface (1+ (contours-water contours))))
+    (if (or (>= (contours-left contours)
+		surface
+		(contours-right contours))
+	    (<= (contours-left contours)
+		surface
+		(contours-right contours)))
+	(contours-water contours))))
 
 (defun set-surface-contours (contours)
   "Sets CONTOURS' range-deque to hold only the water surface contour."
