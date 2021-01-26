@@ -41,8 +41,6 @@
   (left 0 :type (signed-byte 8))
   (range 0 :type (signed-byte 8))
   (water 0 :type (signed-byte 8))
-  ;(water-left 0 :type (signed-byte 8))
-  ;(water-right 0 :type (signed-byte 8))
   (deque nil :type range-deque))
 
 (defun record-contours (hex left right divisor)
@@ -225,7 +223,7 @@
 	   (cairo:set-line-width 0.5))
        (cond ((= ,var (1+ (max (contours-water ,at-right)
 			       (contours-water ,at-left))))
-	      (cairo:set-source-rgb 0.2 0.2 1.0))
+	      (cairo:set-source-rgb 1.0 0.2 0.2))
 	     ((< ,var (1+ (max (contours-water ,at-right)
 			       (contours-water ,at-left))))
 	      (cairo:set-source-rgb 0.0 0.0 0.0)) ; testing
