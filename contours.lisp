@@ -92,6 +92,36 @@
       (cairo:destroy cairo-context)
       (cairo:destroy cairo-surface))))
 
+(declaim (inline offset-bottom offset-left offset-right offset-top)
+	 (ftype (function (elevation contours single-float) single-float)
+		offset-bottom offset-left offset-right offset-top))
+
+(defun offset-bottom (elevation contours hex-r)
+  (let ((half-down-y (* +sin60+ hex-r)))
+    (- half-down-y
+       (contour-offset (contour-index elevation contours)
+		       (contours-range contours)
+		       half-down-y))))
+
+(defun offset-left (elevation contours hex-r)
+  (let ((half-r (/ hex-r 2.0)))
+    (- half-r
+       (contour-offset (contour-index elevation contours)
+		       (contours-range contours)
+		       half-r))))
+
+(defun offset-right (elevation contours hex-r)
+  (let ((half-down-y (* +sin60+ hex-r)))
+    (contour-offset (contour-index elevation contours)
+		    (contours-range contours)
+		    half-down-y)))
+
+(defun offset-top (elevation contours hex-r)
+  (let ((minus-half-r (/ hex-r -2.0)))
+    (contour-offset (contour-index elevation contours)
+		    (contours-range contours)
+		    minus-half-r)))
+
 (defun draw-kite-contours (top left bottom right
 			   angle hex-centre-x hex-centre-y
 			   hex-radius cairo-context)
@@ -127,29 +157,7 @@
 	   (nrotate (crd half-down-y 0.0) () sin-d cos-d
 		    hex-centre-x hex-centre-y)))
 
-    (macrolet ((offset-bottom ()
-		 `(- half-down-y
-		     (the single-float
-			  (contour-offset (contour-index elevation bottom)
-					  (contours-range bottom)
-					  half-down-y))))
-	       (offset-left ()
-		 `(- half-r
-		     (the single-float
-			  (contour-offset (contour-index elevation left)
-					  (contours-range left)
-					  half-r))))
-	       (offset-right ()
-		 `(the single-float
-		       (contour-offset (contour-index elevation right)
-				       (contours-range right)
-				       half-down-y)))
-	       (offset-top ()
-		 `(the single-float
-		       (contour-offset (contour-index elevation top)
-				       (contours-range top)
-				       (- half-r))))
-	       (rotation (bot-lefts top-rights)
+    (macrolet ((rotation (bot-lefts top-rights)
 		 `(progn
 		    ,@(loop
 			for symbol in bot-lefts
