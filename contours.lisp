@@ -199,7 +199,8 @@
 					    (y r-t-corner)))
 			   (cairo:set-source-rgb 0.2 0.3 1.0)
 			   (cairo:close-path)
-			   (cairo:fill-path)))
+			   (cairo:fill-path)
+			   (return-from water-filler t)))
 		       ;; Other side of previous
 		       ((and (eq left 'right)
 			     (eq right 'top))
@@ -218,7 +219,8 @@
 					    (y l-b-corner)))
 			   (cairo:set-source-rgb 0.2 0.3 1.0)
 			   (cairo:close-path)
-			   (cairo:fill-path)))
+			   (cairo:fill-path)
+			   (return-from water-filler t)))
 		       ;; Kite totally submerged		       
 		       (t `(when (and (< (contours-max ,left) (1+ (contours-water ,left)))
 				      ;(< (contours-max ,right) (1+ (contours-water ,right)))
