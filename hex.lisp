@@ -71,6 +71,10 @@
   (+ (contours-left contours)
      (contours-range contours)))
 
+(defun contours-max (contours)
+  (max (contours-left contours)
+       (contours-right contours)))
+
 (defun set-all-contours (contours)
   (reset-range-deque (contours-deque contours))
   (cond ((plusp (contours-range contours))
@@ -104,7 +108,16 @@
 		(contours-right contours))
 	    (<= (contours-left contours)
 		surface
-		(contours-right contours)))
+		(contours-right contours))
+#|
+	    (>= surface
+		(contours-left contours)
+		(contours-right contours))
+	    (>= surface
+		(contours-right contours)
+		(contours-left contours))
+	    |#
+	    )
 	(contours-water contours))))
 
 (defun set-surface-contours (contours)

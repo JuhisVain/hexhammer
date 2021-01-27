@@ -176,30 +176,88 @@
 		    (x xy2) (y xy2)
 		    (x xy3) (y xy3))))
 
-	       (fill-kite-water ((left right)
+	       (fill-kite-water ((left right) (other1 other2)
 				 right-high-corners
 				 left-high-corners
 				 &body body)
-		 `(let ((right-surf (surface-level ,right))
-			(left-surf (surface-level ,left)))
-		    (when (and right-surf (eql right-surf left-surf))
-		    (cairo:set-source-rgb 0.2 0.3 1.0)
-		    ,@body
-		    (cond ((plusp (contours-range ,right))
-			   ,@(mapcar
-			      #'(lambda (corner)
-				  `(cairo:line-to (x ,corner)
-						  (y ,corner)))
-			      right-high-corners))
-			  (t
-			   ,@(mapcar
-			      #'(lambda (corner)
-				  `(cairo:line-to (x ,corner)
-						  (y ,corner)))
-			      left-high-corners)))
-		    (cairo:close-path)
-		    (cairo:fill-path)
-		    t)))
+		 `(block water-filler
+		    ,(cond
+		       ;; Take care of the isthmus/straits special case:
+		       ((and (eq left 'left)
+			     (eq right 'bottom))
+			`(when (and (< (contours-max ,left) (1+ (contours-water ,left)))
+				    (< (contours-max ,right) (1+ (contours-water ,right))))
+			   (cairo:move-to (x t-l-corner)
+					  (y t-l-corner))
+			   (cairo:line-to (x l-b-corner)
+					  (y l-b-corner))
+			   (cairo:line-to (x b-r-corner)
+					  (y b-r-corner))
+			   (when (and ;(< (contours-max ,other1) (1+ (contours-water ,other1)))
+				      (< (contours-max ,other2) (1+ (contours-water ,other2))))
+			     (cairo:line-to (x r-t-corner)
+					    (y r-t-corner)))
+			   (cairo:set-source-rgb 0.2 0.3 1.0)
+			   (cairo:close-path)
+			   (cairo:fill-path)))
+		       ;; Other side of previous
+		       ((and (eq left 'right)
+			     (eq right 'top))
+			`(when (and (< (contours-max ,left) (1+ (contours-water ,left)))
+				    (< (contours-max ,right) (1+ (contours-water ,right))))
+			   (cairo:move-to (x b-r-corner)
+					  (y b-r-corner))
+			   (cairo:line-to (x r-t-corner)
+					  (y r-t-corner))
+			   (cairo:line-to (x t-l-corner)
+					  (y t-l-corner))
+			   
+			   (when (and ;(< (contours-max ,other1) (1+ (contours-water ,other1)))
+				      (< (contours-max ,other2) (1+ (contours-water ,other2))))
+			     (cairo:line-to (x l-b-corner)
+					    (y l-b-corner)))
+			   (cairo:set-source-rgb 0.2 0.3 1.0)
+			   (cairo:close-path)
+			   (cairo:fill-path)))
+		       ;; Kite totally submerged		       
+		       (t `(when (and (< (contours-max ,left) (1+ (contours-water ,left)))
+				      ;(< (contours-max ,right) (1+ (contours-water ,right)))
+				      ;(< (contours-max ,other1) (1+ (contours-water ,other1)))
+				      (< (contours-max ,other2) (1+ (contours-water ,other2))))
+			     (cairo:move-to (x b-r-corner)
+					    (y b-r-corner))
+			     (cairo:line-to (x r-t-corner)
+					    (y r-t-corner))
+			     (cairo:line-to (x t-l-corner)
+					    (y t-l-corner))
+			     (cairo:line-to (x l-b-corner)
+					    (y l-b-corner))
+			     (cairo:set-source-rgb 0.2 0.3 1.0)
+			     (cairo:close-path)
+			     (cairo:fill-path)
+			     (return-from water-filler t))))
+
+		    
+		    (let ((right-surf (surface-level ,right))
+			  (left-surf (surface-level ,left)))
+		      (when (and right-surf (eql right-surf left-surf))
+			(cairo:set-source-rgb 0.2 0.3 1.0)
+			,@body
+			(cond ((plusp (contours-range ,right))
+			       ,@(mapcar
+				  #'(lambda (corner)
+				      `(cairo:line-to (x ,corner)
+						      (y ,corner)))
+				  right-high-corners))
+			      (t
+			       ,@(mapcar
+				  #'(lambda (corner)
+				      `(cairo:line-to (x ,corner)
+						      (y ,corner)))
+				  left-high-corners)))
+			(cairo:close-path)
+			(cairo:fill-path)
+			t))))
 	       )
       
       (cairo:with-context (cairo-context)
@@ -211,7 +269,7 @@
 	    (set-all-contours contours))
 
 	  (or
-	   (fill-kite-water (left bottom)
+	   (fill-kite-water (left bottom) (top right)
 			    (l-b-corner)
 			    (t-l-corner b-r-corner)
 			    (let* ((surface (1+ (surface-level bottom)))
@@ -228,7 +286,7 @@
 			      (rotation (xy0 xy1 xy2 xy3) ())
 			      (move-curve)))
 
-	   (fill-kite-water (top bottom)
+	   (fill-kite-water (top bottom) (left right)
 			    (t-l-corner l-b-corner)
 			    (r-t-corner b-r-corner)
 			    (let* ((surface (1+ (surface-level bottom)))
@@ -247,7 +305,7 @@
 			      (rotation (xy0 xy1) (xy2 xy3))
 			      (move-curve)))
 
-	   (fill-kite-water (right bottom)
+	   (fill-kite-water (right bottom) (top left)
 			    (r-t-corner t-l-corner l-b-corner)
 			    (b-r-corner)
 			    (let* ((surface (1+ (surface-level bottom)))
@@ -262,7 +320,7 @@
 			      (rotation (xy0 xy1) (xy2 xy3))
 			      (move-curve)))
 	  
-	   (fill-kite-water (top left)
+	   (fill-kite-water (top left) (right bottom)
 			    (t-l-corner)
 			    (r-t-corner b-r-corner l-b-corner)
 			    (let* ((surface (1+ (surface-level left)))
@@ -281,7 +339,7 @@
 			      (rotation (xy0 xy1) (xy2 xy3))
 			      (move-curve)))
 
-	   (fill-kite-water (right left)
+	   (fill-kite-water (right left) (top bottom)
 			    (r-t-corner t-l-corner)
 			    (b-r-corner l-b-corner)
 			    (let* ((surface (1+ (surface-level left)))
@@ -300,7 +358,7 @@
 			      (move-curve))))
 
 	  ;; NOTE: This last one must be outside the OR daisy chain
-	  (fill-kite-water (right top)
+	  (fill-kite-water (right top) (left bottom)
 			   (r-t-corner)
 			   (b-r-corner t-l-corner)
 			   (let* ((surface (1+ (surface-level top)))
