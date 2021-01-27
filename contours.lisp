@@ -176,29 +176,6 @@
 		    (x xy2) (y xy2)
 		    (x xy3) (y xy3))))
 
-	       (water-fill ((left right)
-			    right-high-corners
-			    left-high-corners)
-		 `(if (= (1+ (max (contours-water ,right)
-				  (contours-water ,left)))
-			 elevation)
-		      (progn
-			(cond ((plusp (contours-range ,right))
-			       ,@(mapcar
-				  #'(lambda (corner)
-				      `(cairo:line-to (x ,corner)
-						      (y ,corner)))
-				  right-high-corners))
-			      (t
-			       ,@(mapcar
-				  #'(lambda (corner)
-				      `(cairo:line-to (x ,corner)
-						      (y ,corner)))
-				  left-high-corners)))
-			(cairo:close-path)
-			(cairo:fill-path)
-			)))
-
 	       (fill-kite-water ((left right)
 				 right-high-corners
 				 left-high-corners
