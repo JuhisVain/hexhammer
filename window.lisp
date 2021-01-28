@@ -32,8 +32,8 @@
 	      
 	      (do-visible (x y test-state)
 		(when (hex-at (crd x y) test-world)
-		  (draw-hex-borders (crd x y) test-state)
-		  (draw-contours (crd x y) test-world test-state)))
+		  (draw-contours (crd x y) test-world test-state)
+		  (draw-hex-borders (crd x y) test-state)))
 
 
 
@@ -55,8 +55,8 @@
 				       (when (hex-at (crd x y) test-world)
 					 ;;(draw-shading (crd x y) test-world test-state)
 					 (draw-gouraud-shading (crd x y) test-world test-state)
-					 (draw-hex-borders (crd x y) test-state)
-					 (draw-contours (crd x y) test-world test-state))))
+					 (draw-contours (crd x y) test-world test-state)
+					 (draw-hex-borders (crd x y) test-state))))
 				    )
 				  (when (= button 1)
 				    (format t "That's hex ~a~%"
@@ -69,8 +69,8 @@
 			     (clear-all test-state)
 			     (do-visible (x y test-state)
 			       (when (hex-at (crd x y) test-world)
-				 (draw-hex-borders (crd x y) test-state)
-				 (draw-contours (crd x y) test-world test-state)))
+				 (draw-contours (crd x y) test-world test-state)
+				 (draw-hex-borders (crd x y) test-state)))
 			     
 			     )
 
@@ -86,8 +86,8 @@
 			  (do-visible (x y test-state)
 			    (when (hex-at (crd x y) test-world)
 			      (draw-gouraud-shading (crd x y) test-world test-state)
-			      (draw-hex-borders (crd x y) test-state)
-			      (draw-contours (crd x y) test-world test-state)))
+			      (draw-contours (crd x y) test-world test-state)
+			      (draw-hex-borders (crd x y) test-state)))
 			  
 			  (sdl2:update-texture texture nil
 					    buffer
