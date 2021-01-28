@@ -265,6 +265,7 @@
       (cairo:with-context (cairo-context)
 	(cairo:set-source-rgb 0.5 0.5 0.5)
 	(cairo:set-line-width 0.5)
+	(cairo:set-antialias :none)
 	
 	(prog1 nil
 	  (dolist (contours (list top left bottom right))
@@ -378,8 +379,8 @@
 				  (xy3 (crd right-offset 0)))
 			     (rotation () (xy0 xy1 xy2 xy3))
 			     (move-curve)))
-
 	  
+	  (cairo:set-antialias :default)
 	  
 	  (probe-contours (left bottom) elevation
 	    (let* ((bottom-offset (offset-bottom elevation bottom hex-radius))
