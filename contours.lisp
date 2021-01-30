@@ -98,7 +98,6 @@
 
 (defun offset-bottom (elevation contours hex-r)
   (let ((half-down-y (* +sin60+ hex-r)))
-    (format t "~a :: ~a~%" elevation contours)
     (- half-down-y
        (contour-offset (contour-index elevation contours)
 		       (contours-range contours)
@@ -106,7 +105,6 @@
 
 (defun offset-left (elevation contours hex-r)
   (let ((half-r (/ hex-r 2.0)))
-    (format t "~a :: ~a~%" elevation contours)
     (- half-r
        (contour-offset (contour-index elevation contours)
 		       (contours-range contours)
@@ -114,14 +112,12 @@
 
 (defun offset-right (elevation contours hex-r)
   (let ((half-down-y (* +sin60+ hex-r)))
-    (format t "~a :: ~a~%" elevation contours)
     (contour-offset (contour-index elevation contours)
 		    (contours-range contours)
 		    half-down-y)))
 
 (defun offset-top (elevation contours hex-r)
   (let ((minus-half-r (/ hex-r -2.0)))
-    (format t "~a :: ~a~%" elevation contours)
     (contour-offset (contour-index elevation contours)
 		    (contours-range contours)
 		    minus-half-r)))
