@@ -195,7 +195,7 @@ If CONTOURS is totally submerged or totally dry returns NIL."
 		     (compilation-speed 0)))
   (let ((current (vertex-exists crd dir world)))
     (when (and (< (point-water current) water-level)
-	       (<= (point-elevation current) water-level))
+	       (< (point-elevation current) water-level))
       (setf (point-water current) water-level)
       (dolist (con
 	       (remove-if
@@ -209,7 +209,7 @@ If CONTOURS is totally submerged or totally dry returns NIL."
       NIL)))
 
 (defun sinktest ()
-  (flood-fill 9 *world* (crd 49 13) :cen))
+  (flood-fill 10 *world* (crd 49 13) :cen))
 
 (defmacro probe-contours ((at-left at-right) var
 			  &body body)
