@@ -102,23 +102,16 @@
 	   do (push-right elevation (contours-deque contours))))))
 
 (defun surface-level (contours)
-  (let ((surface (1+ (contours-water contours))))
-    (if (or (>= (contours-left contours)
-		surface
-		(contours-right contours))
-	    (<= (contours-left contours)
-		surface
-		(contours-right contours))
-#|
-	    (>= surface
-		(contours-left contours)
-		(contours-right contours))
-	    (>= surface
-		(contours-right contours)
-		(contours-left contours))
-	    |#
-	    )
-	(contours-water contours))))
+  "Returns integer surface level when shoreline drawable.
+If CONTOURS is totally submerged or totally dry returns NIL."
+  (let ((surface (contours-water contours)))
+    (when (or (>= (contours-left contours)
+		  surface
+		  (1+ (contours-right contours)))
+	      (<= (1+ (contours-left contours))
+		  surface
+		  (contours-right contours)))
+      (contours-water contours))))
 
 (defun set-surface-contours (contours)
   "Sets CONTOURS' range-deque to hold only the water surface contour."
@@ -234,11 +227,11 @@
        (if (= (mod ,var 10) 0)
 	   (cairo:set-line-width 1.0)
 	   (cairo:set-line-width 0.5))
-       (cond ((= ,var (1+ (max (contours-water ,at-right)
-			       (contours-water ,at-left))))
+       (cond ((= ,var (max (contours-water ,at-right)
+			       (contours-water ,at-left)))
 	      (cairo:set-source-rgb 1.0 0.2 0.2))
-	     ((< ,var (1+ (max (contours-water ,at-right)
-			       (contours-water ,at-left))))
+	     ((< ,var (max (contours-water ,at-right)
+			       (contours-water ,at-left)))
 	      (cairo:set-source-rgb 0.0 0.0 0.0)) ; testing
 	     (t (cairo:set-source-rgb 0.5 0.5 0.5)))
        ,@body
