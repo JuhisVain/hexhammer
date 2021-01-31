@@ -14,4 +14,5 @@
   (load "vectors.lisp")
   (load "shading.lisp")
   (load "contours.lisp")
+  (load "waypathing.lisp")
   (load "window.lisp"))
