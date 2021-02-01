@@ -9,40 +9,22 @@
 ;; However the construction of infrastructure should not affect
 ;; the graphical position of rivers.
 
-(defstruct crd-paths
-  (rivers)
-  (infrastructure))
+;; All pathways should be ordered AT EACH HEX-VERTEX POINT
+;; Pathway drawing must be done after other terrain features
+;; 
 
-(defstruct rivers
-  (trunks nil :type list)
-  (tributaries nil :type list))
 
-(defstruct river-waypoint
-  (crd nil :type crd)
-  (point nil :type hex-vertex))
+(defvar *paths* (make-hash-table :test 'equal))
 
-(defstruct river
-  (size :stream) ; does this belong here?
-  (entry nil :type (or null river-waypoint))
-  (exit nil :type (or null river-waypoint)))
+'(defstruct crd-river
+  (entry)
+  (exit)
+  (size))
 
-(defstruct infra-waypoint
-  (crd nil :type crd)
-  (point nil :type direction))
-
-(defstruct infrastructure
-  (entry nil :type (or null infra-waypoint))
-  (exit nil :type (or null infra-waypoint)))
-
-#| ; obsolete
-(defun testrivers ()
-  (setf (gethash (crd 43 37) *rivers*)
-	'((((crd 44 38) :E :stream) ((crd 44 39) :N :stream))
-	  ((crd 43 36) :S :stream)))
-  (setf (gethash (crd 43 36) *rivers*)
-	'((((crd 43 37) :N :stream))
-	  ((crd 42 37) :W :stream)))
-  (setf (gethash (crd 42 37) *rivers*)
-	'((((crd 43 36) :SSE :stream))
-	  ((crd 42 36) :S :stream))))
-|#
+'(defstruct crd-paths
+  ;;;; MASTER: Probably largest river.
+  ;; Can't be null.
+  ;; All other paths must be subordinate to this one.
+  (master)
+  ;; Ordering by right/left of master maybe ???
+  )
