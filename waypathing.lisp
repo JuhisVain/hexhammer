@@ -15,16 +15,21 @@
 
 
 (defvar *paths* (make-hash-table :test 'equal))
+;; use pointspec (crd hex-vertex) as keys
 
-'(defstruct crd-river
-  (entry)
-  (exit)
-  (size))
+(defclass point-river ()
+  (size
+   downstream ; the direction of flow: hex-vertex but not :CEN
+   ))
 
-'(defstruct crd-paths
-  ;;;; MASTER: Probably largest river.
-  ;; Can't be null.
-  ;; All other paths must be subordinate to this one.
-  (master)
-  ;; Ordering by right/left of master maybe ???
-  )
+(defclass point-paths ()
+  (
+   ;; The deciding feature of all paths. Most likely largest river.
+   ;; Could also be first piece of infra built.
+   master
+   ;; list of paths left of master (based on downstream)
+   ;; ordered by closest first. Maybe tree with infrastructure.
+   left 
+   right
+   ))
+
