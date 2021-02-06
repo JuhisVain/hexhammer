@@ -1,11 +1,29 @@
 (in-package :hexhammer)
 
-(defmacro dir-list (start count)
-  (let* ((dir-list (list :n :nnw :nw :w :sw :ssw :s :sse :se :e :ne :nne))
+(define-compiler-macro dir-list (start count &optional clockwise)
+  (if (and (typep start 'hex-vertex)
+	   (numberp count))
+      `(macro-dir-list ,start ,count ,clockwise)
+      `(func-dir-list ,start ,count ,clockwise)))
+
+(defmacro macro-dir-list (start count &optional clockwise)
+  (let* ((dir-list (if clockwise
+		       (list :n :nne :ne :e :se :sse :s :ssw :sw :w :nw :nnw)
+		       (list :n :nnw :nw :w :sw :ssw :s :sse :se :e :ne :nne)))
 	 (start-list (member start dir-list)))
     (when (null start-list) (error "There is no direction ~a!~%" start))
     (rplacd (last dir-list) dir-list)
     `(list ,@(loop repeat count for dir in start-list collect dir))))
+
+(defun func-dir-list (start count &optional clockwise)
+  (let* ((dir-list (if clockwise
+		       (list :n :nne :ne :e :se :sse :s :ssw :sw :w :nw :nnw)
+		       (list :n :nnw :nw :w :sw :ssw :s :sse :se :e :ne :nne)))
+	 (start-list (member start dir-list)))
+    (when (null start-list)
+      (error "There is no direction ~a!~%" start))
+    (rplacd (last dir-list) dir-list)
+    (loop repeat count for dir in start-list collect dir)))
 
 ;;should be used with normie coordinate space:
 ;; X is east, Y is north, Z is up
