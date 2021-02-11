@@ -169,20 +169,23 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 (defun push-sub-river (river waypoint)
   (labels ((place-in-tree (dir tree)
 	     (if (eq dir
-		     (right-or-left (crd-river-entry river)
-				    (crd-river-exit river)
-				    (crd-river-entry (car tree))
-				    (crd-river-exit (car tree))))
+		     (right-or-left
+		      (waypoint-vertex (crd-river-entry river))
+		      (waypoint-vertex (crd-river-exit river))
+		      (waypoint-vertex (crd-river-entry (car tree)))
+		      (waypoint-vertex (crd-river-exit (car tree)))))
 		 (list river tree)
 		 (list (car tree)
 		       (if (cadr tree)
-			   (place-in-tree river (cadr tree))
+			   (place-in-tree dir (cadr tree))
 			   (list river nil nil))))))
     
-    (let ((direction (right-or-left (crd-river-entry river)
-				    (crd-river-exit river)
-				    (crd-river-entry (waypoint-master waypoint))
-				    (crd-river-exit (waypoint-master waypoint)))))
+    (let ((direction
+	    (right-or-left
+	     (waypoint-vertex (crd-river-entry river))
+	     (waypoint-vertex (crd-river-exit river))
+	     (waypoint-vertex (crd-river-entry (waypoint-master waypoint)))
+	     (waypoint-vertex (crd-river-exit (waypoint-master waypoint))))))
       (case direction
 	(:left
 	 (setf (waypoint-master-left waypoint)
