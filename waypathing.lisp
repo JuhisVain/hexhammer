@@ -89,14 +89,18 @@
   (or (find-point dir/river crd-paths)
       (waypoint dir/river)))
 
-(defun make-crd-river (&key entry exit crd-paths)
+(defun make-crd-river (&key entry-point exit-point crd-paths)
+  "ENTRY-POINT and EXIT-POINT should be of type waypoint."
   (let ((river (make-instance 'crd-river)))
-    (when entry
-      (setf (crd-river-entry river)
-	    (ensure-waypoint entry crd-paths)))
-    (when exit
-      (setf (crd-river-exit river)
-	    (ensure-waypoint exit crd-paths)))
+    (when entry-point
+      (setf (crd-river-entry river) entry-point))
+    (when exit-point
+      (setf (crd-river-exit river) exit-point))
+
+    (when crd-paths
+      (setf (crd-paths-trunks crd-paths)
+	    (nconc (crd-paths-trunks crd-paths)
+		   (list river))))
     river))
 
 (defun make-waypoint (&key vertex master master-left master-right)
@@ -156,30 +160,22 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 	  (t :left))))
 
 
-;;TEST
-(defparameter *xxx* '(5 (7 NIL NIL)))
-(defun xxx (addme tree)
-  (if (<= addme (car tree))
-      (list addme tree)
-      (list (car tree)
-	    (if (cadr tree)
-		(xxx addme (cadr tree))
-		(list addme nil nil)))))
-
-;; TODO: test this
 (defun push-sub-river (river waypoint)
   (labels ((place-in-tree (dir tree)
-	     (if (eq dir
-		     (right-or-left
-		      (waypoint-vertex (crd-river-entry river))
-		      (waypoint-vertex (crd-river-exit river))
-		      (waypoint-vertex (crd-river-entry (car tree)))
-		      (waypoint-vertex (crd-river-exit (car tree)))))
-		 (list river tree)
-		 (list (car tree)
-		       (if (cadr tree)
-			   (place-in-tree dir (cadr tree))
-			   (list river nil nil))))))
+	     (cond ((null tree)
+		    (list river nil nil))
+		   ((not (eq dir
+			     (right-or-left
+			      (waypoint-vertex (crd-river-entry river))
+			      (waypoint-vertex (crd-river-exit river))
+			      (waypoint-vertex (crd-river-entry (car tree)))
+			      (waypoint-vertex (crd-river-exit (car tree))))))
+		    (list river tree))
+		   (t
+		    (list (car tree)
+			  (if (cadr tree)
+			      (place-in-tree dir (cadr tree))
+			      (list river nil nil)))))))
     
     (let ((direction
 	    (right-or-left
@@ -193,28 +189,25 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 	       (place-in-tree :left (waypoint-master-left waypoint))))
 	((:right :same)
 	 (setf (waypoint-master-right waypoint)
-	       (place-in-tree :right (waypoint-master-right waypoint))))))))
+	       (place-in-tree direction (waypoint-master-right waypoint))))))))
 
 
 ;; No idea if any of this is going to work out
-'(defun add-river-to-crd (crd entry exit)
+(defun add-river-to-crd (crd entry exit)
   (let* ((crd-paths (ensure-crd-paths crd))
 	 (entry-point (ensure-waypoint entry crd-paths))
 	 (exit-point (ensure-waypoint exit crd-paths))
-	 (new-river (make-crd-river)))
+	 (new-river (make-crd-river :entry-point entry-point
+				    :exit-point exit-point
+				    :crd-paths crd-paths)))
 
     ;; Initialize those with no master:
-    (if (not (waypoint-master entry-point))
-	(setf (waypoint-master entry-point) new-river)
-	(case (right-or-left entry exit
-			     (crd-river-entry (waypoint-master entry-point))
-			     (crd-river-exit (waypoint-master entry-point)))
-	  (:LEFT (setf (waypoint-master-left entry-point)))))
+    (cond ((not (waypoint-master entry-point))
+	   (setf (waypoint-master entry-point) new-river))
+	  (t (push-sub-river new-river entry-point)))
 
-    
-    (if (not (waypoint-master exit-point))
-	(setf (waypoint-master exit-point) new-river))
-    
-    
+    (cond ((not (waypoint-master exit-point))
+	   (setf (waypoint-master exit-point) new-river))
+	  (t (push-sub-river new-river exit-point)))
     ))
     
