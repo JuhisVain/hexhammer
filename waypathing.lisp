@@ -14,7 +14,7 @@
 ;;
 
 ;; key: crd
-(defvar *crd-paths* (make-hash-table :test 'equal))
+(defvar *crd-paths* (make-hash-table :test 'equalp))
 
 (defclass crd-paths ()
   ((trunks
