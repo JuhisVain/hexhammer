@@ -76,8 +76,9 @@
       (typep (crd-river-exit river) 'joinpoint)))
 
 (defun make-crd-paths (&key trunks tributaries)
-  (make-instance 'crd-paths :trunks trunks :tributaries tributaries
-			    :centre (make-waypoint :vertex :cen)))
+  (make-instance 'crd-paths
+		 :trunks trunks
+		 :tributaries tributaries))
 
 (defun ensure-crd-paths (crd)
   (or (gethash crd *crd-paths*)
