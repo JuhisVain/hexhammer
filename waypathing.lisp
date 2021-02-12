@@ -119,13 +119,17 @@
 (defmethod waypoint ((point crd-river))
   (make-joinpoint :trunk point))
 
+(defun list-river-points (crd-paths)
+  (remove-duplicates
+   (mapcan #'(lambda (crd-riv)
+	      (list (crd-river-entry crd-riv)
+		    (crd-river-exit crd-riv)))
+	   (append (crd-paths-trunks crd-paths)
+		   (crd-paths-tributaries crd-paths)))
+   :test #'eq))
+
 (defun find-point (point crd-paths)
-  (let ((defined-points
-	  (mapcan #'(lambda (crd-riv)
-		      (list (crd-river-entry crd-riv)
-			    (crd-river-exit crd-riv)))
-		  (append (crd-paths-trunks crd-paths)
-			  (crd-paths-tributaries crd-paths)))))
+  (let ((defined-points (list-river-points crd-paths)))
     (find point defined-points :key #'get-point :test #'eq)))
 
 (defun hex-vertexp (dir &rest more-dirs)
