@@ -177,7 +177,7 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 		    (list river tree))
 		   (t
 		    (list (car tree)
-			  (if (cadr tree)
+			  (if (cadr tree) ;;TODO ?? (null tree) at top should do this
 			      (place-in-tree dir (cadr tree))
 			      (list river nil nil)))))))
     
@@ -193,7 +193,7 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 	       (place-in-tree :left (waypoint-master-left waypoint))))
 	((:right :same)
 	 (setf (waypoint-master-right waypoint)
-	       (place-in-tree direction (waypoint-master-right waypoint))))))))
+	       (place-in-tree :right (waypoint-master-right waypoint))))))))
 
 
 ;; No idea if any of this is going to work out
