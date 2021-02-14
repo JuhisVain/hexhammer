@@ -198,3 +198,8 @@
 		       (* sin (x crd)))
 		    y+))
   crd)
+
+(defun ntranslate (crd x+ y+)
+  (incf (x crd) x+)
+  (incf (y crd) y+)
+  crd)
