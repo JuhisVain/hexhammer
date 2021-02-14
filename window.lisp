@@ -56,6 +56,7 @@
 					 ;;(draw-shading (crd x y) test-world test-state)
 					 (draw-gouraud-shading (crd x y) test-world test-state)
 					 (draw-contours (crd x y) test-world test-state)
+					 (draw-rivers (crd x y) test-world test-state)
 					 (draw-hex-borders (crd x y) test-state))))
 				    )
 				  (when (= button 1)

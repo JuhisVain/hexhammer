@@ -214,4 +214,112 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 	   (setf (waypoint-master exit-point) new-river))
 	  (t (push-sub-river new-river exit-point)))
     ))
+
+(defun waypoint-total-natural-features (waypoint)
+  (if (waypoint-master waypoint)
+      (+ 1
+	 (length (waypoint-master-left waypoint))
+	 (length (waypoint-master-right waypoint)))
+      0))
+
+(defun waypoint-natural-left-count (waypoint)
+  (length (waypoint-master-left waypoint)))
+(defun waypoint-natural-right-count (waypoint)
+  (length (waypoint-master-right waypoint)))
     
+(defun draw-rivers (crd world view-state)
+  (let* ((cairo-surface
+	   (cairo:create-image-surface-for-data
+	    (buffer view-state) :argb32
+	    (width view-state) (height view-state)
+	    (* 4 (width view-state))))
+	 (cairo-context (cairo:create-context cairo-surface))
+	 (crd-paths (gethash crd *crd-paths*)))
+
+    ;; natural features won't change. They should be all drawn at once!
+    (when crd-paths
+      (when (crd-paths-trunks crd-paths)
+	(draw-trunks crd (crd-paths-trunks crd-paths) world view-state cairo-context))
+    
+    )))
+
+(defun testrivers ()
+  (add-river-to-crd (crd 0 0) :n :s)
+  (add-river-to-crd (crd 0 0) :nne :e)
+  (add-river-to-crd (crd 0 0) :n :sw)
+  (add-river-to-crd (crd 0 0) :nnw :sw))
+
+(defun draw-trunks (crd trunk-list world view-state cairo-context)
+  (let* ((window-centre-x-pix (/ (width view-state) 2))
+	 (window-centre-y-pix (/ (height view-state) 2))
+
+	 (origin-x (- window-centre-x-pix (centre-x view-state)))
+	 (origin-y (- window-centre-y-pix (centre-y view-state)))
+
+	 (r (hex-r view-state))
+	 (half-r (/ r 2))
+	 (three-quarters-r (* r 3/4))
+	 (half-down-y (* +sin60+ r))
+	 (full-down-y (* half-down-y 2))
+	 (three-halfs-r (* 1.5 r))
+
+	 (hex-centre-x (+ origin-x
+			  r
+			  (* (x crd) three-halfs-r)))
+	 (hex-centre-y (+ (- window-centre-y-pix
+			     (+ origin-y
+				(* (y crd) full-down-y)))
+			  (- half-down-y)
+			  window-centre-y-pix
+			  (* -1 full-down-y)
+			  (* (mod (1- (x crd)) 2)
+			     half-down-y))))
+
+    (cairo:with-context (cairo-context)
+      (cairo:set-source-rgb 0.0 0.0 0.7)
+      (cairo:set-line-width 1.0)
+
+      (destructuring-bind (master-trunk . slave-trunks)
+	  trunk-list
+	(let ((entry-crd (vertex-crd
+			  r (waypoint-vertex (crd-river-entry master-trunk))
+			  hex-centre-x hex-centre-y))
+	      (exit-crd (vertex-crd
+			 r (waypoint-vertex (crd-river-exit master-trunk))
+			 hex-centre-x hex-centre-y)))
+	  (cairo:move-to (x entry-crd) (y entry-crd))
+	  (cairo:line-to hex-centre-x hex-centre-y)
+	  (cairo:line-to (x exit-crd) (y exit-crd))
+	  (cairo:stroke)
+	  )
+	
+      
+    
+      ))))
+
+;; Now this is PRETTY similar to #'unit-hex-crd,
+;; except that the coordinate system is Y-inverted...
+(defun vertex-crd (r dir &optional (x+ 0) (y+ 0))
+  (ntranslate
+   (case dir
+     (:N (crd 0.0 (* -1 r +sin60+)))
+     (:NNE (nrotate (crd (* r +sin60+) (* -0.5 r))
+		    (* 1/2 +sf-pi+)))
+     (:NE (nrotate (crd (* r +sin60+) 0.0)
+		   (* 1/6 +sf-pi+)))
+     (:E (crd r 0.0))
+     (:SE (nrotate (crd (* r +sin60+) 0.0)
+		   (* -1/6 +sf-pi+)))
+     (:SSE (nrotate (crd (* r +sin60+) (* 0.5 r))
+		    (* -1/2 +sf-pi+)))
+     (:S (crd 0.0 (* r +sin60+)))
+     (:SSW (nrotate (crd (* r +sin60+) (* -0.5 r))
+		    (* -1/2 +sf-pi+)))
+     (:SW (nrotate (crd (* r +sin60+) 0.0)
+		   (* 7/6 +sf-pi+)))
+     (:W (crd (* -1 r) 0.0))
+     (:NW (nrotate (crd (* r +sin60+) 0.0)
+		   (* 5/6 +sf-pi+)))
+     (:NNW (nrotate (crd (* r +sin60+) (* 0.5 r))
+		    (* 1/2 +sf-pi+))))
+   x+ y+))
