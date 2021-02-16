@@ -17,7 +17,7 @@
 (defvar *crd-paths* (make-hash-table :test 'equalp))
 
 (defclass crd-paths ()
-  ((trunks
+  ((trunks ;; (master left-slaves . right-slaves)
     :initarg :trunks
     :accessor crd-paths-trunks)
    (tributaries
@@ -75,7 +75,7 @@
   (or (typep (crd-river-entry river) 'joinpoint)
       (typep (crd-river-exit river) 'joinpoint)))
 
-(defun make-crd-paths (&key trunks tributaries)
+(defun make-crd-paths (&key (trunks (list nil)) tributaries)
   (make-instance 'crd-paths
 		 :trunks trunks
 		 :tributaries tributaries))
@@ -98,10 +98,30 @@
       (setf (crd-river-exit river) exit-point))
 
     (when crd-paths
-      (setf (crd-paths-trunks crd-paths)
-	    (nconc (crd-paths-trunks crd-paths)
-		   (list river))))
+      (crd-paths-push-trunk crd-paths river))
     river))
+
+(defun crd-paths-push-trunk (crd-paths river)
+  (format t "trunks: ~a~%      river: ~a~2%" (crd-paths-trunks crd-paths) river)
+  (if (null (car (crd-paths-trunks crd-paths)))
+      (setf (car (crd-paths-trunks crd-paths)) river)
+      (setf (cdr (crd-paths-trunks crd-paths))
+	    (case (crd-river-right-left
+		   river (car (crd-paths-trunks crd-paths)))
+	      (:left (cons (sort (cons river (cadr (crd-paths-trunks crd-paths)))
+				 #'(lambda (this from)
+				     (ecase (crd-river-right-left this from)
+				       ((:left :same) t)
+				       (:right nil))))
+			   (cddr (crd-paths-trunks crd-paths))))
+	      ((:right :same)
+	       (cons (cadr (crd-paths-trunks crd-paths))
+		     (sort (cons river (cddr (crd-paths-trunks crd-paths)))
+			   #'(lambda (this from)
+			       (ecase (crd-river-right-left this from)
+				 ((:right :same) t)
+				 (:left nil))))
+		     ))))))
 
 (defun make-waypoint (&key vertex master master-left master-right)
   (make-instance 'waypoint
@@ -124,7 +144,10 @@
    (mapcan #'(lambda (crd-riv)
 	      (list (crd-river-entry crd-riv)
 		    (crd-river-exit crd-riv)))
-	   (append (crd-paths-trunks crd-paths)
+	   (append (let ((trunks (crd-paths-trunks crd-paths)))
+		     (when (car trunks)
+		       (list* (car trunks)
+			      (append (cadr trunks) (cddr trunks)))))
 		   (crd-paths-tributaries crd-paths)))
    :test #'eq))
 
@@ -136,6 +159,12 @@
   (and (typep dir 'hex-vertex)
        (or (null more-dirs)
 	   (apply #'hex-vertexp (first more-dirs) (rest more-dirs)))))
+
+(defun crd-river-right-left (this-river from-river)
+  (right-or-left (waypoint-vertex (crd-river-entry this-river))
+		 (waypoint-vertex (crd-river-exit this-river))
+		 (waypoint-vertex (crd-river-entry from-river))
+		 (waypoint-vertex (crd-river-exit from-river))))
 
 ;; This one could be sped up by interpreting the dirs as integers
 (defun right-or-left (this-0 this-1 from-0 from-1)
@@ -169,24 +198,14 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 	     (cond ((null tree)
 		    (list river nil nil))
 		   ((not (eq dir
-			     (right-or-left
-			      (waypoint-vertex (crd-river-entry river))
-			      (waypoint-vertex (crd-river-exit river))
-			      (waypoint-vertex (crd-river-entry (car tree)))
-			      (waypoint-vertex (crd-river-exit (car tree))))))
+			     (crd-river-right-left river (car tree))))
 		    (list river tree))
 		   (t
 		    (list (car tree)
-			  (if (cadr tree) ;;TODO ?? (null tree) at top should do this
-			      (place-in-tree dir (cadr tree))
-			      (list river nil nil)))))))
+			  (place-in-tree dir (cadr tree)))))))
     
     (let ((direction
-	    (right-or-left
-	     (waypoint-vertex (crd-river-entry river))
-	     (waypoint-vertex (crd-river-exit river))
-	     (waypoint-vertex (crd-river-entry (waypoint-master waypoint)))
-	     (waypoint-vertex (crd-river-exit (waypoint-master waypoint))))))
+	    (crd-river-right-left river (waypoint-master waypoint))))
       (case direction
 	(:left
 	 (setf (waypoint-master-left waypoint)
@@ -279,23 +298,28 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
       (cairo:set-source-rgb 0.0 0.0 0.7)
       (cairo:set-line-width 1.0)
 
-      (destructuring-bind (master-trunk . slave-trunks)
+      (destructuring-bind (master-trunk left-slaves . right-slaves)
 	  trunk-list
-	(let ((entry-crd (vertex-crd
-			  r (waypoint-vertex (crd-river-entry master-trunk))
-			  hex-centre-x hex-centre-y))
-	      (exit-crd (vertex-crd
-			 r (waypoint-vertex (crd-river-exit master-trunk))
-			 hex-centre-x hex-centre-y)))
-	  (cairo:move-to (x entry-crd) (y entry-crd))
+	(let* ((master-entry (waypoint-vertex (crd-river-entry master-trunk)))
+	       (master-exit (waypoint-vertex (crd-river-exit master-trunk)))
+	       (master-entry-crd
+		 (vertex-crd r master-entry hex-centre-x hex-centre-y))
+	       (master-exit-crd
+		 (vertex-crd r master-exit hex-centre-x hex-centre-y)))
+	  (cairo:move-to (x master-entry-crd) (y master-entry-crd))
 	  (cairo:line-to hex-centre-x hex-centre-y)
-	  (cairo:line-to (x exit-crd) (y exit-crd))
+	  (cairo:line-to (x master-exit-crd) (y master-exit-crd))
 	  (cairo:stroke)
-	  )
-	
-      
-    
-      ))))
+#|
+	  (dolist (trunk slave-trunks)
+	    (let* ((slave-entry (waypoint-vertex (crd-river-entry trunk)))
+		   (slave-exit (waypoint-vertex (crd-river-exit trunk)))
+		   (from-master (right-or-left slave-entry slave-exit
+					       master-entry master-exit)))
+	      ;; TODO: Will need to have a centre vert ordering
+	      ))
+|#
+      )))))
 
 ;; Now this is PRETTY similar to #'unit-hex-crd,
 ;; except that the coordinate system is Y-inverted...
