@@ -47,7 +47,7 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 	 (cairo-context (cairo:create-context cairo-surface))
 	 (crd-paths (gethash crd *crd-paths*)))
     
-    )))
+    ))
 
 ;; Now this is PRETTY similar to #'unit-hex-crd,
 ;; except that the coordinate system is Y-inverted...
