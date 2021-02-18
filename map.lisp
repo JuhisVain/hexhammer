@@ -54,6 +54,32 @@
 	     (:SW (crd (1- x) (+ y xodd-)))
 	     (:NW (crd (1- x) (+ y xodd+))))))))
 
+(defun vertex-alias (crd vertex alias-crd)
+  "Returns the vertex name of CRD's VERTEX in ALIAS-CRD."
+  (macrolet
+      ((is-there-then ((there-0 then-0) (there-1 then-1))
+	 `(or (and (equalp alias-crd (crd-neighbour crd ,there-0))
+		   ,then-0)
+	      (and (equalp alias-crd (crd-neighbour crd ,there-1))
+		   ,then-1)
+	      (error "Alias-crd ~a is not ~a or ~a from ~a vertex ~a~%"
+		     alias-crd ,there-0 ,there-1 crd vertex))))
+
+    (case vertex
+      ((:N :NW :SW :S :SE :NE)
+       (if (equalp (crd-neighbour crd vertex)
+		   alias-crd)
+	   (opposite vertex)
+	   (error "Alias-crd ~a is not ~a from ~a~%"
+		  alias-crd vertex crd)))
+      (:NNE (is-there-then (:N :SSE) (:NE :W)))
+      (:E (is-there-then (:NE :SSW) (:SE :NNW)))
+      (:SSE (is-there-then (:SE :W) (:S :NNE)))
+      (:SSW (is-there-then (:S :NNW) (:SW :E)))
+      (:W (is-there-then (:SW :NNE) (:NW :SSE)))
+      (:NNW (is-there-then (:NW :E) (:N :SSW)))
+      (t (error "~a is not a valid vertex name!~%" vertex)))))
+
 (defun translate-data (x y direction width height data)
   (round
    (2faref data
