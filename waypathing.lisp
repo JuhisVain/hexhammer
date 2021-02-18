@@ -10,6 +10,44 @@
 ;; key: crd
 (defvar *crd-paths* (make-hash-table :test 'equalp))
 
+(defclass crd-paths ()
+  ((rivers ;; ((exit-dir . exit-to-crd) (entry-dir . entry-from-crd)... )
+    :initarg :rivers
+    :accessor crd-paths-rivers)
+   (infra
+    :initarg :infra
+    :accessor crd-paths-infra)))
+
+
+
+(defun add-river-entry (crd dir from)
+  "Add a river entry to coordinate CRD coming from
+coordinate FROM through DIR in CRD."
+  (let ((crd-paths (gethash crd *crd-paths*)))
+    (if (null (crd-paths-rivers crd-paths))
+	(setf (crd-paths-rivers crd-paths)
+	      (list nil (cons dir from)))
+	(if (not (member dir (crd-paths-rivers crd-paths) :key #'car))
+	    (push (cons dir from) (cdr (crd-paths-rivers crd-paths)))
+	    (error
+	     "Trying to push duplicate river entry vertex ~a to rivers ~a~%"
+	     (cons dir from) (crd-paths-rivers crd-paths))))))
+
+(defun add-river-exit (crd dir to)
+  "Add a river exit to coordinate CRD exiting at CRD's DIR to coordinate TO."
+  (let ((crd-paths (gethash crd *crd-paths*)))
+    (if (null (crd-paths-rivers crd-paths))
+	(setf (crd-paths-rivers crd-paths)
+	      (cons (cons dir to) nil))
+	(if (and (null (car (crd-paths-rivers crd-paths)))
+		 (not (member dir (cdr (crd-paths-rivers crd-paths)) :key #'car)))
+	    (rplaca (crd-paths-rivers crd-paths)
+		    (cons dir to))
+	    (error
+	     "Trying to set invalid river exit vertex ~a to rivers ~a~%"
+	     (cons dir to) (crd-paths-rivers crd-paths)))))
+  (add-river-entry to (vertex-alias crd dir to) crd))
+    
 
 
 ;; This one could be sped up by interpreting the dirs as integers
