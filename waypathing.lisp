@@ -55,18 +55,21 @@ coordinate FROM through DIR in CRD."
 	    (error
 	     "Trying to set invalid river exit vertex ~a to rivers ~a~%"
 	     (cons dir to) (crd-paths-rivers crd-paths)))))
-  (add-river-entry to (vertex-alias crd dir to) crd))
+  (add-river-entry to (vertex-alias crd dir to) crd world))
 
-(defun rivertest ()
+
+(defun rivertest (world)
   (clrhash *crd-paths*)
 
-  (add-river-exit (crd 2 2) :NW (crd 1 2))
-  (add-river-exit (crd 1 2) :SW (crd 0 2))
-  (add-river-exit (crd 0 3) :S (crd 0 2))
-  (add-river-exit (crd 0 2) :S (crd 0 1))
-  (add-river-exit (crd 0 1) :S (crd 0 0))
-  (add-river-exit (crd 0 0) :NE (crd 1 0))
-  (add-river-exit (crd 1 0) :S (crd 1 -1)))
+  (add-river-exit (crd 4 1) :W (crd 3 1) world)
+  (add-river-exit (crd 3 1) :NNW (crd 2 2) world)
+  (add-river-exit (crd 2 2) :NW (crd 1 2) world)
+  (add-river-exit (crd 1 2) :SW (crd 0 2) world)
+  (add-river-exit (crd 0 3) :S (crd 0 2) world)
+  (add-river-exit (crd 0 2) :S (crd 0 1) world)
+  (add-river-exit (crd 0 1) :S (crd 0 0) world)
+  (add-river-exit (crd 0 0) :NE (crd 1 0) world)
+  (add-river-exit (crd 1 0) :S (crd 1 -1)  world))
 
 ;; This one could be sped up by interpreting the dirs as integers
 (defun right-or-left (this-0 this-1 from-0 from-1)
@@ -102,32 +105,71 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 	    (* 4 (width view-state))))
 	 (cairo-context (cairo:create-context cairo-surface))
 	 (crd-paths (gethash crd *crd-paths*)))
+
+    (when (not crd-paths)
+      (return-from draw-rivers))
     
-    ))
+    (let* ((window-centre-x-pix (/ (width view-state) 2))
+	   (window-centre-y-pix (/ (height view-state) 2))
+
+	   (origin-x (- window-centre-x-pix (centre-x view-state)))
+	   (origin-y (- window-centre-y-pix (centre-y view-state)))
+
+	   (r (hex-r view-state))
+	   (half-down-y (* +sin60+ r))
+	   (full-down-y (* half-down-y 2))
+	   (three-halfs-r (* 1.5 r))
+
+	   (hex-centre-x (+ origin-x
+			    r
+			    (* (x crd) three-halfs-r)))
+	   (hex-centre-y (+ (- window-centre-y-pix
+			       (+ origin-y
+				  (* (y crd) full-down-y)))
+			    (- half-down-y)
+			    window-centre-y-pix
+			    (* -1 full-down-y)
+			    (* (mod (1- (x crd)) 2)
+			       half-down-y))))
+
+      (cairo:with-context (cairo-context)
+	(cairo:set-source-rgb 0.0 0.1 0.8)
+	(cairo:set-line-width 1.0)
+	
+	(let* ((exit-dir (caar (crd-paths-rivers crd-paths)))
+	       (exit-crd (vertex-crd r exit-dir hex-centre-x hex-centre-y)))
+	  (cairo:move-to (x exit-crd) (y exit-crd))
+	  (cairo:line-to hex-centre-x hex-centre-y)
+	  (cairo:stroke)
+
+	  ;; TODO entries
+	  
+	  )))))
 
 ;; Now this is PRETTY similar to #'unit-hex-crd,
 ;; except that the coordinate system is Y-inverted...
 (defun vertex-crd (r dir &optional (x+ 0) (y+ 0))
+  (format t "~a~%" dir)
   (ntranslate
    (case dir
      (:N (crd 0.0 (* -1 r +sin60+)))
-     (:NNE (nrotate (crd (* r +sin60+) (* -0.5 r))
+     (:NNE (nrotate (crd (* r +sin60+) (* 0.5 r))
 		    (* 1/2 +sf-pi+)))
      (:NE (nrotate (crd (* r +sin60+) 0.0)
 		   (* 1/6 +sf-pi+)))
      (:E (crd r 0.0))
      (:SE (nrotate (crd (* r +sin60+) 0.0)
 		   (* -1/6 +sf-pi+)))
-     (:SSE (nrotate (crd (* r +sin60+) (* 0.5 r))
+     (:SSE (nrotate (crd (* r +sin60+) (* 0.5 r)) ;; maybe -0.5
 		    (* -1/2 +sf-pi+)))
      (:S (crd 0.0 (* r +sin60+)))
-     (:SSW (nrotate (crd (* r +sin60+) (* -0.5 r))
+     (:SSW (nrotate (crd (* r +sin60+) (* -0.5 r))  ;; maybe +0.5
 		    (* -1/2 +sf-pi+)))
      (:SW (nrotate (crd (* r +sin60+) 0.0)
 		   (* 7/6 +sf-pi+)))
      (:W (crd (* -1 r) 0.0))
      (:NW (nrotate (crd (* r +sin60+) 0.0)
 		   (* 5/6 +sf-pi+)))
-     (:NNW (nrotate (crd (* r +sin60+) (* 0.5 r))
+     (:NNW (nrotate (crd (* r +sin60+) (* -0.5 r))
 		    (* 1/2 +sf-pi+))))
    x+ y+))
