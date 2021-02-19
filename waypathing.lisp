@@ -18,16 +18,21 @@
     :initarg :infra
     :accessor crd-paths-infra)))
 
+(defun make-crd-paths (&key rivers infra)
+  (make-instance 'crd-paths :rivers rivers :infra infra))
 
+(defun define-crd-paths (crd &key rivers infra)
+  (setf (gethash crd *crd-paths*)
+	(make-crd-paths :rivers rivers :infra infra)))
 
 (defun add-river-entry (crd dir from)
   "Add a river entry to coordinate CRD coming from
 coordinate FROM through DIR in CRD."
   (let ((crd-paths (gethash crd *crd-paths*)))
-    (if (null (crd-paths-rivers crd-paths))
-	(setf (crd-paths-rivers crd-paths)
-	      (list nil (cons dir from)))
-	(if (not (member dir (crd-paths-rivers crd-paths) :key #'car))
+    (if (null crd-paths)
+	(define-crd-paths crd :rivers (list nil (cons dir from)))
+	(if (not (member dir (crd-paths-rivers crd-paths)
+			 :key #'car))
 	    (push (cons dir from) (cdr (crd-paths-rivers crd-paths)))
 	    (error
 	     "Trying to push duplicate river entry vertex ~a to rivers ~a~%"
@@ -36,19 +41,28 @@ coordinate FROM through DIR in CRD."
 (defun add-river-exit (crd dir to)
   "Add a river exit to coordinate CRD exiting at CRD's DIR to coordinate TO."
   (let ((crd-paths (gethash crd *crd-paths*)))
-    (if (null (crd-paths-rivers crd-paths))
-	(setf (crd-paths-rivers crd-paths)
-	      (cons (cons dir to) nil))
+    (if (null crd-paths)
+	(define-crd-paths crd :rivers (cons (cons dir to) nil))
 	(if (and (null (car (crd-paths-rivers crd-paths)))
-		 (not (member dir (cdr (crd-paths-rivers crd-paths)) :key #'car)))
+		 (not (member dir (cdr (crd-paths-rivers crd-paths))
+			      :key #'car)))
 	    (rplaca (crd-paths-rivers crd-paths)
 		    (cons dir to))
 	    (error
 	     "Trying to set invalid river exit vertex ~a to rivers ~a~%"
 	     (cons dir to) (crd-paths-rivers crd-paths)))))
   (add-river-entry to (vertex-alias crd dir to) crd))
-    
 
+(defun rivertest ()
+  (clrhash *crd-paths*)
+
+  (add-river-exit (crd 2 2) :NW (crd 1 2))
+  (add-river-exit (crd 1 2) :SW (crd 0 2))
+  (add-river-exit (crd 0 3) :S (crd 0 2))
+  (add-river-exit (crd 0 2) :S (crd 0 1))
+  (add-river-exit (crd 0 1) :S (crd 0 0))
+  (add-river-exit (crd 0 0) :NE (crd 1 0))
+  (add-river-exit (crd 1 0) :S (crd 1 -1)))
 
 ;; This one could be sped up by interpreting the dirs as integers
 (defun right-or-left (this-0 this-1 from-0 from-1)
