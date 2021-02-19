@@ -25,9 +25,11 @@
   (setf (gethash crd *crd-paths*)
 	(make-crd-paths :rivers rivers :infra infra)))
 
-(defun add-river-entry (crd dir from)
+(defun add-river-entry (crd dir from world)
   "Add a river entry to coordinate CRD coming from
 coordinate FROM through DIR in CRD."
+  (when (not (gethash crd (world-map world)))
+    (return-from add-river-entry))
   (let ((crd-paths (gethash crd *crd-paths*)))
     (if (null crd-paths)
 	(define-crd-paths crd :rivers (list nil (cons dir from)))
@@ -38,8 +40,10 @@ coordinate FROM through DIR in CRD."
 	     "Trying to push duplicate river entry vertex ~a to rivers ~a~%"
 	     (cons dir from) (crd-paths-rivers crd-paths))))))
 
-(defun add-river-exit (crd dir to)
+(defun add-river-exit (crd dir to world)
   "Add a river exit to coordinate CRD exiting at CRD's DIR to coordinate TO."
+  (when (not (gethash crd (world-map world)))
+    (return-from add-river-exit))
   (let ((crd-paths (gethash crd *crd-paths*)))
     (if (null crd-paths)
 	(define-crd-paths crd :rivers (cons (cons dir to) nil))
