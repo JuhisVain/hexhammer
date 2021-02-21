@@ -160,10 +160,10 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
      (:E (crd r 0.0))
      (:SE (nrotate (crd (* r +sin60+) 0.0)
 		   (* -1/6 +sf-pi+)))
-     (:SSE (nrotate (crd (* r +sin60+) (* 0.5 r)) ;; maybe -0.5
+     (:SSE (nrotate (crd (* r +sin60+) (* -0.5 r))
 		    (* -1/2 +sf-pi+)))
      (:S (crd 0.0 (* r +sin60+)))
-     (:SSW (nrotate (crd (* r +sin60+) (* -0.5 r))  ;; maybe +0.5
+     (:SSW (nrotate (crd (* r +sin60+) (* 0.5 r))
 		    (* -1/2 +sf-pi+)))
      (:SW (nrotate (crd (* r +sin60+) 0.0)
 		   (* 7/6 +sf-pi+)))
