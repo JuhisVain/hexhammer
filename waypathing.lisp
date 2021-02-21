@@ -143,8 +143,15 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 	  (cairo:stroke)
 
 	  ;; TODO entries
-	  
-	  )))))
+
+	  (dolist (entry (cdr (crd-paths-rivers crd-paths)))
+	    (let* ((entry-dir (car entry))
+		   (entry-crd (vertex-crd r entry-dir hex-centre-x hex-centre-y)))
+	      (cairo:move-to (x entry-crd) (y entry-crd))
+	      (cairo:line-to hex-centre-x hex-centre-y)
+	      (cairo:stroke)
+	      
+	      )))))))
 
 ;; Now this is PRETTY similar to #'unit-hex-crd,
 ;; except that the coordinate system is Y-inverted...
