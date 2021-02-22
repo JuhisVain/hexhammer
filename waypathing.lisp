@@ -57,19 +57,51 @@ coordinate FROM through DIR in CRD."
 	     (cons dir to) (crd-paths-rivers crd-paths)))))
   (add-river-entry to (vertex-alias crd dir to) crd world))
 
-
-(defun rivertest (world)
+(defun rivertest (&optional (world *world*))
   (clrhash *crd-paths*)
+  (macrolet
+      ((river-exits (&rest instructions)
+	 `(progn
+	    ,@(loop for (x0 y0 dir x1 y1)
+		      on instructions
+		    by #'(lambda (x) (nthcdr 5 x))
+		    collect `(add-river-exit (crd ,x0 ,y0) ,dir
+					     (crd ,x1 ,y1) world)))))
 
-  (add-river-exit (crd 4 1) :W (crd 3 1) world)
-  (add-river-exit (crd 3 1) :NNW (crd 2 2) world)
-  (add-river-exit (crd 2 2) :NW (crd 1 2) world)
-  (add-river-exit (crd 1 2) :SW (crd 0 2) world)
-  (add-river-exit (crd 0 3) :S (crd 0 2) world)
-  (add-river-exit (crd 0 2) :S (crd 0 1) world)
-  (add-river-exit (crd 0 1) :S (crd 0 0) world)
-  (add-river-exit (crd 0 0) :NE (crd 1 0) world)
-  (add-river-exit (crd 1 0) :S (crd 1 -1)  world))
+    (river-exits
+     8 14 :s 8 13
+     8 13 :s 8 12
+     8 12 :e 9 11
+     9 11 :s 9 10
+     9 10 :s 9 9
+     9 9 :ssw 9 8
+     9 8 :ssw 8 8
+     8 8 :se 9 7
+     9 7 :sse 9 6
+     9 6 :w 8 6
+     8 6 :ssw 7 5
+     7 5 :nw 6 6
+     6 6 :ssw 6 5
+     6 5 :sw 5 4
+     5 4 :nw 4 5
+     4 5 :w 3 4
+
+     6 15 :sse 6 14
+     6 14 :w 5 13
+     5 13 :s 5 12
+     5 12 :sse 5 11
+     5 11 :e 6 11
+     6 11 :se 7 10
+     7 10 :s 7 9
+     7 9 :s 7 8
+     7 8 :s 7 7
+     7 7 :s 7 6
+     7 6 :s 7 5)
+
+    ;; TODO: A river exiting to off map is OK, but if exiting to water body
+    ;; or "nowhere" will need to do something
+    (remhash (crd 3 4) *crd-paths*)
+    ))
 
 ;; This one could be sped up by interpreting the dirs as integers
 (defun right-or-left (this-0 this-1 from-0 from-1)
