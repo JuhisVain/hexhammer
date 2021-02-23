@@ -35,7 +35,9 @@ coordinate FROM through DIR in CRD."
 	(define-crd-paths crd :rivers (list nil (cons dir from)))
 	(if (not (member dir (crd-paths-rivers crd-paths)
 			 :key #'car))
-	    (push (cons dir from) (cdr (crd-paths-rivers crd-paths)))
+	    (setf (crd-paths-rivers crd-paths)
+		  (nconc (crd-paths-rivers crd-paths) (list (cons dir from))))
+	    ;;(push (cons dir from) (cdr (crd-paths-rivers crd-paths)))
 	    (error
 	     "Trying to push duplicate river entry vertex ~a to rivers ~a~%"
 	     (cons dir from) (crd-paths-rivers crd-paths))))))
