@@ -209,5 +209,6 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
      (:NW (nrotate (crd (* r +sin60+) 0.0)
 		   (* 5/6 +sf-pi+)))
      (:NNW (nrotate (crd (* r +sin60+) (* -0.5 r))
-		    (* 1/2 +sf-pi+))))
+		    (* 1/2 +sf-pi+)))
+     (:CEN (crd 0.0 0.0)))
    x+ y+))
