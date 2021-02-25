@@ -171,19 +171,47 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 	(cairo:set-line-width 1.0)
 	
 	(let* ((exit-dir (caar (crd-paths-rivers crd-paths)))
-	       (exit-crd (vertex-crd r exit-dir hex-centre-x hex-centre-y)))
-	  (cairo:move-to (x exit-crd) (y exit-crd))
-	  (cairo:line-to hex-centre-x hex-centre-y)
-	  (cairo:stroke)
+	       (exit-crd (vertex-crd r exit-dir ;hex-centre-x hex-centre-y
+				     ))
+	       (master-entry
+		 (vertex-crd r (or (caadr (crd-paths-rivers crd-paths))
+				   :CEN)
+			     ;hex-centre-x hex-centre-y
+			     )))
 
-	  (dolist (entry (cdr (crd-paths-rivers crd-paths)))
-	    (let* ((entry-dir (car entry))
-		   (entry-crd (vertex-crd r entry-dir hex-centre-x hex-centre-y)))
-	      (cairo:move-to (x entry-crd) (y entry-crd))
-	      (cairo:line-to hex-centre-x hex-centre-y)
-	      (cairo:stroke)
-	      
-	      )))))))
+	  (let* ((yd (- (- (y master-entry) (y exit-crd))))
+		 (xd (- (x master-entry) (x exit-crd)))
+		 
+		 (half-distance (/ (sqrt (+ (expt yd 2)
+					    (expt xd 2)))
+				   2))
+		 
+		 (midpoint-x (+ (x exit-crd) (/ xd 2)))
+		 (midpoint-y (+ (y master-entry) (/ yd 2)))
+
+		 (angle (atan midpoint-y midpoint-x))
+
+		 (centre-crd (ntranslate (crd (* (cos angle)
+						 (- (* +sin60+ r)
+						    half-distance))
+					      (* (sin angle)
+						 (- (* +sin60+ r)
+						    half-distance)))
+					 hex-centre-x hex-centre-y)))
+
+	    (cairo:move-to (x centre-crd) (y centre-crd))
+	    (cairo:line-to (+ (x exit-crd) hex-centre-x)
+			   (+ (y exit-crd) hex-centre-y))
+	    (cairo:stroke)
+
+	    (dolist (entry (cdr (crd-paths-rivers crd-paths)))
+	      (let* ((entry-dir (car entry))
+		     (entry-crd (vertex-crd r entry-dir hex-centre-x hex-centre-y)))
+		(cairo:move-to (x entry-crd) (y entry-crd))
+		(cairo:line-to (x centre-crd) (y centre-crd)))
+		(cairo:stroke)
+		
+		)))))))
 
 ;; Now this is PRETTY similar to #'unit-hex-crd,
 ;; except that the coordinate system is Y-inverted...
