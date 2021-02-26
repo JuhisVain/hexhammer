@@ -192,12 +192,15 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 		 (angle (atan midpoint-y midpoint-x))
 
 		 (centre-crd (ntranslate (crd (* (cos angle)
-						 (- (* +sin60+ r)
+						 ;; use either r or sin60*r :
+						 (- r;(* +sin60+ r)
 						    half-distance))
 					      (* (sin angle)
-						 (- (* +sin60+ r)
+						 (- r;(* +sin60+ r)
 						    half-distance)))
 					 hex-centre-x hex-centre-y)))
+
+	    
 
 	    (cairo:move-to (x centre-crd) (y centre-crd))
 	    (cairo:line-to (+ (x exit-crd) hex-centre-x)
