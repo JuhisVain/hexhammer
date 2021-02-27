@@ -200,6 +200,31 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 						    half-distance)))
 					 hex-centre-x hex-centre-y)))
 
+	    ;;TEST
+	    ;; NOTE: slopes are always the wrong solution for absolutely everything
+	    ;; TODO: Check what side of origin line is and switch sign of 90 degree inc
+	    (let* ((prime-angle (atan (- (- (y master-entry) (y exit-crd)))
+				      (- (x master-entry) (x exit-crd))))
+		   (angle (+ (/ +sf-pi+ 2) prime-angle))
+		   
+		   (angle-mark
+		     (nrotate (crd (* 0.5 r) 0)
+			      nil (sin angle) (cos angle))))
+
+	      (format t "~&r ~a CRD  ~a -> primeangle: ~a -> perp ANGLE: ~a~2%"
+		      r crd
+		      (* (/ (atan (- (- (y master-entry) (y exit-crd)))
+				  (- (x master-entry) (x exit-crd)))
+			    +sf-pi+)
+			 180)
+		      (* (/ angle +sf-pi+) 180))
+
+	      (cairo:set-source-rgb 1.0 0.1 0.5)
+	      (cairo:move-to (x centre-crd) (y centre-crd))
+	      (cairo:rel-line-to (x angle-mark) (y angle-mark))
+	      (cairo:stroke)
+	      (cairo:set-source-rgb 0.0 0.1 0.8))
+	    ;;TEST OVER
 	    
 
 	    (cairo:move-to (x centre-crd) (y centre-crd))
@@ -210,6 +235,7 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 	    (dolist (entry (cdr (crd-paths-rivers crd-paths)))
 	      (let* ((entry-dir (car entry))
 		     (entry-crd (vertex-crd r entry-dir hex-centre-x hex-centre-y)))
+
 		(cairo:move-to (x entry-crd) (y entry-crd))
 		(cairo:line-to (x centre-crd) (y centre-crd)))
 		(cairo:stroke)
