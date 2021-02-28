@@ -87,6 +87,12 @@ coordinate FROM through DIR in CRD."
      6 5 :sw 5 4
      5 4 :nw 4 5
      4 5 :w 3 4
+     3 4 :e 4 4
+     4 4 :sse 5 3
+     5 3 :ssw 4 3
+     4 3 :se 5 2
+     5 2 :nne 6 3
+     6 3 :e 7 2
 
      6 15 :sse 6 14
      6 14 :w 5 13
@@ -102,7 +108,7 @@ coordinate FROM through DIR in CRD."
 
     ;; TODO: A river exiting to off map is OK, but if exiting to water body
     ;; or "nowhere" will need to do something
-    (remhash (crd 3 4) *crd-paths*)
+    (remhash (crd 7 2) *crd-paths*)
     ))
 
 ;; This one could be sped up by interpreting the dirs as integers
@@ -202,7 +208,6 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 
 	    ;;TEST
 	    ;; NOTE: slopes are always the wrong solution for absolutely everything
-	    ;; TODO: Check what side of origin line is and switch sign of 90 degree inc
 	    (let* ((prime-angle (atan (- (- (y master-entry) (y exit-crd)))
 				      (- (x master-entry) (x exit-crd))))
 		   (angle (+ (/ +sf-pi+ 2) prime-angle))
