@@ -137,6 +137,35 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 	   :cross) ; rivers don't cross
 	  (t :left))))
 
+(defun graphical-path-centre (entry-crd exit-crd r x-cen y-cen)
+  (let* ((yd (- (- (y entry-crd) (y exit-crd))))
+	 (xd (- (x entry-crd) (x exit-crd)))
+	 
+	 (half-distance (/ (sqrt (+ (expt yd 2)
+				    (expt xd 2)))
+			   2))
+	 
+	 (midpoint-x (+ (x exit-crd) (/ xd 2)))
+	 (midpoint-y (+ (y entry-crd) (/ yd 2))) ;; ?
+
+	 (angle (atan midpoint-y midpoint-x))
+
+	 (centre-crd (ntranslate (crd (* (cos angle)
+					 ;; use either r or sin60*r :
+					 (- r half-distance))
+				      (* (sin angle)
+					 (- r half-distance)))
+				 x-cen y-cen))
+
+	 #| ;; This is how this is supposed to be done but doesn't work
+	 (centre-crd (nrotate (crd (- r half-distance) 0.0)
+			      () (sin angle) (cos angle)
+			      x-cen y-cen))
+	 |#
+	 )
+    centre-crd))
+
+
 (defun draw-rivers (crd world view-state)
   (let* ((cairo-surface
 	   (cairo:create-image-surface-for-data
@@ -185,31 +214,15 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 			     ;hex-centre-x hex-centre-y
 			     )))
 
-	  (let* ((yd (- (- (y master-entry) (y exit-crd))))
-		 (xd (- (x master-entry) (x exit-crd)))
-		 
-		 (half-distance (/ (sqrt (+ (expt yd 2)
-					    (expt xd 2)))
-				   2))
-		 
-		 (midpoint-x (+ (x exit-crd) (/ xd 2)))
-		 (midpoint-y (+ (y master-entry) (/ yd 2)))
-
-		 (angle (atan midpoint-y midpoint-x))
-
-		 (centre-crd (ntranslate (crd (* (cos angle)
-						 ;; use either r or sin60*r :
-						 (- r;(* +sin60+ r)
-						    half-distance))
-					      (* (sin angle)
-						 (- r;(* +sin60+ r)
-						    half-distance)))
-					 hex-centre-x hex-centre-y)))
-
+	  (let ((centre-crd 
+		  (graphical-path-centre master-entry exit-crd
+					 r hex-centre-x hex-centre-y)))
+	    
 	    ;;TEST
 	    ;; NOTE: slopes are always the wrong solution for absolutely everything
 	    (let* ((prime-angle (atan (- (- (y master-entry) (y exit-crd)))
 				      (- (x master-entry) (x exit-crd))))
+		   ;; Right side when looking downstream:
 		   (angle (+ (/ +sf-pi+ 2) prime-angle))
 		   
 		   (angle-mark
@@ -229,6 +242,10 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 	      (cairo:rel-line-to (x angle-mark) (y angle-mark))
 	      (cairo:stroke)
 	      (cairo:set-source-rgb 0.0 0.1 0.8))
+
+	    ;; Check exit crd centre etc..
+	    ;;(let* (()))
+	    
 	    ;;TEST OVER
 	    
 
