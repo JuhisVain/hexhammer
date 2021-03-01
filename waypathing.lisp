@@ -144,10 +144,10 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 	 (half-distance (/ (sqrt (+ (expt yd 2)
 				    (expt xd 2)))
 			   2))
-	 
+	 ;; midpoint is the middle of line from entry to exit:
 	 (midpoint-x (+ (x exit-crd) (/ xd 2)))
-	 (midpoint-y (+ (y entry-crd) (/ yd 2))) ;; ?
-
+	 (midpoint-y (+ (y entry-crd) (/ yd 2)))
+	 ;; This is the angle from hex centre to midpoint:
 	 (angle (atan midpoint-y midpoint-x))
 
 	 (centre-crd (ntranslate (crd (* (cos angle)
@@ -155,14 +155,7 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 					 (- r half-distance))
 				      (* (sin angle)
 					 (- r half-distance)))
-				 x-cen y-cen))
-
-	 #| ;; This is how this is supposed to be done but doesn't work
-	 (centre-crd (nrotate (crd (- r half-distance) 0.0)
-			      () (sin angle) (cos angle)
-			      x-cen y-cen))
-	 |#
-	 )
+				 x-cen y-cen)))
     centre-crd))
 
 
