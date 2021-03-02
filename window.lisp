@@ -204,3 +204,7 @@
   (incf (x crd) x+)
   (incf (y crd) y+)
   crd)
+
+(defun translate (crd x+ y+)
+  (crd (+ x+ (x crd))
+       (+ y+ (y crd))))
