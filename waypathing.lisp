@@ -158,6 +158,30 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 				 x-cen y-cen)))
     centre-crd))
 
+(defun crd-graphical-centre (x y view-state)
+  (let* ((window-centre-x-pix (/ (width view-state) 2))
+	 (window-centre-y-pix (/ (height view-state) 2))
+
+	 (origin-x (- window-centre-x-pix (centre-x view-state)))
+	 (origin-y (- window-centre-y-pix (centre-y view-state)))
+
+	 (r (hex-r view-state))
+	 (half-down-y (* +sin60+ r))
+	 (full-down-y (* half-down-y 2))
+	 (three-halfs-r (* 1.5 r))
+
+	 (hex-centre-x (+ origin-x
+			  r
+			  (* x three-halfs-r)))
+	 (hex-centre-y (+ (- window-centre-y-pix
+			     (+ origin-y
+				(* y full-down-y)))
+			  (- half-down-y)
+			  window-centre-y-pix
+			  (* -1 full-down-y)
+			  (* (mod (1- x) 2)
+			     half-down-y))))
+    (crd hex-centre-x hex-centre-y)))
 
 (defun draw-rivers (crd world view-state)
   (let* ((cairo-surface
