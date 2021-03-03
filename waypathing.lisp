@@ -222,14 +222,13 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 	(cairo:set-source-rgb 0.0 0.1 0.8)
 	(cairo:set-line-width 1.0)
 	
-	(let* ((exit-dir (caar (crd-paths-rivers crd-paths)))
-	       (exit-crd (vertex-crd r exit-dir ;hex-centre-x hex-centre-y
-				     ))
+	(let* ((exit-river (car (crd-paths-rivers crd-paths)))
+	       (exit-dir (car exit-river))
+	       (exit-crd-act (cdr exit-river)) ;; map coordinates
+	       (exit-crd (vertex-crd r exit-dir)) ;; screen coordinates rel to hex centre
 	       (master-entry
 		 (vertex-crd r (or (caadr (crd-paths-rivers crd-paths))
-				   :CEN)
-			     ;hex-centre-x hex-centre-y
-			     )))
+				   :CEN))))
 
 	  (let ((centre-crd 
 		  (graphical-path-centre master-entry exit-crd
@@ -245,23 +244,38 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 		   (angle-mark
 		     (nrotate (crd (* 0.5 r) 0)
 			      nil (sin angle) (cos angle))))
-
-	      (format t "~&r ~a CRD  ~a -> primeangle: ~a -> perp ANGLE: ~a~2%"
-		      r crd
-		      (* (/ (atan (- (- (y master-entry) (y exit-crd)))
-				  (- (x master-entry) (x exit-crd)))
-			    +sf-pi+)
-			 180)
-		      (* (/ angle +sf-pi+) 180))
-
+	      
 	      (cairo:set-source-rgb 1.0 0.1 0.5)
 	      (cairo:move-to (x centre-crd) (y centre-crd))
 	      (cairo:rel-line-to (x angle-mark) (y angle-mark))
 	      (cairo:stroke)
 	      (cairo:set-source-rgb 0.0 0.1 0.8))
 
-	    ;; Check exit crd centre etc..
-	    ;;(let* (()))
+	    (let* ((exit-crd-river (gethash exit-crd-act *crd-paths*))
+		   (exit-hex-centre
+		     (crd-graphical-centre
+		      (x exit-crd-act) (y exit-crd-act) view-state))
+		   (exit-crd-centre
+		     (graphical-path-centre
+		      (vertex-crd r (vertex-alias crd exit-dir exit-crd-act))
+		      (vertex-crd r
+				  (if exit-crd-river
+				      (caar (crd-paths-rivers exit-crd-river))
+				      :CEN))
+		      r (x exit-hex-centre) (y exit-hex-centre)))
+		   (angle (+ (/ +sf-pi+ 2)
+			     (atan (- (- (y centre-crd) (y exit-crd-centre)))
+				   (- (x centre-crd) (x exit-crd-centre)))))
+		   (angle-mark
+		     (nrotate (crd (* 0.5 r) 0)
+			      nil (sin angle) (cos angle))))
+	      
+	      (cairo:set-source-rgb 1.0 0.1 0.5)
+	      (cairo:move-to (+ (x exit-crd) hex-centre-x)
+			     (+ (y exit-crd) hex-centre-y))
+	      (cairo:rel-line-to (x angle-mark) (y angle-mark))
+	      (cairo:stroke)
+	      (cairo:set-source-rgb 0.0 0.1 0.8))
 	    
 	    ;;TEST OVER
 	    
