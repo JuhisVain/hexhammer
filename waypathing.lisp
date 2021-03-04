@@ -10,13 +10,30 @@
 ;; key: crd
 (defvar *crd-paths* (make-hash-table :test 'equalp))
 
+(defstruct river
+  (dir nil :type hex-vertex)
+  (size 1.0)
+  (crd nil :type crd))
+
 (defclass crd-paths ()
-  ((rivers ;; ((exit-dir . exit-to-crd) (entry-dir . entry-from-crd)... )
+  ((rivers ;; ((exit-dir size exit-to-crd) (entry-dir size entry-from-crd)... )
     :initarg :rivers
     :accessor crd-paths-rivers)
    (infra
     :initarg :infra
     :accessor crd-paths-infra)))
+
+(defun rivers-exit (crd-paths)
+  (car (crd-paths-rivers crd-paths)))
+
+(defun river-entries (crd-paths)
+  (cdr (crd-paths-rivers crd-paths)))
+
+(defun rivers-master-entry (crd-paths)
+  (cadr (crd-paths-rivers crd-paths)))
+
+(defun rivers-sub-entries (crd-paths)
+  (cddr (crd-paths-rivers crd-paths)))
 
 (defun make-crd-paths (&key rivers infra)
   (make-instance 'crd-paths :rivers rivers :infra infra))
@@ -32,12 +49,17 @@ coordinate FROM through DIR in CRD."
     (return-from add-river-entry))
   (let ((crd-paths (gethash crd *crd-paths*)))
     (if (null crd-paths)
-	(define-crd-paths crd :rivers (list nil (cons dir from)))
+	(define-crd-paths crd
+	  :rivers (list nil
+			(make-river :dir dir :size 1.0 :crd from)) ;(list nil (cons dir from))
+	  )
 	(if (not (member dir (crd-paths-rivers crd-paths)
-			 :key #'car))
+			 :key #'river-dir))
 	    (setf (crd-paths-rivers crd-paths)
-		  (nconc (crd-paths-rivers crd-paths) (list (cons dir from))))
-	    ;;(push (cons dir from) (cdr (crd-paths-rivers crd-paths)))
+		  (nconc (crd-paths-rivers crd-paths)
+			 ;;(list (cons dir from))
+			 (list (make-river :dir dir :size 1.0 :crd from))
+			 ))
 	    (error
 	     "Trying to push duplicate river entry vertex ~a to rivers ~a~%"
 	     (cons dir from) (crd-paths-rivers crd-paths))))))
@@ -48,12 +70,16 @@ coordinate FROM through DIR in CRD."
     (return-from add-river-exit))
   (let ((crd-paths (gethash crd *crd-paths*)))
     (if (null crd-paths)
-	(define-crd-paths crd :rivers (cons (cons dir to) nil))
+	(define-crd-paths crd
+	  :rivers (list (make-river :dir dir :size 1.0 :crd to)) ;(cons (cons dir to) nil)
+	  )
 	(if (and (null (car (crd-paths-rivers crd-paths)))
 		 (not (member dir (cdr (crd-paths-rivers crd-paths))
-			      :key #'car)))
+			      :key #'river-dir)))
 	    (rplaca (crd-paths-rivers crd-paths)
-		    (cons dir to))
+		    ;;(cons dir to)
+		    (make-river :dir dir :size 1.0 :crd to)
+		    )
 	    (error
 	     "Trying to set invalid river exit vertex ~a to rivers ~a~%"
 	     (cons dir to) (crd-paths-rivers crd-paths)))))
@@ -222,12 +248,13 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 	(cairo:set-source-rgb 0.0 0.1 0.8)
 	(cairo:set-line-width 1.0)
 	
-	(let* ((exit-river (car (crd-paths-rivers crd-paths)))
-	       (exit-dir (car exit-river))
-	       (exit-crd-act (cdr exit-river)) ;; map coordinates
+	(let* ((exit-river (rivers-exit crd-paths))
+	       (exit-dir (river-dir exit-river))
+	       (exit-crd-act (river-crd exit-river)) ;; map coordinates
 	       (exit-crd (vertex-crd r exit-dir)) ;; screen coordinates rel to hex centre
 	       (master-entry
-		 (vertex-crd r (or (caadr (crd-paths-rivers crd-paths))
+		 (vertex-crd r (or (when (rivers-master-entry crd-paths)
+				     (river-dir (rivers-master-entry crd-paths)))
 				   :CEN))))
 
 	  (let ((centre-crd 
@@ -260,7 +287,10 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 		      (vertex-crd r (vertex-alias crd exit-dir exit-crd-act))
 		      (vertex-crd r
 				  (if exit-crd-river
-				      (caar (crd-paths-rivers exit-crd-river))
+				      ;;(caar (crd-paths-rivers exit-crd-river))
+				      (when (crd-paths-rivers exit-crd-river)
+					(river-dir
+					 (rivers-exit exit-crd-river)))
 				      :CEN))
 		      r (x exit-hex-centre) (y exit-hex-centre)))
 		   (angle (+ (/ +sf-pi+ 2)
@@ -285,8 +315,8 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 			   (+ (y exit-crd) hex-centre-y))
 	    (cairo:stroke)
 
-	    (dolist (entry (cdr (crd-paths-rivers crd-paths)))
-	      (let* ((entry-dir (car entry))
+	    (dolist (entry (river-entries crd-paths))
+	      (let* ((entry-dir (river-dir entry))
 		     (entry-crd (vertex-crd r entry-dir hex-centre-x hex-centre-y)))
 
 		(cairo:move-to (x entry-crd) (y entry-crd))
