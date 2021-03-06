@@ -209,6 +209,25 @@ relative direction from FROM path when FROM path is looking towards FROM-1."
 			     half-down-y))))
     (crd hex-centre-x hex-centre-y)))
 
+(defun crd-centre-river-angle (crd)
+  "Compute crosswise angle of river path at river's central position at map
+coordinate CRD. Returns angle in radians to right side looking downstream."
+  (let* ((crd-paths (gethash crd *crd-paths*))
+	 (master-entry-river (rivers-master-entry crd-paths))
+	 (master-entry-crd
+	   (vertex-crd 1.0 ; radius doesn't matter
+		       (if master-entry-river
+			   (river-dir master-entry-river)
+			   :CEN)))
+	 (exit-river
+	   (rivers-exit crd-paths))
+	 (exit-crd
+	   (vertex-crd 1.0 (river-dir exit-river))))
+    (+ (/ +sf-pi+ 2)
+       (atan (- (- (y master-entry-crd) (y exit-crd)))
+	     (- (x master-entry-crd) (x exit-crd))))))
+	 
+
 (defun draw-rivers (crd world view-state)
   (let* ((cairo-surface
 	   (cairo:create-image-surface-for-data
