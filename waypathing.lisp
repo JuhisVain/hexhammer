@@ -12,7 +12,7 @@
 
 (defstruct river
   (dir nil :type hex-vertex)
-  (size 1.0)
+  (size 1.0) ; maybe 1.0 = half r ?
   (crd nil :type crd))
 
 (defclass crd-paths ()
