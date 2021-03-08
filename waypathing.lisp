@@ -136,7 +136,7 @@ coordinate FROM through DIR in CRD."
 
     ;; TODO: A river exiting to off map is OK, but if exiting to water body
     ;; or "nowhere" will need to do something
-    (remhash (crd 7 2) *crd-paths*)
+    ;(remhash (crd 7 2) *crd-paths*)
     ))
 
 ;; This one could be sped up by interpreting the dirs as integers
@@ -282,182 +282,170 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
       (cairo:with-context (cairo-context)
 	(cairo:set-source-rgb 0.0 0.1 0.8)
 	(cairo:set-line-width 1.0)
-	
-	(let* ((exit-river (rivers-exit crd-paths))
-	       (exit-dir (river-dir exit-river))
-	       (exit-crd-act (river-crd exit-river)) ;; map coordinates
-	       (exit-crd (vertex-crd r exit-dir)) ;; screen coordinates rel to hex centre
-	       (master-entry-river (rivers-master-entry crd-paths))
-	       (master-entry
-		 (vertex-crd r (if master-entry-river
-				   (river-dir (rivers-master-entry crd-paths))
-				   :CEN)))
-	       (river-centre-size (/ (+ (river-size exit-river)
-					(if master-entry-river
-					    (river-size master-entry-river)
-					    0.0))
-				     2)))
-	  
-	  (let ((centre-crd 
-		  (graphical-path-centre master-entry exit-crd
-					 r hex-centre-x hex-centre-y)))
+	;; if there is no exit, this river has already been drawn:
+	(when (rivers-exit crd-paths)
+	  (let* ((exit-river (rivers-exit crd-paths))
+		 (exit-dir (river-dir exit-river))
+		 (exit-crd-act (river-crd exit-river)) ;; map coordinates
+		 (exit-crd (vertex-crd r exit-dir)) ;; screen coordinates rel to hex centre
+		 (master-entry-river (rivers-master-entry crd-paths))
+		 (master-entry
+		   (vertex-crd r (if master-entry-river
+				     (river-dir (rivers-master-entry crd-paths))
+				     :CEN)))
+		 (river-centre-size (/ (+ (river-size exit-river)
+					  (if master-entry-river
+					      (river-size master-entry-river)
+					      0.0))
+				       2)))
 	    
-	    ;;TEST
-	    (let* ((angle (crd-centre-river-angle crd))
-		   (angle-mark
-		     (nrotate (crd (* 0.5 r) 0)
-			      nil (sin angle) (cos angle))))
+	    (let ((centre-crd 
+		    (graphical-path-centre master-entry exit-crd
+					   r hex-centre-x hex-centre-y)))
 	      
-	      (cairo:set-source-rgb 1.0 0.1 0.5)
-	      (cairo:move-to (x centre-crd) (y centre-crd))
-	      (cairo:rel-line-to (x angle-mark) (y angle-mark))
-	      (cairo:stroke)
-	      (cairo:set-source-rgb 0.0 0.1 0.8))
+	      ;;TEST
+	      (let* ((angle (crd-centre-river-angle crd))
+		     (angle-mark
+		       (nrotate (crd (* 0.5 r) 0)
+				nil (sin angle) (cos angle))))
+		
+		(cairo:set-source-rgb 1.0 0.1 0.5)
+		(cairo:move-to (x centre-crd) (y centre-crd))
+		(cairo:rel-line-to (x angle-mark) (y angle-mark))
+		(cairo:stroke)
+		(cairo:set-source-rgb 0.0 0.1 0.8))
 
-	    ;; angle at hex edges:
-	    (let* ((exit-crd-river (gethash exit-crd-act *crd-paths*))
-		   (exit-hex-centre
-		     (crd-graphical-centre
-		      (x exit-crd-act) (y exit-crd-act) view-state))
-		   (exit-crd-centre
-		     (graphical-path-centre
-		      (vertex-crd r (vertex-alias crd exit-dir exit-crd-act))
-		      (vertex-crd r
-				  (if exit-crd-river
-				      (when (crd-paths-rivers exit-crd-river)
-					(river-dir
-					 (rivers-exit exit-crd-river)))
-				      :CEN))
-		      r (x exit-hex-centre) (y exit-hex-centre)))
-		   (angle (+ (/ +sf-pi+ 2)
-			     (atan (- (- (y centre-crd) (y exit-crd-centre)))
-				   (- (x centre-crd) (x exit-crd-centre)))))
-		   (angle-mark
-		     (nrotate (crd (* 0.5 r) 0)
-			      nil (sin angle) (cos angle))))
+	      ;; angle at hex edges:
+	      '(let* ((exit-crd-river (gethash exit-crd-act *crd-paths*))
+		     (exit-hex-centre
+		       (crd-graphical-centre
+			(x exit-crd-act) (y exit-crd-act) view-state))
+		     (exit-crd-centre
+		       (graphical-path-centre
+			(vertex-crd r (vertex-alias crd exit-dir exit-crd-act))
+			(vertex-crd r
+				    (if exit-crd-river
+					(when (rivers-exit exit-crd-river)
+					  (river-dir
+					   (rivers-exit exit-crd-river)))
+					:CEN))
+			
+			r (x exit-hex-centre) (y exit-hex-centre)))
+		     (angle (+ (/ +sf-pi+ 2)
+			       (atan (- (- (y centre-crd) (y exit-crd-centre)))
+				     (- (x centre-crd) (x exit-crd-centre)))))
+		     (angle-mark
+		       (nrotate (crd (* 0.5 r) 0)
+				nil (sin angle) (cos angle))))
+		
+		(cairo:set-source-rgb 1.0 0.1 0.5)
+		(cairo:move-to (+ (x exit-crd) hex-centre-x)
+			       (+ (y exit-crd) hex-centre-y))
+		(cairo:rel-line-to (x angle-mark) (y angle-mark))
+		(cairo:stroke)
+		(cairo:set-source-rgb 0.0 0.1 0.8))
+	      ;;TEST OVER
 	      
-	      (cairo:set-source-rgb 1.0 0.1 0.5)
-	      (cairo:move-to (+ (x exit-crd) hex-centre-x)
-			     (+ (y exit-crd) hex-centre-y))
-	      (cairo:rel-line-to (x angle-mark) (y angle-mark))
-	      (cairo:stroke)
-	      (cairo:set-source-rgb 0.0 0.1 0.8))
-	    
-	    ;;TEST OVER
+	      (let* ((centre-angle (crd-centre-river-angle crd))
+		     
+		     (centre-right-side
+		       (nrotate (crd (* *river-rad* r river-centre-size) 0)
+				nil (sin centre-angle) (cos centre-angle)))
+		     (centre-left-side
+		       (nrotate (crd (* (- *river-rad*) r river-centre-size) 0)
+				nil (sin centre-angle) (cos centre-angle)))
 
-	    (let* ((centre-angle (crd-centre-river-angle crd))
-		   
-		   (centre-right-side
-		     (nrotate (crd (* *river-rad* r river-centre-size) 0)
-			      nil (sin centre-angle) (cos centre-angle)))
-		   (centre-left-side
-		     (nrotate (crd (* (- *river-rad*) r river-centre-size) 0)
-			      nil (sin centre-angle) (cos centre-angle)))
-
-		   (exit-crd-river (gethash exit-crd-act *crd-paths*))
-		   (exit-hex-centre
-		     (crd-graphical-centre
-		      (x exit-crd-act) (y exit-crd-act) view-state))
-		   (exit-crd-centre
-		     (graphical-path-centre
-		      (vertex-crd r (vertex-alias crd exit-dir exit-crd-act))
-		      (vertex-crd r
-				  (if exit-crd-river
-				      (when (crd-paths-rivers exit-crd-river)
+		     (exit-crd-river (gethash exit-crd-act *crd-paths*))
+		     (exit-hex-centre
+		       (crd-graphical-centre
+			(x exit-crd-act) (y exit-crd-act) view-state))
+		     (exit-crd-centre
+		       (graphical-path-centre
+			(vertex-crd
+			 r
+			 ;; The master entry of exit-crd-act:
+			 (if (rivers-master-entry exit-crd-river)
+			     (river-dir (rivers-master-entry exit-crd-river))
+			     :CEN))
+			(vertex-crd r
+				    (if (rivers-exit exit-crd-river)
 					(river-dir
-					 (rivers-exit exit-crd-river)))
-				      :CEN))
-		      r (x exit-hex-centre) (y exit-hex-centre)))
-		   (exit-angle (+ (/ +sf-pi+ 2)
-				  (atan (- (- (y centre-crd) (y exit-crd-centre)))
-					(- (x centre-crd) (x exit-crd-centre)))))
-		   (river-exit-size (river-size exit-river))
-		   (exit-right-side
-		     (nrotate (crd (* *river-rad* r river-exit-size) 0)
-			      nil (sin exit-angle) (cos exit-angle)))
-		   (exit-left-side
-		     (nrotate (crd (* (- *river-rad*) r river-exit-size) 0)
-			      nil (sin exit-angle) (cos exit-angle)))
+					 (rivers-exit exit-crd-river))
+					:CEN))
+			r (x exit-hex-centre) (y exit-hex-centre)))
+		     (exit-angle (+ (/ +sf-pi+ 2)
+				    (atan (- (- (y centre-crd) (y exit-crd-centre)))
+					  (- (x centre-crd) (x exit-crd-centre)))))
+		     (river-exit-size (river-size exit-river))
+		     (exit-right-side
+		       (nrotate (crd (* *river-rad* r river-exit-size) 0)
+				nil (sin exit-angle) (cos exit-angle)))
+		     (exit-left-side
+		       (nrotate (crd (* (- *river-rad*) r river-exit-size) 0)
+				nil (sin exit-angle) (cos exit-angle)))
 
 		   ;;; If drawing exit hex's river in this hex
-		   ;; river drawing will have to have separate iteration
-		   ;; over displayed hexes
+		     ;; river drawing will have to have separate iteration
+		     ;; over displayed hexes
 
-		   (exit-centre-angle (crd-centre-river-angle exit-crd-act))
-		   (exit-centre-size (river-centre-size exit-crd-act))
+		     (exit-centre-angle (crd-centre-river-angle exit-crd-act))
+		     (exit-centre-size (river-centre-size exit-crd-act))
 
-		   (exit-centre-right-side
-		     (nrotate (crd (* *river-rad* r exit-centre-size) 0)
-			      nil (sin exit-centre-angle) (cos exit-centre-angle)))
-		   (exit-centre-left-side
-		     (nrotate (crd (* -0.25 r exit-centre-size) 0)
-			      nil (sin exit-centre-angle) (cos exit-centre-angle)))
+		     (exit-centre-right-side
+		       (nrotate (crd (* *river-rad* r exit-centre-size) 0)
+				nil (sin exit-centre-angle) (cos exit-centre-angle)))
+		     (exit-centre-left-side
+		       (nrotate (crd (* (- *river-rad*) r exit-centre-size) 0)
+				nil (sin exit-centre-angle) (cos exit-centre-angle))))
 
-		   
-		   )
+		(cairo:set-source-rgb 0.0 0.1 0.8)
+		
+		(cairo:move-to (x centre-crd) (y centre-crd))
+		(cairo:rel-move-to (x centre-left-side) (y centre-left-side))
+		(cairo:line-to (+ (x centre-right-side)
+				  (x centre-crd))
+			       (+ (y centre-right-side)
+				  (y centre-crd)))
+		(cairo:line-to (+ (x exit-right-side)
+				  (x exit-crd) hex-centre-x)
+			       (+ (y exit-right-side)
+				  (y exit-crd) hex-centre-y))
 
-	      ;; TODO:
-	      ;; exit-crd-centre screwed when sub river joins master trunk
+		(cairo:line-to (+ (x exit-centre-right-side)
+				  (x exit-crd-centre))
+			       (+ (y exit-centre-right-side)
+				  (y exit-crd-centre)))
+		(cairo:line-to (+ (x exit-centre-left-side)
+				  (x exit-crd-centre))
+			       (+ (y exit-centre-left-side)
+				  (y exit-crd-centre)))
 
-	      (when (equalp crd (crd 7 6))
-		(format t "~a ->~%   angle ~a~%   size ~a~%   right ~a~%   left ~a~2%"
-			crd
-			(* (/ exit-centre-angle +sf-pi+) 180)
-			exit-centre-size exit-centre-right-side
-			exit-centre-left-side))
-		     (nrotate (crd (* (- *river-rad*) r exit-centre-size) 0)
-			      nil (sin exit-centre-angle) (cos exit-centre-angle))))
+		(cairo:line-to (+ (x exit-left-side)
+				  (x exit-crd) hex-centre-x)
+			       (+ (y exit-left-side)
+				  (y exit-crd) hex-centre-y))
 
-	      (cairo:set-source-rgb 0.0 0.1 0.8)
-	      
+		(cairo:line-to (+ (x centre-left-side)
+				  (x centre-crd))
+			       (+ (y centre-left-side)
+				  (y centre-crd)))
+
+		(cairo:stroke))
+
 	      (cairo:move-to (x centre-crd) (y centre-crd))
-	      (cairo:rel-move-to (x centre-left-side) (y centre-left-side))
-	      (cairo:line-to (+ (x centre-right-side)
-				(x centre-crd))
-			     (+ (y centre-right-side)
-				(y centre-crd)))
-	      (cairo:line-to (+ (x exit-right-side)
-				(x exit-crd) hex-centre-x)
-			     (+ (y exit-right-side)
-				(y exit-crd) hex-centre-y))
-
-	      (cairo:line-to (+ (x exit-centre-right-side)
-				(x exit-crd-centre))
-			     (+ (y exit-centre-right-side)
-				(y exit-crd-centre)))
-	      (cairo:line-to (+ (x exit-centre-left-side)
-				(x exit-crd-centre))
-			     (+ (y exit-centre-left-side)
-				(y exit-crd-centre)))
-
-	      (cairo:line-to (+ (x exit-left-side)
-				(x exit-crd) hex-centre-x)
-			     (+ (y exit-left-side)
-				(y exit-crd) hex-centre-y))
-
-	      (cairo:line-to (+ (x centre-left-side)
-				(x centre-crd))
-			     (+ (y centre-left-side)
-				(y centre-crd)))
-
+	      (cairo:line-to (+ (x exit-crd) hex-centre-x)
+			     (+ (y exit-crd) hex-centre-y))
 	      (cairo:stroke)
-	      )
-	  
 
-	    (cairo:move-to (x centre-crd) (y centre-crd))
-	    (cairo:line-to (+ (x exit-crd) hex-centre-x)
-			   (+ (y exit-crd) hex-centre-y))
-	    (cairo:stroke)
-
-	    (dolist (entry (river-entries crd-paths))
-	      (let* ((entry-dir (river-dir entry))
-		     (entry-crd (vertex-crd r entry-dir hex-centre-x hex-centre-y)))
-		(cairo:set-source-rgb 1.0 1.0 0.8)
-		(cairo:move-to (x entry-crd) (y entry-crd))
-		(cairo:line-to (x centre-crd) (y centre-crd)))
-	      (cairo:stroke))
+	      (dolist (entry (river-entries crd-paths))
+		(let* ((entry-dir (river-dir entry))
+		       (entry-crd (vertex-crd r entry-dir hex-centre-x hex-centre-y)))
+		  (cairo:set-source-rgb 1.0 1.0 0.8)
+		  (cairo:move-to (x entry-crd) (y entry-crd))
+		  (cairo:line-to (x centre-crd) (y centre-crd)))
+		(cairo:stroke))
 	      
-	    ))))))
+	      )))))))
 
 ;; Now this is PRETTY similar to #'unit-hex-crd,
 ;; except that the coordinate system is Y-inverted...
