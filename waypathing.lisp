@@ -9,6 +9,8 @@
 
 ;; key: crd
 (defvar *crd-paths* (make-hash-table :test 'equalp))
+(defvar *river-rad* 0.05
+  "Multiply this by hex radius to get HALF of river width.")
 
 (defstruct river
   (dir nil :type hex-vertex)
@@ -346,10 +348,10 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 	    (let* ((centre-angle (crd-centre-river-angle crd))
 		   
 		   (centre-right-side
-		     (nrotate (crd (* 0.25 r river-centre-size) 0)
+		     (nrotate (crd (* *river-rad* r river-centre-size) 0)
 			      nil (sin centre-angle) (cos centre-angle)))
 		   (centre-left-side
-		     (nrotate (crd (* -0.25 r river-centre-size) 0)
+		     (nrotate (crd (* (- *river-rad*) r river-centre-size) 0)
 			      nil (sin centre-angle) (cos centre-angle)))
 
 		   (exit-crd-river (gethash exit-crd-act *crd-paths*))
@@ -371,10 +373,10 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 					(- (x centre-crd) (x exit-crd-centre)))))
 		   (river-exit-size (river-size exit-river))
 		   (exit-right-side
-		     (nrotate (crd (* 0.25 r river-exit-size) 0)
+		     (nrotate (crd (* *river-rad* r river-exit-size) 0)
 			      nil (sin exit-angle) (cos exit-angle)))
 		   (exit-left-side
-		     (nrotate (crd (* -0.25 r river-exit-size) 0)
+		     (nrotate (crd (* (- *river-rad*) r river-exit-size) 0)
 			      nil (sin exit-angle) (cos exit-angle)))
 
 		   ;;; If drawing exit hex's river in this hex
@@ -385,7 +387,7 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 		   (exit-centre-size (river-centre-size exit-crd-act))
 
 		   (exit-centre-right-side
-		     (nrotate (crd (* 0.25 r exit-centre-size) 0)
+		     (nrotate (crd (* *river-rad* r exit-centre-size) 0)
 			      nil (sin exit-centre-angle) (cos exit-centre-angle)))
 		   (exit-centre-left-side
 		     (nrotate (crd (* -0.25 r exit-centre-size) 0)
@@ -403,6 +405,8 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 			(* (/ exit-centre-angle +sf-pi+) 180)
 			exit-centre-size exit-centre-right-side
 			exit-centre-left-side))
+		     (nrotate (crd (* (- *river-rad*) r exit-centre-size) 0)
+			      nil (sin exit-centre-angle) (cos exit-centre-angle))))
 
 	      (cairo:set-source-rgb 0.0 0.1 0.8)
 	      
