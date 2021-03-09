@@ -316,7 +316,7 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 		(cairo:set-source-rgb 0.0 0.1 0.8))
 
 	      ;; angle at hex edges:
-	      '(let* ((exit-crd-river (gethash exit-crd-act *crd-paths*))
+	      (let* ((exit-crd-river (gethash exit-crd-act *crd-paths*))
 		     (exit-hex-centre
 		       (crd-graphical-centre
 			(x exit-crd-act) (y exit-crd-act) view-state))
@@ -324,10 +324,9 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 		       (graphical-path-centre
 			(vertex-crd r (vertex-alias crd exit-dir exit-crd-act))
 			(vertex-crd r
-				    (if exit-crd-river
-					(when (rivers-exit exit-crd-river)
-					  (river-dir
-					   (rivers-exit exit-crd-river)))
+				    (if (and exit-crd-river (rivers-exit exit-crd-river))
+					(river-dir
+					 (rivers-exit exit-crd-river))
 					:CEN))
 			
 			r (x exit-hex-centre) (y exit-hex-centre)))
