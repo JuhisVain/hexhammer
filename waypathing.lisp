@@ -322,13 +322,17 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 			(x exit-crd-act) (y exit-crd-act) view-state))
 		     (exit-crd-centre
 		       (graphical-path-centre
-			(vertex-crd r (vertex-alias crd exit-dir exit-crd-act))
+			(vertex-crd
+			 r
+			 ;; The master entry of exit-crd-act:
+			 (if (rivers-master-entry exit-crd-river)
+			     (river-dir (rivers-master-entry exit-crd-river))
+			     :CEN))
 			(vertex-crd r
-				    (if (and exit-crd-river (rivers-exit exit-crd-river))
+				    (if (rivers-exit exit-crd-river)
 					(river-dir
 					 (rivers-exit exit-crd-river))
 					:CEN))
-			
 			r (x exit-hex-centre) (y exit-hex-centre)))
 		     (angle (+ (/ +sf-pi+ 2)
 			       (atan (- (- (y centre-crd) (y exit-crd-centre)))
