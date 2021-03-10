@@ -305,9 +305,8 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 	      
 	      ;;TEST
 	      (let* ((angle (crd-centre-river-angle crd))
-		     (angle-mark
-		       (nrotate (crd (* 0.5 r) 0)
-				nil (sin angle) (cos angle))))
+		     (angle-mark (nrotate (crd (* 0.5 r) 0)
+					  nil (sin angle) (cos angle))))
 		
 		(cairo:set-source-rgb 1.0 0.1 0.5)
 		(cairo:move-to (x centre-crd) (y centre-crd))
@@ -399,21 +398,74 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 				nil (sin exit-centre-angle) (cos exit-centre-angle)))
 		     (exit-centre-left-side
 		       (nrotate (crd (* (- *river-rad*) r exit-centre-size) 0)
-				nil (sin exit-centre-angle) (cos exit-centre-angle))))
+				nil (sin exit-centre-angle) (cos exit-centre-angle)))
+
+		     ;; Now for the bezier curve control points:
+		     ;; Compute distance between path crds:
+		     (right-c-e-dist (sqrt (+ (expt (- (+ (x centre-right-side)
+							  (x centre-crd))
+						       (+ (x exit-right-side)
+							  (x exit-crd)
+							  hex-centre-x))
+						    2)
+					      (expt (- (+ (y centre-right-side)
+							  (y centre-crd))
+						       (+ (y exit-right-side)
+							  (y exit-crd)
+							  hex-centre-y))
+						    2))))
+		     (dist-div 2.0)
+		     ;; Relative coordinates:
+		     (r-c-e-cp1 (nrotate (crd (/ right-c-e-dist
+						 dist-div)
+					      0)
+					 (+ centre-angle
+					    (/ +sf-pi+ 2))))
+		     (r-c-e-cp2 (nrotate (crd (- (/ right-c-e-dist
+						    dist-div))
+					      0)
+					 (+ exit-angle
+					    (/ +sf-pi+ 2))))
+		     )
 
 		(cairo:set-source-rgb 0.0 0.1 0.8)
-		
+		;; Move to initial point centre-right-side:
 		(cairo:move-to (x centre-crd) (y centre-crd))
 		(cairo:rel-move-to (x centre-left-side) (y centre-left-side))
-		(cairo:line-to (+ (x centre-right-side)
+                (cairo:line-to (+ (x centre-right-side)
 				  (x centre-crd))
 			       (+ (y centre-right-side)
 				  (y centre-crd)))
+
+		(cairo:curve-to
+		 (+ (x centre-right-side)
+		    (x centre-crd)
+		    (x r-c-e-cp1))
+		 (+ (y centre-right-side)
+		    (y centre-crd)
+		    (y r-c-e-cp1))
+
+		 (+ (x exit-right-side)
+		    (x exit-crd)
+		    hex-centre-x
+		    (x r-c-e-cp2))
+		 (+ (y exit-right-side)
+		    (y exit-crd)
+		    hex-centre-y
+		    (y r-c-e-cp2))
+		 
+		 (+ (x exit-right-side)
+		    (x exit-crd)
+		    hex-centre-x)
+		 (+ (y exit-right-side)
+		    (y exit-crd)
+		    hex-centre-y))
+		#|
 		(cairo:line-to (+ (x exit-right-side)
 				  (x exit-crd) hex-centre-x)
 			       (+ (y exit-right-side)
 				  (y exit-crd) hex-centre-y))
-
+		|#
 		(cairo:line-to (+ (x exit-centre-right-side)
 				  (x exit-crd-centre))
 			       (+ (y exit-centre-right-side)
@@ -439,7 +491,7 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 	      (cairo:line-to (+ (x exit-crd) hex-centre-x)
 			     (+ (y exit-crd) hex-centre-y))
 	      (cairo:stroke)
-
+	      #|
 	      (dolist (entry (river-entries crd-paths))
 		(let* ((entry-dir (river-dir entry))
 		       (entry-crd (vertex-crd r entry-dir hex-centre-x hex-centre-y)))
@@ -447,7 +499,7 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 		  (cairo:move-to (x entry-crd) (y entry-crd))
 		  (cairo:line-to (x centre-crd) (y centre-crd)))
 		(cairo:stroke))
-	      
+	      |#
 	      )))))))
 
 ;; Now this is PRETTY similar to #'unit-hex-crd,
