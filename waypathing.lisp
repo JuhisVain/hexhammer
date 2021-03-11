@@ -415,7 +415,7 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 							  hex-centre-y))
 						    2))))
 		     (dist-div 2.0)
-		     ;; Relative coordinates:
+		     ;; Relative to closest start/end point coordinates:
 		     (r-c-e-cp1 (nrotate (crd (/ right-c-e-dist
 						 dist-div)
 					      0)
@@ -426,25 +426,102 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 					      0)
 					 (+ exit-angle
 					    (/ +sf-pi+ 2))))
+
+		     (right-e-ec-dist (sqrt (+ (expt (- (+ (x exit-right-side)
+							   (x exit-crd)
+							   hex-centre-x)
+							(+ (x exit-centre-right-side)
+							   (x exit-crd-centre)))
+						     2)
+					       (expt (- (+ (y exit-right-side)
+							   (y exit-crd)
+							   hex-centre-y)
+							(+ (y exit-centre-right-side)
+							   (y exit-crd-centre)))
+						     2))))
+
+		     (r-e-ec-cp1 (nrotate (crd (/ right-e-ec-dist
+						  dist-div)
+					       0)
+					  (+ exit-angle
+					     (/ +sf-pi+ 2))))
+		     (r-e-ec-cp2 (nrotate (crd (- (/ right-e-ec-dist
+						     dist-div))
+					       0)
+					  (+ exit-centre-angle
+					     (/ +sf-pi+ 2))))
+
+		     (left-ec-e-dist (sqrt (+ (expt (- (+ (x exit-left-side)
+							  (x exit-crd)
+							  hex-centre-x)
+						       (+ (x exit-centre-left-side)
+							  (x exit-crd-centre)))
+						    2)
+					      (expt (- (+ (y exit-left-side)
+							  (y exit-crd)
+							  hex-centre-y)
+						       (+ (y exit-centre-left-side)
+							  (y exit-crd-centre)))
+						    2))))
+
+		     (l-ec-e-cp1 (nrotate (crd (- (/ left-ec-e-dist
+						  dist-div))
+					       0)
+					  (+ exit-centre-angle
+					     (/ +sf-pi+ 2))))
+
+		     (l-ec-e-cp2 (nrotate (crd (/ left-ec-e-dist
+						     dist-div)
+					       0)
+					  (+ exit-angle
+					     (/ +sf-pi+ 2))))
+
+		     (left-e-c-dist (sqrt (+ (expt (- (+ (x centre-left-side)
+							 (x centre-crd))
+						      (+ (x exit-left-side)
+							 (x exit-crd)
+							 hex-centre-x))
+						   2)
+					     (expt (- (+ (y centre-left-side)
+							 (y centre-crd))
+						      (+ (y exit-left-side)
+							 (y exit-crd)
+							 hex-centre-y))
+						   2))))
+
+		     (l-e-c-cp1 (nrotate (crd (- (/ left-e-c-dist
+						    dist-div))
+					      0)
+					 (+ exit-angle
+					    (/ +sf-pi+ 2))))
+
+		     (l-e-c-cp2 (nrotate (crd (/ left-e-c-dist
+						 dist-div)
+					      0)
+					 (+ centre-angle
+					    (/ +sf-pi+ 2))))
 		     )
 
 		(cairo:set-source-rgb 0.0 0.1 0.8)
 		;; Move to initial point centre-right-side:
 		(cairo:move-to (x centre-crd) (y centre-crd))
 		(cairo:rel-move-to (x centre-left-side) (y centre-left-side))
+
+		;; Preclosing river section area boundary:
                 (cairo:line-to (+ (x centre-right-side)
 				  (x centre-crd))
 			       (+ (y centre-right-side)
 				  (y centre-crd)))
 
 		(cairo:curve-to
+		 ;; First control point
 		 (+ (x centre-right-side)
 		    (x centre-crd)
 		    (x r-c-e-cp1))
 		 (+ (y centre-right-side)
 		    (y centre-crd)
 		    (y r-c-e-cp1))
-
+		 ;; Second control point:
 		 (+ (x exit-right-side)
 		    (x exit-crd)
 		    hex-centre-x
@@ -453,7 +530,7 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 		    (y exit-crd)
 		    hex-centre-y
 		    (y r-c-e-cp2))
-		 
+		 ;; Edge point:
 		 (+ (x exit-right-side)
 		    (x exit-crd)
 		    hex-centre-x)
@@ -466,25 +543,100 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 			       (+ (y exit-right-side)
 				  (y exit-crd) hex-centre-y))
 		|#
+
+		(cairo:curve-to
+		 ;; First cp:
+		 (+ (x r-e-ec-cp1)
+		    (x exit-right-side)
+		    (x exit-crd)
+		    hex-centre-x)
+		 (+ (y r-e-ec-cp1)
+		    (y exit-right-side)
+		    (y exit-crd)
+		    hex-centre-y)
+		 ;; Second cp:
+		 (+ (x r-e-ec-cp2)
+		    (x exit-centre-right-side)
+		    (x exit-crd-centre))
+		 (+ (y r-e-ec-cp2)
+		    (y exit-centre-right-side)
+		    (y exit-crd-centre))
+		 ;; Right side destination:
+		 (+ (x exit-centre-right-side)
+		    (x exit-crd-centre))
+		 (+ (y exit-centre-right-side)
+		    (y exit-crd-centre)))
+		#|
 		(cairo:line-to (+ (x exit-centre-right-side)
 				  (x exit-crd-centre))
 			       (+ (y exit-centre-right-side)
 				  (y exit-crd-centre)))
+		|#
+		;; Close destination section boundary:
 		(cairo:line-to (+ (x exit-centre-left-side)
 				  (x exit-crd-centre))
 			       (+ (y exit-centre-left-side)
 				  (y exit-crd-centre)))
 
+		(cairo:curve-to
+		 (+ (x l-ec-e-cp1)
+		    (x exit-centre-left-side)
+		    (x exit-crd-centre))
+		 (+ (y l-ec-e-cp1)
+		    (y exit-centre-left-side)
+		    (y exit-crd-centre))
+
+		 (+ (x l-ec-e-cp2)
+		    (x exit-left-side)
+		    (x exit-crd)
+		    hex-centre-x)
+		 (+ (y l-ec-e-cp2)
+		    (y exit-left-side)
+		    (y exit-crd)
+		    hex-centre-y)
+
+		 (+ (x exit-left-side)
+		    (x exit-crd)
+		    hex-centre-x)
+		 (+ (y exit-left-side)
+		    (y exit-crd)
+		    hex-centre-y)
+		 )
+		#|
 		(cairo:line-to (+ (x exit-left-side)
 				  (x exit-crd) hex-centre-x)
 			       (+ (y exit-left-side)
 				  (y exit-crd) hex-centre-y))
+		|#
 
+		(cairo:curve-to
+		 (+ (x l-e-c-cp1)
+		    (x exit-left-side)
+		    (x exit-crd)
+		    hex-centre-x)
+		 (+ (y l-e-c-cp1)
+		    (y exit-left-side)
+		    (y exit-crd)
+		    hex-centre-y)
+
+		 (+ (x l-e-c-cp2)
+		    (x centre-left-side)
+		    (x centre-crd))
+		 (+ (y l-e-c-cp2)
+		    (y centre-left-side)
+		    (y centre-crd))
+
+		 (+ (x centre-left-side)
+		    (x centre-crd))
+		 (+ (y centre-left-side)
+		    (y centre-crd))
+		 )
+		#|
 		(cairo:line-to (+ (x centre-left-side)
 				  (x centre-crd))
 			       (+ (y centre-left-side)
 				  (y centre-crd)))
-
+		|#
 		(cairo:stroke))
 
 	      (cairo:move-to (x centre-crd) (y centre-crd))
