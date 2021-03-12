@@ -117,7 +117,7 @@ coordinate FROM through DIR in CRD."
      4 5 :w 3 4
      3 4 :e 4 4
      4 4 :sse 5 3
-     5 3 :ssw 4 3
+     5 3 :sw 4 3
      4 3 :se 5 2
      5 2 :nne 6 3
      6 3 :e 7 2
@@ -132,7 +132,12 @@ coordinate FROM through DIR in CRD."
      7 9 :s 7 8
      7 8 :s 7 7
      7 7 :s 7 6
-     7 6 :s 7 5)
+     7 6 :s 7 5
+
+     2 6 :sse 3 5
+     3 5 :s 3 4
+
+     3 3 :n 3 4)
 
     ;; TODO: A river exiting to off map is OK, but if exiting to water body
     ;; or "nowhere" will need to do something
