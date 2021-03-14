@@ -405,7 +405,18 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 		     ;; river drawing will have to have separate iteration
 		     ;; over displayed hexes
 
-		     (exit-centre-angle (crd-centre-river-angle exit-crd-act))
+		     (exit-centre-angle
+		       ;; Branches joining trunk may cause too thin river paths:
+		       (let ((exit-centre-master-angle
+			       (crd-centre-river-angle exit-crd-act)))
+			 (if (and (not (destination-masterp crd))
+				  (> (abs (- exit-centre-master-angle
+					     exit-angle))
+				     (/ +sf-pi+ 4)))
+			     (+ exit-centre-master-angle
+				(/ +sf-pi+ 2)) ; branch entry perpendicular to trunk
+			     exit-centre-master-angle)))
+
 		     (exit-centre-size (river-centre-size exit-crd-act))
 
 		     (exit-centre-right-side
