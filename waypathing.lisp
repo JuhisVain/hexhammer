@@ -34,6 +34,16 @@
 (defun rivers-master-entry (crd-paths)
   (cadr (crd-paths-rivers crd-paths)))
 
+(defun destination-masterp (crd)
+  "Is CRD's exit-river's counterpart it's destination's master entry?"
+  (let* ((crd-paths (gethash crd *crd-paths*))
+	 (exit (rivers-exit crd-paths))
+	 (entry-crd (river-crd exit)))
+    (eq
+     (vertex-alias crd (river-dir exit) entry-crd)
+     (river-dir
+      (rivers-master-entry (gethash entry-crd *crd-paths*))))))
+
 (defun rivers-sub-entries (crd-paths)
   (cddr (crd-paths-rivers crd-paths)))
 
