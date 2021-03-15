@@ -666,10 +666,19 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 			       (+ (y centre-left-side)
 				  (y centre-crd)))
 		|#
+		
+		(cairo:set-source-rgb 0.0 0.2 0.8)
+		(cairo:set-line-width 1.0)
+
+		;; NOTE: The current colours hurt my eyes
+		;; and there seems to be either an illusion or a problem with my monitor
+		;; causing the western borders to appear dark and eastern borders to appear
+		;; brighter than the fill color.
 		(cairo:set-antialias :none)
 		(cairo:fill-preserve)
 		(cairo:set-antialias :default)
 		(cairo:stroke))
+	      
 	      #|
 	      (cairo:move-to (x centre-crd) (y centre-crd))
 	      (cairo:line-to (+ (x exit-crd) hex-centre-x)
