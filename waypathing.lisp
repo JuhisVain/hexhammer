@@ -54,7 +54,7 @@
   (setf (gethash crd *crd-paths*)
 	(make-crd-paths :rivers rivers :infra infra)))
 
-(defun add-river-entry (crd dir from world)
+(defun add-river-entry (crd dir from size world)
   "Add a river entry to coordinate CRD coming from
 coordinate FROM through DIR in CRD."
   (when (not (gethash crd (world-map world)))
@@ -63,91 +63,94 @@ coordinate FROM through DIR in CRD."
     (if (null crd-paths)
 	(define-crd-paths crd
 	  :rivers (list nil
-			(make-river :dir dir :size 1.0 :crd from)) ;(list nil (cons dir from))
+			(make-river :dir dir :size size :crd from)) ;(list nil (cons dir from))
 	  )
 	(if (not (member dir (crd-paths-rivers crd-paths)
 			 :key #'river-dir))
 	    (setf (crd-paths-rivers crd-paths)
 		  (nconc (crd-paths-rivers crd-paths)
 			 ;;(list (cons dir from))
-			 (list (make-river :dir dir :size 1.0 :crd from))
+			 (list (make-river :dir dir :size size :crd from))
 			 ))
 	    (error
 	     "Trying to push duplicate river entry vertex ~a to rivers ~a~%"
 	     (cons dir from) (crd-paths-rivers crd-paths))))))
 
-(defun add-river-exit (crd dir to world)
+(defun add-river-exit (crd dir to size world)
   "Add a river exit to coordinate CRD exiting at CRD's DIR to coordinate TO."
   (when (not (gethash crd (world-map world)))
     (return-from add-river-exit))
   (let ((crd-paths (gethash crd *crd-paths*)))
     (if (null crd-paths)
 	(define-crd-paths crd
-	  :rivers (list (make-river :dir dir :size 1.0 :crd to)) ;(cons (cons dir to) nil)
+	  :rivers (list (make-river :dir dir :size size :crd to)) ;(cons (cons dir to) nil)
 	  )
 	(if (and (null (car (crd-paths-rivers crd-paths)))
 		 (not (member dir (cdr (crd-paths-rivers crd-paths))
 			      :key #'river-dir)))
 	    (rplaca (crd-paths-rivers crd-paths)
 		    ;;(cons dir to)
-		    (make-river :dir dir :size 1.0 :crd to)
+		    (make-river :dir dir :size size :crd to)
 		    )
 	    (error
 	     "Trying to set invalid river exit vertex ~a to rivers ~a~%"
 	     (cons dir to) (crd-paths-rivers crd-paths)))))
-  (add-river-entry to (vertex-alias crd dir to) crd world))
+  (add-river-entry to (vertex-alias crd dir to) crd size world))
 
 (defun rivertest (&optional (world *world*))
   (clrhash *crd-paths*)
   (macrolet
       ((river-exits (&rest instructions)
 	 `(progn
-	    ,@(loop for (x0 y0 dir x1 y1)
+	    ,@(loop for (x0 y0 dir x1 y1 size)
 		      on instructions
-		    by #'(lambda (x) (nthcdr 5 x))
-		    collect `(add-river-exit (crd ,x0 ,y0) ,dir
-					     (crd ,x1 ,y1) world)))))
+		    by #'(lambda (x) (nthcdr 6 x))
+		    collect `(add-river-exit (crd ,x0 ,y0)
+					     ,dir
+					     (crd ,x1 ,y1)
+					     ,(coerce size 'single-float)
+					     world)))))
 
     (river-exits
-     8 14 :s 8 13
-     8 13 :s 8 12
-     8 12 :e 9 11
-     9 11 :s 9 10
-     9 10 :s 9 9
-     9 9 :ssw 9 8
-     9 8 :ssw 8 8
-     8 8 :se 9 7
-     9 7 :sse 9 6
-     9 6 :w 8 6
-     8 6 :ssw 7 5
-     7 5 :nw 6 6
-     6 6 :ssw 6 5
-     6 5 :sw 5 4
-     5 4 :nw 4 5
-     4 5 :w 3 4
-     3 4 :e 4 4
-     4 4 :sse 5 3
-     5 3 :sw 4 3
-     4 3 :se 5 2
-     5 2 :nne 6 3
-     6 3 :e 7 2
+     8 14 :s 8 13 0.1
+     8 13 :s 8 12 0.1
+     8 12 :e 9 11 0.1
+     9 11 :s 9 10 0.1
+     9 10 :s 9 9 0.2
+     9 9 :ssw 9 8 0.2
+     9 8 :ssw 8 8 0.2
+     8 8 :se 9 7 0.3
+     9 7 :sse 9 6 0.3
+     9 6 :w 8 6 0.4
+     8 6 :ssw 7 5 0.4
+     7 5 :nw 6 6 0.7
+     6 6 :ssw 6 5 0.7
+     6 5 :sw 5 4 0.8
+     5 4 :nw 4 5 0.8
+     4 5 :w 3 4 0.8
+     3 4 :e 4 4 1.1
+     4 4 :sse 5 3 1.2
+     5 3 :sw 4 3 1.2
+     4 3 :se 5 2 1.2
+     5 2 :nne 6 3 1.3
+     6 3 :e 7 2 1.3
 
-     6 15 :sse 6 14
-     6 14 :w 5 13
-     5 13 :s 5 12
-     5 12 :sse 5 11
-     5 11 :e 6 11
-     6 11 :se 7 10
-     7 10 :s 7 9
-     7 9 :s 7 8
-     7 8 :s 7 7
-     7 7 :s 7 6
-     7 6 :s 7 5
+     6 15 :sse 6 14 0.1
+     6 14 :w 5 13 0.1
+     5 13 :s 5 12 0.1
+     5 12 :sse 5 11 0.2
+     5 11 :e 6 11 0.2
+     6 11 :se 7 10 0.2
+     7 10 :s 7 9 0.2
+     7 9 :s 7 8 0.3
+     7 8 :s 7 7 0.3
+     7 7 :s 7 6 0.3
+     7 6 :s 7 5 0.4
 
-     2 6 :sse 3 5
-     3 5 :s 3 4
+     2 6 :sse 3 5 0.3
+     3 5 :s 3 4 0.3
 
-     3 3 :n 3 4)
+     3 3 :n 3 4 0.2)
 
     ;; TODO: A river exiting to off map is OK, but if exiting to water body
     ;; or "nowhere" will need to do something
