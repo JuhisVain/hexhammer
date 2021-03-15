@@ -320,7 +320,7 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 	    (let ((centre-crd 
 		    (graphical-path-centre master-entry exit-crd
 					   r hex-centre-x hex-centre-y)))
-	      
+	      #|
 	      ;;TEST
 	      (let* ((angle (crd-centre-river-angle crd))
 		     (angle-mark (nrotate (crd (* 0.5 r) 0)
@@ -365,7 +365,7 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 		(cairo:stroke)
 		(cairo:set-source-rgb 0.0 0.1 0.8))
 	      ;;TEST OVER
-	      
+	      |#
 	      (let* ((centre-angle (crd-centre-river-angle crd))
 		     
 		     (centre-right-side
@@ -666,12 +666,16 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 			       (+ (y centre-left-side)
 				  (y centre-crd)))
 		|#
+		(cairo:set-antialias :none)
+		(cairo:fill-preserve)
+		(cairo:set-antialias :default)
 		(cairo:stroke))
-
+	      #|
 	      (cairo:move-to (x centre-crd) (y centre-crd))
 	      (cairo:line-to (+ (x exit-crd) hex-centre-x)
 			     (+ (y exit-crd) hex-centre-y))
 	      (cairo:stroke)
+	      |#
 	      #|
 	      (dolist (entry (river-entries crd-paths))
 		(let* ((entry-dir (river-dir entry))
