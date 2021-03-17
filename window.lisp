@@ -1,5 +1,15 @@
 (in-package :hexhammer)
 
+(defun render (world view-state)
+  (do-visible (x y view-state)
+    (when (hex-at (crd x y) world)
+      (draw-gouraud-shading (crd x y) world view-state)
+      (draw-contours (crd x y) world view-state)
+      (draw-hex-borders (crd x y) view-state)))
+  
+  (do-visible (x y view-state)
+    (draw-rivers (crd x y) world view-state)))
+
 (defun test ()
   (sdl2:with-init (:everything)
     (sdl2:with-window
@@ -51,14 +61,7 @@
 					    (centre-y test-state))
 				    (clear-all test-state)
 				    (time
-				     (do-visible (x y test-state)
-				       (when (hex-at (crd x y) test-world)
-					 ;;(draw-shading (crd x y) test-world test-state)
-					 (draw-gouraud-shading (crd x y) test-world test-state)
-					 (draw-contours (crd x y) test-world test-state)
-					 (draw-rivers (crd x y) test-world test-state)
-					 (draw-hex-borders (crd x y) test-state))))
-				    )
+				     (render test-world test-state)))
 				  (when (= button 1)
 				    (format t "That's hex ~a~%"
 					    (hex-xy-at-pix x y test-state)))
@@ -84,11 +87,8 @@
 						(nrotate *vector-wall* (* 0.1 +sf-pi+)) 0
 						*vector-wall* 1))
 			  (clear-all test-state)
-			  (do-visible (x y test-state)
-			    (when (hex-at (crd x y) test-world)
-			      (draw-gouraud-shading (crd x y) test-world test-state)
-			      (draw-contours (crd x y) test-world test-state)
-			      (draw-hex-borders (crd x y) test-state)))
+
+			  (render test-world test-state)
 			  
 			  (sdl2:update-texture texture nil
 					    buffer
