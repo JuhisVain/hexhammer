@@ -228,7 +228,31 @@ If CONTOURS is totally submerged or totally dry returns NIL."
     (decf (point-elevation vertex) rel-water-level)))
 
 (defun sinktest ()
-  (flood-fill 10 *world* (crd 49 13) :cen))
+  ;;(flood-fill 10 *world* (crd 49 13) :cen)
+
+  (macrolet ((vert-sinker (&rest instructions)
+	       `(progn
+		  ,@(loop for (x y dir)
+			    on instructions
+			  by #'(lambda (x) (nthcdr 3 x))
+			  collect `(sink-vert (crd ,x ,y)
+					      ,dir
+					      1
+					      *world*)))))
+    ;; Buggy behaviour when sinking right next to lower elevations:
+    (vert-sinker
+     68 44 :nw
+     68 44 :ssw
+     68 44 :s
+     68 44 :sw
+     68 44 :w
+     68 44 :sse
+     69 43 :sw
+     69 43 :cen
+     69 43 :ne
+     69 43 :n
+     ;; TODO: Change of plan: Let's make a graphical sinker!
+     )))
 
 (defmacro probe-contours ((at-left at-right) var
 			  &body body)
