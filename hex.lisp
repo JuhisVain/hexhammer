@@ -224,8 +224,9 @@ If CONTOURS is totally submerged or totally dry returns NIL."
 (defun sink-vert (crd dir rel-water-level world)
   "Sink the vertex at CRD DIR by REL-WATER-LEVEL and fill depression."
   (let ((vertex (vertex-exists crd dir world)))
-    (setf (point-water vertex) (point-elevation vertex))
-    (decf (point-elevation vertex) rel-water-level)))
+    (when vertex
+      (setf (point-water vertex) (point-elevation vertex))
+      (decf (point-elevation vertex) rel-water-level))))
 
 (defun sinktest ()
   ;;(flood-fill 10 *world* (crd 49 13) :cen)
