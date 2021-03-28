@@ -64,7 +64,7 @@
 				     (render test-world test-state)))
 				  (when (= button 1)
 				    (format t "That's hex ~a~%"
-					    (hex-xy-at-pix x y test-state)))
+					    (hex-xy-vert-at-pix x y test-state)))
 				  )
 
 		(:mousewheel (:y roll) ; 1 = away, -1 inwards, todo: test with non smooth wheel
