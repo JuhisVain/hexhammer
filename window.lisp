@@ -51,22 +51,34 @@
 
 		(:mousebuttondown (:x x :y y :button button)
 				  (format t "x=~a ; y=~a ; but: ~a~%" x y button)
-				  (when (= button 3)
-				    (setf (centre-x test-state) (+ (centre-x test-state)
-								   (- x (/ (width test-state) 2)))
-					  (centre-y test-state) (- (centre-y test-state)
-								   (- y (/ (height test-state) 2))))
-				    (format t "centre: (~a;~a)~%"
-					    (centre-x test-state)
+				  (cond
+				    ((= button 3)
+				     (setf (centre-x test-state) (+ (centre-x test-state)
+								    (- x (/ (width test-state) 2)))
+					   (centre-y test-state) (- (centre-y test-state)
+								    (- y (/ (height test-state) 2))))
+				     (format t "centre: (~a;~a)~%"
+					     (centre-x test-state)
 					    (centre-y test-state))
-				    (clear-all test-state)
-				    (time
-				     (render test-world test-state)))
-				  (when (= button 1)
-				    (format t "That's hex ~a~%"
-					    (hex-xy-vert-at-pix x y test-state)))
-				  )
-
+				     (clear-all test-state)
+				     (time
+				      (render test-world test-state)))
+				    ((= button 1)
+				     (format t "That's hex ~a, clicked with ~a~%"
+					     (hex-xy-vert-at-pix x y test-state)
+					     button)
+				     ;; Hold down left CTRL and left click to paint water bodies
+				     (when (sdl2:keyboard-state-p 224)
+				       (destructuring-bind (crd . vert)
+					   (hex-xy-vert-at-pix x y test-state)
+					 (when vert
+					   (sink-vert crd vert 1 test-world)
+					   (clear-all test-state)
+					   (render test-world test-state)))))
+				    (t
+				     nil)
+				    ))
+		
 		(:mousewheel (:y roll) ; 1 = away, -1 inwards, todo: test with non smooth wheel
 			     (incf (hex-r test-state) (* 10 roll))
 
@@ -74,31 +86,29 @@
 			     (do-visible (x y test-state)
 			       (when (hex-at (crd x y) test-world)
 				 (draw-contours (crd x y) test-world test-state)
-				 (draw-hex-borders (crd x y) test-state)))
-			     
-			     )
+				 (draw-hex-borders (crd x y) test-state))))
 
 		(:keydown (:keysym keysym)
+			  ;;(format t "~a~%" (sdl2:scancode-value keysym))
+			  (let ((scancode (sdl2:scancode-value keysym)))
+			    (when (sdl2:scancode= scancode :scancode-q)
+			      ;; Rotate light source around map
+			      (defvar *vector-wall* (crd 0.2 1))
+			      (setf *light-vector*
+				    (surface-normal (crd 0 0) 0
+						    (nrotate *vector-wall* (* 0.1 +sf-pi+)) 0
+						    *vector-wall* 1))
+			      (clear-all test-state)
 
-			  ;; Rotate light source around map
-			  (defvar *vector-wall* (crd 0.2 1))
-			  (setf *light-vector*
-				(surface-normal (crd 0 0) 0
-						(nrotate *vector-wall* (* 0.1 +sf-pi+)) 0
-						*vector-wall* 1))
-			  (clear-all test-state)
-
-			  (render test-world test-state)
-			  
-			  (sdl2:update-texture texture nil
-					    buffer
-					    (* 4 1000)) ; ARGB8888 size * texture width
-			  (sdl2:render-clear renderer)
-			  (sdl2:render-copy renderer texture)
-			  (sdl2:render-present renderer)
-
-
-			  )
+			      (render test-world test-state)
+			      
+			      (sdl2:update-texture texture nil
+						   buffer
+						   (* 4 1000)) ; ARGB8888 size * texture width
+			      (sdl2:render-clear renderer)
+			      (sdl2:render-copy renderer texture)
+			      (sdl2:render-present renderer)
+			      )))
 		
 		(:idle ()
 		       (sdl2:update-texture texture nil
