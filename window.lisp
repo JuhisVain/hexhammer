@@ -68,13 +68,23 @@
 					     (hex-xy-vert-at-pix x y test-state)
 					     button)
 				     ;; Hold down left CTRL and left click to paint water bodies
-				     (when (sdl2:keyboard-state-p 224)
-				       (destructuring-bind (crd . vert)
-					   (hex-xy-vert-at-pix x y test-state)
-					 (when vert
-					   (sink-vert crd vert 1 test-world)
-					   (clear-all test-state)
-					   (render test-world test-state)))))
+				     (cond ((sdl2:keyboard-state-p 225) ;; left shift
+					    (destructuring-bind (crd . vert)
+						(hex-xy-vert-at-pix x y test-state)
+					      (when vert
+						(elevate-vert crd vert 1 test-world)
+						(clear-all test-state)
+						(render test-world test-state))))
+					   ((sdl2:keyboard-state-p 224) ;; left ctrl
+					    (destructuring-bind (crd . vert)
+						(hex-xy-vert-at-pix x y test-state)
+					      (when vert
+						(depress-vert crd vert 1 test-world)
+						(clear-all test-state)
+						(render test-world test-state))))
+					   ((sdl2:keyboard-state-p 227) ;; left winkey/super
+					    ;; TODO: fill with water
+					    )))
 				    (t
 				     nil)
 				    ))
@@ -91,6 +101,8 @@
 		(:keydown (:keysym keysym)
 			  ;;(format t "~a~%" (sdl2:scancode-value keysym))
 			  (let ((scancode (sdl2:scancode-value keysym)))
+			    (format t "That button is keysym: ~a, scancode ~a~%"
+				    keysym scancode)
 			    (when (sdl2:scancode= scancode :scancode-q)
 			      ;; Rotate light source around map
 			      (defvar *vector-wall* (crd 0.2 1))
