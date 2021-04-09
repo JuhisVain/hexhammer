@@ -189,7 +189,7 @@ If CONTOURS is totally submerged or totally dry returns NIL."
 (defpointcon :NNW (:NW :N :cen (:NW :NE)))
 (defpointcon :CEN (:N :NE :SE :S :SW :NW :nnw :nne :e :sse :ssw :w))
 
-(defun flood-fill (water-level world crd dir)
+'(defun flood-fill (water-level world crd dir)
   (declare (fixnum water-level)
 	   (optimize (speed 3)
 		     (compilation-speed 0)))
@@ -208,9 +208,42 @@ If CONTOURS is totally submerged or totally dry returns NIL."
 	(apply #'flood-fill water-level world con))
       NIL)))
 
+;;; Well that was easy.
+;; for example (flood-fill (crd 47 14) :cen 10 *world*)
+(defun flood-fill (crd dir water-level world)
+  (maphash #'(lambda (crd-vert cf)
+	       (declare (ignore cf))
+	       (setf (point-water (vertex-exists (car crd-vert) (cadr crd-vert) world))
+		     water-level))
+	   (breadth-first-search (list crd dir)
+				 0 world
+				 #'(lambda (x world) ;; Could just close on world here
+				     (let* ((con-verts (point-connections (car x) (cadr x)))
+					    (con-points (mapcar
+							 #'(lambda (vert)
+							     (vertex-exists (car vert) (cadr vert) world))
+							 con-verts)))
+				       (let ((neighbours
+					       (loop for vert in con-verts
+						     for point in con-points
+						     when point collect vert)))
+					 (format t "neighbous ~a~%" neighbours)
+					 neighbours)))
+				 #'(lambda (from to world)
+				     (declare (ignore from))
+				     (let ((to-point (vertex-exists (car to) (cadr to) world)))
+				       (if (or (>= (point-water to-point)
+						   water-level)
+					       (>= (point-elevation to-point)
+						   water-level))
+					   666 0)))
+				 #'(lambda (x) (declare (ignore x)) nil))))
+
 (defun depress-vert (crd dir amount world)
   (let ((vertex (vertex-exists crd dir world)))
-    (decf (point-elevation vertex) amount)))
+    (decf (point-elevation vertex) amount)
+    ;; TODO: check connected verts for water, if yes fill this.
+    ))
 
 (defun elevate-vert (crd dir amount world)
   (let ((vertex (vertex-exists crd dir world)))
