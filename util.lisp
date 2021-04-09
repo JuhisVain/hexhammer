@@ -79,6 +79,58 @@
   (when (range-deque-initp ranged)
     (range-deque-right ranged)))
 
+(defstruct seekee
+  (priority 0 :type integer)
+  (data))
+
+;; Works for filling, yet to test pathing
+(defun breadth-first-search
+    (start range world
+     get-neighbours-func move-cost-func end-when-func)
+  "
+(GET-NEIGHBOURS-FUNC data WORLD) -> (or null data)
+(MOVE-COST-FUNC from-data to-data WORLD) -> integer
+(END-WHEN-FUNC data) - predicate"
+  (let ((frontier
+	  (sera:make-heap :element-type 'seekee
+			  :key #'seekee-priority
+			  :test #'<))
+	(came-from (make-hash-table :test 'equalp)))
+    
+    (sera:heap-insert frontier
+		      (make-seekee :priority range
+				   :data start))
+    
+    (setf (gethash start came-from)
+	  (list range nil))
+
+    (do ((current))
+	((null (sera:heap-maximum frontier)))
+      (format t "heapmax: ~a~%" (sera:heap-maximum frontier))
+      (setf current (sera:heap-extract-maximum frontier))
+      (when (>= (seekee-priority current) 0)
+	(dolist (neighbour
+		 (funcall get-neighbours-func (seekee-data current) world))
+	  (cond ((null neighbour) nil)
+		((null (gethash neighbour came-from))
+		 (let ((range-left
+			 (- (seekee-priority current)
+			    (funcall move-cost-func
+				     (seekee-data current)
+				     neighbour
+				     world))))
+		   (format t "Range left ~a~%" range-left)
+		   (when (>= range-left 0)
+		     (sera:heap-insert frontier
+				       (make-seekee :priority range-left
+						    :data neighbour))
+		     (setf (gethash neighbour came-from)
+			   (list range-left (seekee-data current)))))))
+	  (when (funcall end-when-func neighbour)
+	    (format t "END-WHEN-FUNC triggered!~%")
+	    (return-from breadth-first-search came-from)))))
+    came-from))
+
 
 #|
 ;; Doubly linked integer list:
