@@ -106,7 +106,6 @@
 
     (do ((current))
 	((null (sera:heap-maximum frontier)))
-      (format t "heapmax: ~a~%" (sera:heap-maximum frontier))
       (setf current (sera:heap-extract-maximum frontier))
       (when (>= (seekee-priority current) 0)
 	(dolist (neighbour
@@ -119,7 +118,6 @@
 				     (seekee-data current)
 				     neighbour
 				     world))))
-		   (format t "Range left ~a~%" range-left)
 		   (when (>= range-left 0)
 		     (sera:heap-insert frontier
 				       (make-seekee :priority range-left
@@ -127,7 +125,6 @@
 		     (setf (gethash neighbour came-from)
 			   (list range-left (seekee-data current)))))))
 	  (when (funcall end-when-func neighbour)
-	    (format t "END-WHEN-FUNC triggered!~%")
 	    (return-from breadth-first-search came-from)))))
     came-from))
 
