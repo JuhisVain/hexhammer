@@ -68,25 +68,34 @@
 					     (hex-xy-vert-at-pix x y test-state)
 					     button)
 				     ;; Hold down left CTRL and left click to paint water bodies
-				     (cond ((sdl2:keyboard-state-p 225) ;; left shift
-					    (destructuring-bind (crd . vert)
-						(hex-xy-vert-at-pix x y test-state)
+				     (destructuring-bind (crd . vert)
+					 (hex-xy-vert-at-pix x y test-state)
+				       (cond ((null vert)
+					      nil) ;; abort
+					     ((sdl2:keyboard-state-p 225) ;; left shift
 					      (when vert
 						(elevate-vert crd vert 1 test-world)
 						(clear-all test-state)
-						(render test-world test-state))))
-					   ((sdl2:keyboard-state-p 224) ;; left ctrl
-					    (destructuring-bind (crd . vert)
-						(hex-xy-vert-at-pix x y test-state)
+						(render test-world test-state)))
+					     ((sdl2:keyboard-state-p 224) ;; left ctrl
 					      (when vert
 						(depress-vert crd vert 1 test-world)
 						(clear-all test-state)
-						(render test-world test-state))))
-					   ((sdl2:keyboard-state-p 227) ;; left winkey/super
-					    ;; TODO: fill with water
-					    )))
+						(render test-world test-state)))
+					     ((sdl2:keyboard-state-p 4) ;; A key
+					      (increase-water-level crd vert test-world)
+					      (clear-all test-state)
+					      (render test-world test-state)
+					      )
+					     ((sdl2:keyboard-state-p 29) ;; Z key
+					      (format t "TEST!~%")
+					      ;; TODO: reduce water
+					      (increase-water-level crd vert test-world -1)
+					      (clear-all test-state)
+					      (render test-world test-state)
+					      ))))
 				    (t
-				     nil)
+				     (format t "~a~%" button))
 				    ))
 		
 		(:mousewheel (:y roll) ; 1 = away, -1 inwards, todo: test with non smooth wheel

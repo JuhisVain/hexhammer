@@ -208,36 +208,76 @@ If CONTOURS is totally submerged or totally dry returns NIL."
 	(apply #'flood-fill water-level world con))
       NIL)))
 
-;;; Well that was easy.
+(defun increase-water-level (crd dir world &optional (delta 1))
+  (let ((point (vertex-exists crd dir world)))
+    (format t "in water level ~a ~a ~a~%" crd dir delta)
+    (if (plusp delta)
+	(flood-fill crd dir
+		    (+ delta
+		       (max (point-water point)
+			    (point-elevation point)))
+		    world)
+	;; else:
+	(let ((water-level (+ delta
+			      (max (point-water point)
+				   (point-elevation point)))))
+	  (format t "new water level will be : ~a~%" water-level)
+	  (maphash #'(lambda (crd-vert cf)
+		       (declare (ignore cf))
+		       (setf (point-water (vertex-exists (car crd-vert) (cadr crd-vert) world))
+			     water-level))
+		   (breadth-first-search
+		    (list crd dir)
+		    0 world
+		    #'(lambda (x world)
+			(let* ((con-verts (point-connections (car x) (cadr x)))
+			       (con-points (mapcar
+					    #'(lambda (vert)
+						(vertex-exists (car vert) (cadr vert) world))
+					    con-verts)))
+			  (let ((neighbours
+				  (loop for vert in con-verts
+					for point in con-points
+					when point collect vert)))
+			    neighbours)))
+		    #'(lambda (from to world)
+			(declare (ignore from))
+			(let ((to-point (vertex-exists (car to) (cadr to) world)))
+			  (if (or (> (1- (point-elevation to-point)) ;; TODO: this is broken
+				     (- water-level delta)))
+			      666 0)))
+		    #'(lambda (x) (declare (ignore x)) nil)))
+	  ))))
+
 ;; for example (flood-fill (crd 47 14) :cen 10 *world*)
 (defun flood-fill (crd dir water-level world)
   (maphash #'(lambda (crd-vert cf)
 	       (declare (ignore cf))
 	       (setf (point-water (vertex-exists (car crd-vert) (cadr crd-vert) world))
 		     water-level))
-	   (breadth-first-search (list crd dir)
-				 0 world
-				 #'(lambda (x world) ;; Could just close on world here
-				     (let* ((con-verts (point-connections (car x) (cadr x)))
-					    (con-points (mapcar
-							 #'(lambda (vert)
-							     (vertex-exists (car vert) (cadr vert) world))
-							 con-verts)))
-				       (let ((neighbours
-					       (loop for vert in con-verts
-						     for point in con-points
-						     when point collect vert)))
-					 (format t "neighbous ~a~%" neighbours)
-					 neighbours)))
-				 #'(lambda (from to world)
-				     (declare (ignore from))
-				     (let ((to-point (vertex-exists (car to) (cadr to) world)))
-				       (if (or (>= (point-water to-point)
-						   water-level)
-					       (>= (point-elevation to-point)
-						   water-level))
-					   666 0)))
-				 #'(lambda (x) (declare (ignore x)) nil))))
+	   (breadth-first-search
+	    (list crd dir)
+	    0 world
+	    #'(lambda (x world) ;; Could just close on world here
+		(let* ((con-verts (point-connections (car x) (cadr x)))
+		       (con-points (mapcar
+				    #'(lambda (vert)
+					(vertex-exists (car vert) (cadr vert) world))
+				    con-verts)))
+		  (let ((neighbours
+			  (loop for vert in con-verts
+				for point in con-points
+				when point collect vert)))
+		    neighbours)))
+	    #'(lambda (from to world)
+		(declare (ignore from))
+		(let ((to-point (vertex-exists (car to) (cadr to) world)))
+		  (if (or (>= (point-water to-point)
+			      water-level)
+			  (>= (point-elevation to-point)
+			      water-level))
+		      666 0)))
+	    #'(lambda (x) (declare (ignore x)) nil))))
 
 (defun depress-vert (crd dir amount world)
   (let ((vertex (vertex-exists crd dir world)))
