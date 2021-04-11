@@ -236,9 +236,11 @@ If CONTOURS is totally submerged or totally dry returns NIL."
 		    #'(lambda (from to world)
 			(declare (ignore from))
 			(let ((to-point (vertex-exists (car to) (cadr to) world)))
-			  (if (or (> (1- (point-elevation to-point)) ;; TODO: this is broken
-				     (- water-level delta)))
-			      666 0)))
+			  (if (and (>= (point-water to-point)
+				       water-level)
+				   (>= (point-water to-point)
+				       (point-elevation to-point)))
+			      0 666)))
 		    #'(lambda (x) (declare (ignore x)) nil)))
 	  ))))
 
