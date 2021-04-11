@@ -2,9 +2,18 @@
 
 (deftype pointspec ()
   `(cons crd (cons (member ,@+vertex-directions+) null)))
-(defstruct (point (:constructor point (elevation &optional (water 0))))
+(defstruct (point (:constructor point (elevation &optional (raw-water 0))))
   (elevation 0 :type elevation)
-  (water 0 :type elevation))
+  (raw-water 0 :type elevation))
+
+(declaim (inline point-water))
+(defun point-water (instance)
+  (point-raw-water instance))
+(defun (setf point-water) (new-value instance)
+  (setf (point-raw-water instance)
+	(if (<= new-value (point-elevation instance))
+	    0
+	    new-value)))
 
 (defstruct (hex (:constructor
 		    make-hex (cen &optional nne ne e se sse s ssw sw w nw nnw n)))
