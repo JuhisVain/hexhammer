@@ -201,25 +201,6 @@ If CONTOURS is totally submerged or totally dry returns NIL."
 (defpointcon :NNW (:NW :N :cen (:NW :NE :CEN) (:N :CEN)))
 (defpointcon :CEN (:N :NE :SE :S :SW :NW :nnw :nne :e :sse :ssw :w))
 
-'(defun flood-fill (water-level world crd dir)
-  (declare (fixnum water-level)
-	   (optimize (speed 3)
-		     (compilation-speed 0)))
-  (let ((current (vertex-exists crd dir world)))
-    (when (and (< (point-water current) water-level)
-	       (< (point-elevation current) water-level))
-      (setf (point-water current) water-level)
-      (dolist (con
-	       (remove-if
-		#'(lambda (crd-dir)
-		    (not (vertex-exists (first crd-dir)
-					(second crd-dir)
-					*world*)))
-		(point-connections crd dir)))
-	;; This WILL blow the stack:
-	(apply #'flood-fill water-level world con))
-      NIL)))
-
 (defun increase-water-level (crd dir world &optional (delta 1))
   (let ((point (vertex-exists crd dir world)))
     (format t "in water level ~a ~a ~a~%" crd dir delta)
