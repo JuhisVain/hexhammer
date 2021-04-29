@@ -201,6 +201,20 @@ If CONTOURS is totally submerged or totally dry returns NIL."
 (defpointcon :NNW (:NW :N :cen (:NW :NE :CEN) (:N :CEN)))
 (defpointcon :CEN (:N :NE :SE :S :SW :NW :nnw :nne :e :sse :ssw :w))
 
+(defun point-neighbours (point world)
+  "Returns list of points that neighbour the point POINT
+and exist in world WORLD."
+  (let* ((con-verts (point-connections (car point) (cadr point)))
+	 (con-points (mapcar
+		      #'(lambda (vert)
+			  (vertex-exists (car vert) (cadr vert) world))
+		      con-verts)))
+    (let ((neighbours
+	    (loop for vert in con-verts
+		  for point in con-points
+		  when point collect vert)))
+      neighbours)))
+
 (defun increase-water-level (crd dir world &optional (delta 1))
   (let ((point (vertex-exists crd dir world)))
     (format t "in water level ~a ~a ~a~%" crd dir delta)
@@ -222,17 +236,7 @@ If CONTOURS is totally submerged or totally dry returns NIL."
 		   (breadth-first-search
 		    (list crd dir)
 		    0 world
-		    #'(lambda (x world)
-			(let* ((con-verts (point-connections (car x) (cadr x)))
-			       (con-points (mapcar
-					    #'(lambda (vert)
-						(vertex-exists (car vert) (cadr vert) world))
-					    con-verts)))
-			  (let ((neighbours
-				  (loop for vert in con-verts
-					for point in con-points
-					when point collect vert)))
-			    neighbours)))
+		    #'point-neighbours
 		    #'(lambda (from to world)
 			(declare (ignore from))
 			(let ((to-point (vertex-exists (car to) (cadr to) world)))
@@ -253,17 +257,7 @@ If CONTOURS is totally submerged or totally dry returns NIL."
 	   (breadth-first-search
 	    (list crd dir)
 	    0 world
-	    #'(lambda (x world) ;; Could just close on world here
-		(let* ((con-verts (point-connections (car x) (cadr x)))
-		       (con-points (mapcar
-				    #'(lambda (vert)
-					(vertex-exists (car vert) (cadr vert) world))
-				    con-verts)))
-		  (let ((neighbours
-			  (loop for vert in con-verts
-				for point in con-points
-				when point collect vert)))
-		    neighbours)))
+	    #'point-neighbours
 	    #'(lambda (from to world)
 		(declare (ignore from))
 		(let ((to-point (vertex-exists (car to) (cadr to) world)))
