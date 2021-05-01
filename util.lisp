@@ -88,7 +88,7 @@
     (start range world
      get-neighbours-func move-cost-func end-when-func)
   "
-(GET-NEIGHBOURS-FUNC data WORLD) -> (or null data)
+(GET-NEIGHBOURS-FUNC data WORLD) -> (data?..)
 (MOVE-COST-FUNC from-data to-data WORLD) -> integer
 (END-WHEN-FUNC data) - predicate"
   (let ((frontier

@@ -201,7 +201,7 @@ If CONTOURS is totally submerged or totally dry returns NIL."
 (defpointcon :NNW (:NW :N :cen (:NW :NE :CEN) (:N :CEN)))
 (defpointcon :CEN (:N :NE :SE :S :SW :NW :nnw :nne :e :sse :ssw :w))
 
-(defun point-neighbours (point world)
+(defun point-neighbours (point world) ;; vertex / point terminology is screwed
   "Returns list of points that neighbour the point POINT
 and exist in world WORLD."
   (let* ((con-verts (point-connections (car point) (cadr point)))
