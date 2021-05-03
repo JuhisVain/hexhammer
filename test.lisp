@@ -70,7 +70,7 @@
 							   :priority distance))
 		   (setf (gethash (funcall data-key neighbour) came-from)
 			 (list distance (seekee-data current))))))
-	      ((and shortest-path ;; Not too sure whether or not this is useful
+	      ((and shortest-path ;; if search used for filling, no need for shortest path
 		    (gethash (funcall data-key neighbour) came-from))
 	       (let ((distance (+ (seekee-priority current)
 				  (funcall
