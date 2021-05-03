@@ -30,7 +30,7 @@
 		)))
 
 
-(defun depth-search (start get-neighbours-func move-cost-func end-when-func
+(defun depth-search (start get-neighbours-func moveable-func move-cost-func end-when-func
 		     &key (shortest-path t) max-range (data-key #'identity))
   (let ((frontier (sera:make-heap :element-type 'seekee
 				  :key #'seekee-priority
@@ -44,7 +44,10 @@
 	((null (sera:heap-maximum frontier)))
       (setf current (sera:heap-extract-maximum frontier))
       (dolist (neighbour (funcall get-neighbours-func (seekee-data current)))
-	(cond ((null neighbour) nil)
+	(cond ((null neighbour)
+	       nil)
+	      ((not (funcall moveable-func (seekee-data current) neighbour))
+	       nil)
 	      ((null (gethash (funcall data-key neighbour) came-from))
 	       (let ((distance (+ (seekee-priority current)
 				  (funcall
@@ -56,7 +59,7 @@
 							   :priority distance))
 		   (setf (gethash (funcall data-key neighbour) came-from)
 			 (list distance (seekee-data current))))))
-	      ((and shortest-path ;; END-WHEN-FUNC can be used to abort at first path
+	      ((and shortest-path ;; Not too sure whether or not this is useful
 		    (gethash (funcall data-key neighbour) came-from))
 	       (let ((distance (+ (seekee-priority current)
 				  (funcall
