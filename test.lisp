@@ -49,20 +49,26 @@
 		    (1 1 1 1 1 1 1 1 1 1 1)))
 	 (width (array-dimension world 0))
 	 (height (array-dimension world 1)))
+
     (depth-search (crd 5 5)
-		#'(lambda (crd) (testneigh crd width height))
-		#'(lambda (from to)
-		    (<= (aref world (x to) (y to))
-			(aref world (x from) (y from))))
-		#'(lambda (from to)
-		    (declare (ignore from to))
-		    1)
-		#'(lambda (to)
-		    (declare (ignore to))
-		    nil)
-		)))
+		  #'(lambda (crd) (testneigh crd width height))
+		  #'(lambda (from to)
+		      (<= (aref world (x to) (y to))
+			  (aref world (x from) (y from))))
+		  #'(lambda (from to)
+		      ;;(declare (ignore from to))
+		      (if (< (aref world (x to) (y to))
+			     (aref world (x from) (y from)))
+			  1
+			  0))
+		  #'(lambda (to)
+		      (declare (ignore to))
+		      nil)
+		  )))
 
-
+;;; The problem with this implementation is that it has no understading of the path-tree's
+;; actual structure making it unable to return an acceptable dead-end early.
+;; Finding a 'pool' of suitable size will require an actual tree structure.
 (defun depth-search (start get-neighbours-func moveable-func move-cost-func end-when-func
 		     &key (shortest-path t) max-range (data-key #'identity))
   (let ((frontier (sera:make-heap :element-type 'seekee
