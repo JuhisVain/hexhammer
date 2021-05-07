@@ -66,6 +66,11 @@
 		      nil)
 		  )))
 
+(defun degree (node)
+  "Number of children for NODE."
+  (+ (length (car node))
+     (apply #'+ (mapcar #'degree (car node)))))
+
 (defun runtest-tree ()
   (let* ((world #2A((1 1 1 1 1 1 1 0 0 0 0)
 		    (1 1 1 1 1 1 1 0 0 0 0)
