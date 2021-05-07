@@ -75,7 +75,7 @@
   (let* ((world #2A((1 1 1 1 1 1 1 0 0 0 0)
 		    (1 1 1 1 1 1 1 0 0 0 0)
 		    (1 1 1 1 1 1 1 0 0 0 0)
-		    (1 1 1 1 1 1 1 0 0 0 0)
+		    (1 1 1 1 1 1 1 0 0 0 0) ;; changing (3 10) to -1 will block pooling
 		    (1 1 1 1 9 9 9 1 1 1 0)
 		    (1 1 1 1 9 1 1 1 1 1 0)
 		    (1 0 1 9 9 9 9 1 0 0 0)
@@ -86,21 +86,34 @@
 	 (width (array-dimension world 0))
 	 (height (array-dimension world 1)))
 
-    (tree-search (crd 5 5)
-		 #'(lambda (crd) (testneigh crd width height))
-		 #'(lambda (from to)
-		     (<= (aref world (x to) (y to))
-			 (aref world (x from) (y from))))
-		 #'(lambda (from to)
-		     ;;(declare (ignore from to))
-		     (if (< (aref world (x to) (y to))
-			    (aref world (x from) (y from)))
-			 1
-			 2))
-		 #'(lambda (to)
-		     (declare (ignore to))
-		     nil)
-		 )))
+    (block escape
+      (tree-search (crd 5 5)
+		   #'(lambda (crd) (testneigh crd width height))
+		   #'(lambda (from to)
+		       (<= (aref world (x to) (y to))
+			   (aref world (x from) (y from))))
+		   #'(lambda (from to)
+		       (cond ((< (aref world (x to) (y to))
+				 (aref world (x from) (y from)))
+			      2)
+			     (t
+			      1)))
+		   #'(lambda (to)
+		       (declare (ignore to))
+		       nil)
+
+		   ;; prototype backtrack func
+		   #'(lambda (from to from-node to-node)
+		        ;; TODO: investigate if possible to avoid internal nodes leaking
+		       (when (< (aref world (x to) (y to))
+				(aref world (x from) (y from)))
+			 (when (>= (1+ (degree to-node))
+				   9) ;; desired minimum pool size
+			   (return-from escape to-node)
+			   )))
+		   
+		   :shortest-path nil
+		   ))))
 
 (defun display-tree-costs (tree)
   (let ((world (make-array '(11 11) :initial-element #\#)))
@@ -165,6 +178,7 @@
 
 
 (defun tree-search (start get-neighbours-func moveable-func move-cost-func end-when-func
+		    backtrack-func
 		    &key (shortest-path t) max-range (key #'identity))
   (let ((discovered (make-hash-table :test 'equalp))
 	(path-tree (list () (make-seekee :data start))))
@@ -193,7 +207,13 @@
 			      (list () (make-seekee :data neigh
 						    :priority move-cost)))))
 		      (funcall get-neighbours-func (seekee-data (cadr current-node)))))
+	       
 	       (dolist (neigh (car current-node))
-		 (seek neigh))))
+		 (seek neigh)
+		 (funcall backtrack-func
+			  (seekee-data (cadr current-node))
+			  (seekee-data (cadr neigh))
+			  current-node neigh)
+		 )))
       (seek path-tree)
       path-tree)))
