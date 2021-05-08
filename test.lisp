@@ -75,14 +75,14 @@
   (let* ((world #2A((1 1 1 1 1 1 1 0 0 0 0)
 		    (1 1 1 1 1 1 1 0 0 0 0)
 		    (1 1 1 1 1 1 1 0 0 0 0)
-		    (1 1 1 1 1 1 1 0 0 0 0) ;; changing (3 10) to -1 will block pooling
+		    (1 1 1 1 1 1 1 0 0 0 -1)
 		    (1 1 1 1 9 9 9 1 1 1 0)
 		    (1 1 1 1 9 1 1 1 1 1 0)
 		    (1 0 1 9 9 9 9 1 0 0 0)
-		    (1 1 1 9 1 1 1 1 0 1 1)
-		    (1 1 1 9 9 1 1 1 1 1 1)
-		    (1 1 1 1 1 1 1 1 1 1 1)
-		    (1 1 1 1 1 1 1 1 1 1 1)))
+		    (1 1 1 9 1 1 1 1 0 1 -5)
+		    (1 1 1 9 9 1 1 1 1 1 -4)
+		    (1 1 1 1 1 1 1 1 1 1 0)
+		    (1 1 1 1 1 1 1 1 1 0 1)))
 	 (width (array-dimension world 0))
 	 (height (array-dimension world 1)))
 
@@ -104,16 +104,30 @@
 
 		   ;; prototype backtrack func
 		   #'(lambda (from to from-node to-node)
-		        ;; TODO: investigate if possible to avoid internal nodes leaking
+		       ;; TODO: investigate if possible to avoid internal nodes leaking
 		       (when (< (aref world (x to) (y to))
 				(aref world (x from) (y from)))
 			 (when (>= (1+ (degree to-node))
 				   9) ;; desired minimum pool size
-			   (return-from escape to-node)
-			   )))
+			   (return-from escape ;to-node)
+			     ;; Let's return pool as list instead:
+			     (test-floodfill to (aref world (x to) (y to)) world)))))
 		   
 		   :shortest-path nil
 		   ))))
+
+(defun test-floodfill (crd depth world)
+  (let ((hashtable (make-hash-table :test 'equalp)))
+    (labels ((tfrec (crd)
+	       (when (and
+		      (not (gethash crd hashtable))
+		      (<= (aref world (x crd) (y crd))
+			  depth))
+		 (setf (gethash crd hashtable) t)
+		 (cons crd (mapcan #'(lambda (neigh)
+				       (tfrec neigh))
+				   (testneigh crd 11 11))))))
+      (tfrec crd))))
 
 (defun display-tree-costs (tree)
   (let ((world (make-array '(11 11) :initial-element #\#)))
@@ -197,11 +211,13 @@
 				   ;; should be before move-cost:
 				   (funcall moveable-func
 					    (seekee-data (cadr current-node)) neigh)
+				   
 				   (let ((found (gethash (funcall key neigh) discovered)))
 				     (or
 				      (not found)
 				      (and shortest-path
 					   (< move-cost found)))))
+			      
 			      (setf (gethash (funcall key neigh) discovered)
 				    move-cost)
 			      (list () (make-seekee :data neigh
