@@ -110,6 +110,17 @@ Returns NIL if not found."
 		(make-node child-priority parent))
 	  child))))
 
+(defun hashtree-degree (key hashtree)
+  (let ((count -1))
+    (labels ((rec-degree (key)
+	       (incf count)
+	       (dolist (child (children (access key hashtree)))
+		 (rec-degree child))))
+      (rec-degree key)
+      count)))
 
-'(setf (access (list 5 'test 'test 'test) *ht*) (make-node 0))
-'(add-child-node (list 5 1 2 3) (list 'a) 6 *ht*)
+(defun make-keyed-hashtree (key ordering &optional root root-priority)
+  (let ((hashtree (make-instance 'keyed-hashtree :key key :ordering ordering)))
+    (when root
+      (setf (access root hashtree) (make-node root-priority)))
+    hashtree))
