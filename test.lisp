@@ -107,6 +107,8 @@
 		       ;; TODO: investigate if possible to avoid internal nodes leaking
 		       (when (< (aref world (x to) (y to))
 				(aref world (x from) (y from)))
+			 ;;; TODO:::WRONG! degree will ignore things that should
+			 ;; be counted beyond holes 
 			 (when (>= (1+ (degree to-node))
 				   9) ;; desired minimum pool size
 			   (return-from escape ;to-node)
@@ -233,3 +235,75 @@
 		 )))
       (seek path-tree)
       path-tree)))
+
+(defun hashtree-search (start get-neighbours-func moveable-func move-cost-func end-when-func
+			backtrack-func
+			&key (shortest-path t) max-range (key #'identity))
+  (let ((path-tree (make-keyed-hashtree key #'< start 0)))
+    (labels ((seek (current)
+	       (let ((current-node (access current path-tree))
+		     (current-neighbours (funcall get-neighbours-func current)))
+		 (dolist (neighbour current-neighbours)
+		   (when (funcall moveable-func current neighbour)
+		     (let ((move-cost (+ (priority current-node)
+					 (funcall move-cost-func current neighbour))))
+		       (when (or
+			      (null (access neighbour path-tree))
+			      (> (priority (access neighbour path-tree))
+				 move-cost))
+			 (add-child-node current neighbour
+					 move-cost
+					 path-tree))
+		       )))
+		 (dolist (child (children current-node))
+		   (seek child)
+		   (funcall backtrack-func current child :tree path-tree)))))
+      (seek start)
+      path-tree)))
+
+(defun runtest-hashtree ()
+  (let* ((world #2A((1 1 1 1 1 1 1 0 0 0 0)
+		    (1 1 1 1 1 1 1 0 0 0 0)
+		    (1 1 1 1 1 1 1 0 0 0 0)
+		    (1 1 1 1 1 1 1 0 0 0 -1)
+		    (1 1 1 1 9 9 9 1 1 1 0)
+		    (1 1 1 1 9 1 1 1 1 1 0)
+		    (1 0 1 9 9 9 9 1 0 0 0)
+		    (1 1 1 9 1 1 1 1 0 1 -5)
+		    (1 1 1 9 9 1 1 1 1 1 -4)
+		    (1 1 1 1 1 1 1 1 1 1 0)
+		    (1 1 1 1 1 1 1 1 1 0 1)))
+	 (width (array-dimension world 0))
+	 (height (array-dimension world 1)))
+
+    (block escape
+      (hashtree-search (crd 5 5)
+		   #'(lambda (crd) (testneigh crd width height))
+		   #'(lambda (from to)
+		       (<= (aref world (x to) (y to))
+			   (aref world (x from) (y from))))
+		   #'(lambda (from to)
+		       (cond ((< (aref world (x to) (y to))
+				 (aref world (x from) (y from)))
+			      2)
+			     (t
+			      1)))
+		   #'(lambda (to)
+		       (declare (ignore to))
+		       nil)
+
+		   ;; prototype backtrack func
+		   #'(lambda (from to &key tree)
+		       ;; TODO: investigate if possible to avoid internal nodes leaking
+		       (when (< (aref world (x to) (y to))
+				(aref world (x from) (y from)))
+			 ;;; TODO:::WRONG! degree will ignore things that should
+			 ;; be counted beyond holes 
+			 (when (>= (1+ (hashtree-degree to tree))
+				   9) ;; desired minimum pool size
+			   (return-from escape ;to-node)
+			     ;; Let's return pool as list instead:
+			     (test-floodfill to (aref world (x to) (y to)) world)))))
+		   
+		   :shortest-path nil
+		   ))))
