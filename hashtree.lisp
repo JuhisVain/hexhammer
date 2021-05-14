@@ -1,3 +1,5 @@
+(in-package :hexhammer)
+
 (defclass node-value ()
   ((priority :initform 0
 	     :initarg :priority
@@ -89,6 +91,7 @@ Returns NIL if not found."
 	   prio-b))
 
 (defmethod add-child-node (parent child child-priority hashtree)
+  "Returns CHILD on success, NIL on failure."
   (let ((old-rest-child (child-of parent child hashtree)))
     (if old-rest-child ; parent already has child with this key?
 	(when (priority-ordered ; new child has higher priority than old?
@@ -96,13 +99,16 @@ Returns NIL if not found."
 	       (priority (access (car old-rest-child) hashtree))
 	       hashtree)
 	  (setf (car old-rest-child) child) ; replace old child with new
+	  ;; This will write over old child, but grandchildren will be left dangling in hashtable:
 	  (setf (access child hashtree) ; add node for new child
-		(make-node child-priority parent)))
+		(make-node child-priority parent))
+	  child)
 	;; using parent arg of no consequence here as long as hashtree-key is immutable
 	(progn ; no old children with same key
 	  (push child (children (access parent hashtree)))
 	  (setf (access child hashtree)
-		(make-node child-priority parent))))))
+		(make-node child-priority parent))
+	  child))))
 
 
 '(setf (access (list 5 'test 'test 'test) *ht*) (make-node 0))
