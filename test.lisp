@@ -261,6 +261,14 @@
       (seek start)
       path-tree)))
 
+(defun display-hashtree (ht)
+  (dotimes (x 11)
+    (dotimes (y 11)
+      (format t "~2a " (if (access (crd x y) ht)
+			   (priority (access (crd x y) ht))
+			   #\#)))
+    (format t "~%")))
+
 (defun runtest-hashtree ()
   (let* ((world #2A((1 1 1 1 1 1 1 0 0 0 0)
 		    (1 1 1 1 1 1 1 0 0 0 0)
@@ -285,21 +293,24 @@
 		   #'(lambda (from to)
 		       (cond ((< (aref world (x to) (y to))
 				 (aref world (x from) (y from)))
-			      2)
+			      1)
 			     (t
-			      1)))
+			      0)))
 		   #'(lambda (to)
 		       (declare (ignore to))
 		       nil)
 
+		   ;;; Maybe this is a bit too ambitious...
 		   ;; prototype backtrack func
 		   #'(lambda (from to &key tree)
 		       ;; TODO: investigate if possible to avoid internal nodes leaking
 		       (when (< (aref world (x to) (y to))
 				(aref world (x from) (y from)))
+			 (format t "Backtraking at f:~a -> ~a~%" from to)
 			 ;;; TODO:::WRONG! degree will ignore things that should
-			 ;; be counted beyond holes 
-			 (when (>= (1+ (hashtree-degree to tree))
+			 ;; be counted beyond holes
+			 ;; nah
+			 '(when (>= (1+ (hashtree-degree to tree))
 				   9) ;; desired minimum pool size
 			   (return-from escape ;to-node)
 			     ;; Let's return pool as list instead:
@@ -307,3 +318,50 @@
 		   
 		   :shortest-path nil
 		   ))))
+
+(defun make-perf-test-world (dims)
+  (destructuring-bind (x y) dims
+    (let ((world (make-array dims)))
+      (dotimes (xi x)
+	(dotimes (yi y)
+	  (setf (aref world xi yi) (random 100))))
+      world)))
+
+(defun perf-test (dim)
+  (let* ((width dim)
+	 (height dim)
+	 (world (make-perf-test-world (list width height))))
+    (flet ((moveable (from to)
+	     (<= (abs (- (aref world (x to) (y to))
+			 (aref world (x from) (y from))))
+		 50))
+	   (movecost (from to)
+	     (cond ((< (aref world (x to) (y to))
+		       (aref world (x from) (y from)))
+		    1)
+		   (t
+		    2))))
+      (format t "TREE~%")
+      (time
+       (tree-search (crd (floor dim 2) (floor dim 2))
+		    #'(lambda (crd) (testneigh crd width height))
+		    #'moveable
+		    #'movecost
+		    #'(lambda (to)
+			(declare (ignore to))
+			nil)
+		    #'(lambda (from to from-node to-node) nil)
+		    :shortest-path nil))
+      ;;;; UNACCEPTABLE
+      (format t "~%HASHTREE~%")
+      (time
+       (hashtree-search (crd (floor dim 2) (floor dim 2))
+			#'(lambda (crd) (testneigh crd width height))
+			#'moveable
+			#'movecost
+			#'(lambda (to)
+			    (declare (ignore to))
+			    nil)
+			#'(lambda (from to &key tree) nil)
+			:shortest-path nil))
+      NIL)))

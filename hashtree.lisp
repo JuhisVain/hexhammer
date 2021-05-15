@@ -119,6 +119,11 @@ Returns NIL if not found."
       (rec-degree key)
       count)))
 
+(defun root-path (key hashtree)
+  "List of keys from KEY to HASHRTEE's root."
+  (when key
+    (cons key (root-path (parent (access key hashtree)) hashtree))))
+
 (defun make-keyed-hashtree (key ordering &optional root root-priority)
   (let ((hashtree (make-instance 'keyed-hashtree :key key :ordering ordering)))
     (when root
