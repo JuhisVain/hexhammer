@@ -29,7 +29,7 @@
 				    :priority priority
 				    :parent (node-key parent-node))))
 
-    (pushnew child (node-children parent-node) :test #'equalp)
+    (pushnew new-child-node (node-children parent-node) :test #'equalp :key #'node-key)
     (cond ((null (prigraph-set prigraph)) ; merge child into it's position
 	   (setf (gethash child priorities)
 		 (merge-child-node new-child-node children-nodes)))
