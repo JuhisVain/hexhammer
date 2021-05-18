@@ -1,4 +1,5 @@
 (in-package :hexhammer)
+(setf *print-circle* t)
 
 (defstruct node
   (key nil)
