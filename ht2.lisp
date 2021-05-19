@@ -50,5 +50,12 @@
   (let ((new-child-node (make-node :key child
 				   :priority priority
 				   :parent parent-node)))
-    
-    (store-priority new-child-node prigraph)))
+    (when (store-priority new-child-node prigraph)
+      new-child-node)))
+
+(defun get-nodes (key prigraph)
+  (gethash key (prigraph-priorities prigraph)))
+
+(defun highest-priority (key prigraph)
+  (let ((first (first (get-nodes key prigraph))))
+    (when first (node-priority first))))
