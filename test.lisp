@@ -193,6 +193,76 @@
     came-from))
 
 
+;; TODO: write pathwriter
+(defun ht2-search (start;of type keytype
+		   get-neighbours-func;(keytype)
+		   moveable-func;(from to)
+		   move-cost-func;(from to)
+		   &key
+		     (shortest-path t)
+		     max-range ; Should be set when shortest-path nil
+		   )
+  (let ((pg (make-prigraph start)))
+    (labels ((seek (current-node)
+	       (format t "(~a;~a)~%"
+		       (x (node-key current-node))
+		       (y (node-key current-node)))
+	       (dolist (neigh (remove (when (node-parent current-node)
+					(node-key (node-parent current-node)))
+				      (funcall get-neighbours-func (node-key current-node))
+				      :test #'equalp))
+		 (when (funcall moveable-func (node-key current-node) neigh)
+		   (let* ((move-cost (funcall move-cost-func (node-key current-node) neigh))
+			  (total-cost (+ (node-priority current-node) move-cost))
+			  (old-top-node (first (get-nodes neigh pg))))
+		     ;; Reason to add new node:
+		     ;; -We want everything, that is not out of reach
+		     ;; -There is no node here
+		     ;; -The new node is superior to the old one
+		     (when (or (and (not shortest-path)
+				    (<= total-cost max-range))
+			       (null old-top-node)
+			       (and shortest-path
+				    (< total-cost (node-priority old-top-node))))
+		       (seek
+			(add-child neigh
+				   total-cost
+				   current-node
+				   pg))))))))
+      (seek (prigraph-root-node pg))
+      pg)))
+
+(defun runtest-ht2 ()
+  (let* ((world #2A((1 1 1 1 1 1 1 0 0 0 0)
+		    (1 1 1 1 1 1 1 0 0 0 0)
+		    (1 1 1 1 1 1 1 0 0 0 0)
+		    (1 1 1 1 1 1 1 0 0 0 -1)
+		    (1 1 1 1 9 9 9 1 1 1 0)
+		    (1 1 1 1 9 1 1 1 1 1 0)
+		    (1 0 1 9 9 9 9 1 0 0 0)
+		    (1 1 1 9 1 1 1 1 0 1 -5)
+		    (1 1 1 9 9 1 1 1 1 1 -4)
+		    (1 1 1 1 1 1 1 1 1 1 0)
+		    (1 1 1 1 1 1 1 1 1 0 1)))
+	 (width (array-dimension world 0))
+	 (height (array-dimension world 1)))
+
+    (ht2-search (crd 5 5)
+		#'(lambda (crd) (testneigh crd width height))
+		#'(lambda (from to)
+		    (<= (aref world (x to) (y to))
+			(aref world (x from) (y from))))
+		#'(lambda (from to)
+		    (cond ((< (aref world (x to) (y to))
+			      (aref world (x from) (y from)))
+			   1)
+			  (t
+			   2)))
+		:shortest-path nil
+		:max-range 15
+		)))
+      
+
 (defun tree-search (start get-neighbours-func moveable-func move-cost-func end-when-func
 		    backtrack-func
 		    &key (shortest-path t) max-range (key #'identity))
