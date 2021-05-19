@@ -27,18 +27,19 @@
 	       #'< :key #'node-priority)))
 
 (defun store-priority (node prigraph)
+  "Will return this NODE's key's priority list or NIL if adding NODE failed."
   (let ((old-nodes (gethash (node-key node) (prigraph-priorities prigraph)))
 	(node-priority (node-priority node)))
-    (cond ((and (prigraph-set prigraph) ; There can be only one!
-		(< node-priority (node-priority (car old-nodes))))
-	   (let ((old-parent (node-parent (car old-nodes))))
-	     (setf (node-children old-parent)
-		   (delete (node-key node)
-			   (node-children old-parent)
-			   :key #'node-key :test #'equalp))
-	     (merge-child-node node (node-parent node))
-	     (setf (gethash (node-key node) (prigraph-priorities prigraph))
-		   (list node))))
+    (cond ((prigraph-set prigraph) ; There can be only one!
+	   (when (< node-priority (node-priority (car old-nodes)))
+	     (let ((old-parent (node-parent (car old-nodes))))
+	       (setf (node-children old-parent)
+		     (delete (node-key node)
+			     (node-children old-parent)
+			     :key #'node-key :test #'equalp))
+	       (merge-child-node node (node-parent node))
+	       (setf (gethash (node-key node) (prigraph-priorities prigraph))
+		     (list node)))))
 	  (t
 	   (merge-child-node node (node-parent node))
 	   (setf (gethash (node-key node) (prigraph-priorities prigraph))
