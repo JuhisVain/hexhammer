@@ -192,8 +192,6 @@
 	  (return-from DEPTH-SEARCH came-from))))
     came-from))
 
-
-;; TODO: write pathwriter
 (defun ht2-search (start;of type keytype
 		   get-neighbours-func;(keytype)
 		   moveable-func;(from to)
@@ -204,7 +202,7 @@
 		   )
   (let ((pg (make-prigraph start)))
     (labels ((seek (current-node)
-	       (format t "(~a;~a)~%"
+	       '(format t "(~a;~a)~%"
 		       (x (node-key current-node))
 		       (y (node-key current-node)))
 	       (dolist (neigh (remove (when (node-parent current-node)
@@ -215,24 +213,63 @@
 		   (let* ((move-cost (funcall move-cost-func (node-key current-node) neigh))
 			  (total-cost (+ (node-priority current-node) move-cost))
 			  (old-top-node (first (get-nodes neigh pg))))
-		     ;; Reason to add new node:
-		     ;; -We want everything, that is not out of reach
-		     ;; -There is no node here
-		     ;; -The new node is superior to the old one
-		     (when (or (and (not shortest-path)
-				    (<= total-cost max-range))
-			       (null old-top-node)
-			       (and shortest-path
-				    (< total-cost (node-priority old-top-node))))
-		       (seek
-			(add-child neigh
-				   total-cost
-				   current-node
-				   pg))))))))
+
+		     (cond ((and max-range (> total-cost max-range))
+			    NIL)
+			   ((and shortest-path old-top-node
+				 (>= total-cost (node-priority old-top-node)))
+			    NIL)
+			   (t
+			    (seek
+			     (add-child neigh
+					total-cost
+					current-node
+					pg)))))))))
       (seek (prigraph-root-node pg))
       pg)))
 
-(defun runtest-ht2 ()
+(defun display-ht2 (pg)
+  (dotimes (i 11)
+    (dotimes (j 11)
+      (format t "~2a " (or (when (get-nodes (crd i j) pg)
+			     (node-priority (car (get-nodes (crd i j) pg))))
+			   #\#)))
+    (format t "~%")))
+
+;;; Shows downstream children of START annotated with a letter designating lineage
+(defun display-signed-ht2 (start pg)
+  (let ((world (make-array '(11 11) :initial-element "###"))
+	(sigils (list 'a 'b 'c 'd)))
+
+    (labels ((follow (node sigil)
+	       (when (< (node-priority node)
+			(or (parse-integer (aref world
+						 (x (node-key node))
+						 (y (node-key node)))
+					   :start 1 :junk-allowed t)
+			    666))
+		 (setf (aref world
+			     (x (node-key node))
+			     (y (node-key node)))
+		       (format nil "~a~2a" sigil (node-priority node))))
+	       (dolist (child (node-children node))
+		 (follow child sigil))))
+
+      (setf (aref world
+		  (x start)
+		  (y start))
+	    (format nil "~a~2a" "X" (node-priority (car (get-nodes start pg)))))
+
+      (loop for child in (node-children (car (get-nodes start pg)))
+	    for sigil in sigils
+	    do (follow child sigil))
+      
+      (dotimes (i 11)
+	(dotimes (j 11)
+	  (format t "~3a " (aref world i j)))
+	(format t "~%")))))
+
+(defun runtest-ht2 (&optional (short t) (maxr nil))
   (let* ((world #2A((1 1 1 1 1 1 1 0 0 0 0)
 		    (1 1 1 1 1 1 1 0 0 0 0)
 		    (1 1 1 1 1 1 1 0 0 0 0)
@@ -258,8 +295,8 @@
 			   1)
 			  (t
 			   2)))
-		:shortest-path nil
-		:max-range 15
+		:shortest-path short
+		:max-range maxr
 		)))
       
 
