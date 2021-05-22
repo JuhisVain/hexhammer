@@ -20,11 +20,33 @@
     (setf (gethash root (prigraph-priorities graph)) (list root-node))
     graph))
 
-(defun merge-child-node (child-node parent-node) ; but parent-node is part of child-node...?
-  ;; This isn't supposed to be ordered??
-  (setf (node-children parent-node)
-	(merge 'list (list child-node) (node-children parent-node)
-	       #'< :key #'node-priority)))
+(declaim (inline get-nodes))
+(defun get-nodes (key prigraph)
+  (gethash key (prigraph-priorities prigraph)))
+
+(declaim (inline push-child-node))
+(defun push-child-node (child-node parent-node) ; but parent-node is part of child-node...?
+  (push child-node (node-children parent-node)))
+
+(defmacro sort-push-node (node nodes)
+  "Destructively inserts NODE into the sorted list NODES."
+  (let ((pre (gensym))
+	(post (gensym))
+	(sort-push-block (gensym))
+	(letnode (gensym)))
+    `(block ,sort-push-block
+       (let ((,letnode ,node))
+	 (if (or (null ,nodes)
+		 (< (node-priority ,letnode)
+		    (node-priority (car ,nodes))))
+	     (push ,letnode ,nodes)
+	     (loop for ,pre on ,nodes
+		   for ,post on (cdr ,nodes)
+		   when (or (null ,post)
+			    (< (node-priority ,letnode)
+			       (node-priority (car ,post))))
+		     do (rplacd ,pre (cons ,letnode ,post))
+			(return-from ,sort-push-block ,nodes)))))))
 
 (defun store-priority (node prigraph)
   "Will return this NODE's key's priority list or NIL if adding NODE failed."
@@ -37,14 +59,13 @@
 		     (delete (node-key node)
 			     (node-children old-parent)
 			     :key #'node-key :test #'equalp))
-	       (merge-child-node node (node-parent node))
+	       (push-child-node node (node-parent node))
 	       (setf (gethash (node-key node) (prigraph-priorities prigraph))
 		     (list node)))))
 	  (t
-	   (merge-child-node node (node-parent node))
+	   (push-child-node node (node-parent node))
 	   (setf (gethash (node-key node) (prigraph-priorities prigraph))
-		 (merge 'list (list node) old-nodes
-			#'< :key #'node-priority))))))
+		 (sort-push-node node old-nodes))))))
 
 (defun add-child (child priority parent-node prigraph)
   (let ((new-child-node (make-node :key child
@@ -52,9 +73,6 @@
 				   :parent parent-node)))
     (when (store-priority new-child-node prigraph)
       new-child-node)))
-
-(defun get-nodes (key prigraph)
-  (gethash key (prigraph-priorities prigraph)))
 
 (defun highest-priority (key prigraph)
   (let ((first (first (get-nodes key prigraph))))

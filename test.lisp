@@ -196,15 +196,13 @@
 		   get-neighbours-func;(keytype)
 		   moveable-func;(from to)
 		   move-cost-func;(from to)
+		   backtrack-func;(from to) ;; backtracking-wise it's actually (to from)
 		   &key
-		     (shortest-path t)
-		     max-range ; Should be set when shortest-path nil
+		     (shortest-path t) ; Don't care about paths worse than the best already found
+		     max-range ; Should be set when shortest-path nil, unless guaranteed not to circle
 		   )
   (let ((pg (make-prigraph start)))
     (labels ((seek (current-node)
-	       '(format t "(~a;~a)~%"
-		       (x (node-key current-node))
-		       (y (node-key current-node)))
 	       (dolist (neigh (remove (when (node-parent current-node)
 					(node-key (node-parent current-node)))
 				      (funcall get-neighbours-func (node-key current-node))
@@ -224,7 +222,9 @@
 			     (add-child neigh
 					total-cost
 					current-node
-					pg)))))))))
+					pg))
+			    (funcall backtrack-func (node-key current-node) neigh)))))
+		 )))
       (seek (prigraph-root-node pg))
       pg)))
 
@@ -295,6 +295,9 @@
 			   1)
 			  (t
 			   2)))
+		#'(lambda (from to)
+		    (declare (ignorable from to))
+		    nil)
 		:shortest-path short
 		:max-range maxr
 		)))
@@ -459,9 +462,19 @@
 			nil)
 		    #'(lambda (from to from-node to-node) nil)
 		    :shortest-path nil))
-      ;;;; UNACCEPTABLE
-      (format t "~%HASHTREE~%")
+
+      (format t "HT2~%")
       (time
+       (ht2-search (crd (floor dim 2) (floor dim 2))
+		    #'(lambda (crd) (testneigh crd width height))
+		    #'moveable
+		    #'movecost
+		    #'(lambda (from to) nil)
+		    :shortest-path t))
+      
+      ;;;; UNACCEPTABLE
+      '(format t "~%HASHTREE~%")
+      '(time
        (hashtree-search (crd (floor dim 2) (floor dim 2))
 			#'(lambda (crd) (testneigh crd width height))
 			#'moveable
