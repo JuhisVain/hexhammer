@@ -48,6 +48,44 @@
 		     do (rplacd ,pre (cons ,letnode ,post))
 			(return-from ,sort-push-block ,nodes)))))))
 
+;;; Appears to take about twice the time of above macro
+;;; If we declaim so:
+;;(declaim (inline nsort-insert))
+;; and say that keyed-x and funcall key (car list) are fixnums below we could get better perf
+(defun nsort-insert (x list predicate &key key)
+  "Insert X into it's position in sorted list LIST according to PREDICATE.
+May modify LIST."
+  (declare (optimize speed)
+	   (list list)
+	   (function predicate)
+	   ((or function null) key))
+  (let* ((key (if key key #'identity))
+	 (keyed-x (funcall key x)))
+    (labels ((rec-nsortins (x list)
+	       (cond ((null list)
+		      (setf list (list x)))
+		     ((funcall predicate
+			       keyed-x
+			       (funcall key (car list)))
+		      (rplaca (rplacd list (cons (car list) (cdr list)))
+			      x))
+		     ((null (cdr list))
+		      (rplacd list (list x)))
+		     (t
+		      (rec-nsortins x (cdr list))))))
+      (rec-nsortins x list)
+      list)))
+(defun nsi-test ()
+  (let ((l (sort (loop repeat 100000
+		       collect (make-node :priority (random 100000)))
+		 #'<= :key #'node-priority))
+	(add-list (loop repeat 1000
+			collect (make-node :priority (random 100000)))))
+    (time (progn (dolist (n add-list)
+		   (setf *foo*
+			 (nsort-insert n l #'< :key #'node-priority)))
+		 nil))))
+
 (defun store-priority (node prigraph)
   "Will return this NODE's key's priority list or NIL if adding NODE failed."
   (let ((old-nodes (gethash (node-key node) (prigraph-priorities prigraph)))
