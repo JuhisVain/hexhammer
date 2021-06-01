@@ -55,7 +55,7 @@
 (defun nsort-insert (x list predicate &key key)
   "Insert X into it's position in sorted list LIST according to PREDICATE.
 May modify LIST."
-  (declare (optimize speed)
+  (declare (optimize speed (compilation-speed 0))
 	   (list list)
 	   (function predicate)
 	   ((or function null) key))
@@ -83,7 +83,9 @@ May modify LIST."
 			collect (make-node :priority (random 100000)))))
     (time (progn (dolist (n add-list)
 		   (setf *foo*
-			 (nsort-insert n l #'< :key #'node-priority)))
+			 (nsort-insert n l #'< :key #'node-priority)
+			 ;;(sort-push-node n l)
+			 ))
 		 nil))))
 
 (defun store-priority (node prigraph)
