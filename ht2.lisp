@@ -48,6 +48,25 @@
 		     do (rplacd ,pre (cons ,letnode ,post))
 			(return-from ,sort-push-block ,nodes)))))))
 
+(defmacro sort-push (obj list predicate)
+  (let ((sort-push-block (gensym "SORT-PUSH"))
+	(letobj (gensym "OBJ"))
+	(letlist (gensym "LIST"))
+	(pre (gensym "PRE"))
+	(post (gensym "POST")))
+    `(block ,sort-push-block
+       (let ((,letobj ,obj)
+	     (,letlist ,list))
+	 (if (or (null ,list)
+		 (funcall ,predicate ,letobj (car ,letlist)))
+	     (push ,letobj ,list) ;; Pushing to ,list will work when lexical arg list empty
+	     (loop for ,pre on ,letlist
+		   and ,post = (cdr ,letlist) then (cdr ,post)
+		   when (or (null ,post)
+			    (funcall ,predicate ,letobj (car ,post)))
+		     do (rplacd ,pre (cons ,letobj ,post))
+			(return-from ,sort-push-block ,letlist)))))))
+
 ;;; Appears to take about twice the time of above macro
 ;;; If we declaim so:
 ;;(declaim (inline nsort-insert))
