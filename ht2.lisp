@@ -28,6 +28,21 @@
 (defun push-child-node (child-node parent-node) ; but parent-node is part of child-node...?
   (push child-node (node-children parent-node)))
 
+(defun pg-degree (node)
+  (loop for child in (node-children node)
+	summing (1+ (degree child))))
+
+(defun follow (key prigraph)
+  "List nodes from PRIGRAPH's root node to KEY"
+  (let* ((target (car (get-nodes key prigraph)))
+	 (list nil))
+    (labels ((node-follow (node)
+	       (when node
+		 (push node list)
+		 (node-follow (node-parent node)))))
+      (node-follow target)
+      list)))
+
 (defmacro sort-push-node (node nodes)
   "Destructively inserts NODE into the sorted list NODES."
   (let ((pre (gensym))
