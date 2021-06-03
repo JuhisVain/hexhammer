@@ -723,3 +723,43 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 		    (* 1/2 +sf-pi+)))
      (:CEN (crd 0.0 0.0)))
    x+ y+))
+
+;; TODO: Move somewhere smarter
+(defun random-pick (option-seq)
+  "Pick randomly from elements in sequence OPTION-SEQ."
+  (elt option-seq (random (length option-seq))))
+
+(defun run-river-from (crd dir world)
+  "Generate river from source point (CRD DIR), running downhill."
+		 ;;TODO: Get best options
+		 ;; Prefer water over steep downhill over downhill over off-map
+		 ;; pick randomly from best
+		 ;; NOTE: Possible strategy: ignore above and choose exit dir option
+		 ;; closest to entry.
+
+		 ;;; NOTE: Will hace to take elevation on CEN into account when
+		 ;; determining direction
+
+		 ;;;;TODO: This is a job for searching after all.
+                 ;; end condition should be a "dead end"
+
+  ;; As it is right now ht2-search searches recursively every child
+  (ht2-search (list crd dir)
+	      #'(lambda (point)
+		  (alex:shuffle (point-neighbours point world)))
+	      #'(lambda (from to)
+		  (let ((from-point (vertex-exists (car from) (cadr from) world))
+			(to-point (vertex-exists (car to) (cadr to) world)))
+		    (<= (point-elevation to-point)
+			(point-elevation from-point))))
+	      #'(lambda (from to)
+		  (declare (ignore from to))
+		  1)
+	      #'(lambda (from to)
+		  (declare (ignore from to))
+		  nil)
+	      :max-range 50))
+
+;;;   (defparameter *test* (run-river-from (crd 61 34) :w *world*))
+;;;   (mapcar #'node-key (follow (list (crd 58 26) :nnw) *test*))
+;;;   etc..
