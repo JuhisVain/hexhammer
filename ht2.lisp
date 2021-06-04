@@ -30,7 +30,7 @@
 
 (defun pg-degree (node)
   (loop for child in (node-children node)
-	summing (1+ (degree child))))
+	summing (1+ (pg-degree child))))
 
 (defun follow (key prigraph)
   "List nodes from PRIGRAPH's root node to KEY"
