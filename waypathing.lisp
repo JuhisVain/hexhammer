@@ -724,6 +724,22 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
      (:CEN (crd 0.0 0.0)))
    x+ y+))
 
+;; Probably belongs somewhere else
+(defun vertex-key (vert)
+  "Returns a primary name for VERT to be used for identity in sets."
+  (destructuring-bind (crd dir) vert
+    (case dir
+      ((:NNW :N :NNE)
+       (let ((ncrd (crd-neighbour crd :N)))
+	 (list ncrd (vertex-alias crd dir ncrd))))
+      ((:NE :E)
+       (let ((ncrd (crd-neighbour crd :NE)))
+	 (list ncrd (vertex-alias crd dir ncrd))))
+      ((:SE :SSE)
+       (let ((ncrd (crd-neighbour crd :SE)))
+	 (list ncrd (vertex-alias crd dir ncrd))))
+      (otherwise vert))))
+
 ;; TODO: Move somewhere smarter
 (defun random-pick (option-seq)
   "Pick randomly from elements in sequence OPTION-SEQ."
