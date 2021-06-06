@@ -740,6 +740,26 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 	 (list ncrd (vertex-alias crd dir ncrd))))
       (otherwise vert))))
 
+(defun count-connected (crd dir predicate world &key (max 100))
+  "Counts the vertices connected to (CRD DIR) that fullfill PREDICATE.
+Will return count or MAX."
+  (let ((frontier nil)
+	(processed (make-hash-table :test 'equalp))
+	(init-vert (vertex-key (list crd dir))))
+    (setf (gethash init-vert processed) t)
+    (do* ((vert init-vert (pop frontier))
+	  (count 0))
+	 ((or (null vert)
+	      (>= count max))
+	  count)
+      (when (funcall predicate vert)
+	(incf count)
+	(dolist (neigh (mapcar #'vertex-key (point-neighbours vert world)))
+	  (let ((found (gethash neigh processed)))
+	    (when (not found)
+	      (setf (gethash neigh processed) t)
+	      (push neigh frontier))))))))
+
 ;; TODO: Move somewhere smarter
 (defun random-pick (option-seq)
   "Pick randomly from elements in sequence OPTION-SEQ."
