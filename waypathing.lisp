@@ -729,10 +729,10 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
   "Returns a primary name for VERT to be used for identity in sets."
   (destructuring-bind (crd dir) vert
     (case dir
-      ((:NNW :N :NNE)
+      ((:NNW :N)
        (let ((ncrd (crd-neighbour crd :N)))
 	 (list ncrd (vertex-alias crd dir ncrd))))
-      ((:NE :E)
+      ((:NE :E :NNE)
        (let ((ncrd (crd-neighbour crd :NE)))
 	 (list ncrd (vertex-alias crd dir ncrd))))
       ((:SE :SSE)
