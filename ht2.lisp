@@ -151,3 +151,24 @@ May modify LIST."
 (defun highest-priority (key prigraph)
   (let ((first (first (get-nodes key prigraph))))
     (when first (node-priority first))))
+
+(defun end-leaves (prigraph)
+  "List PRIGRAPH's childless nodes."
+  (let ((leaves nil))
+    (labels ((rec-el (node)
+	       (if (node-children node)
+		   (dolist (child (node-children node))
+		     (rec-el child))
+		   (push node leaves))))
+      (rec-el (prigraph-root-node prigraph))
+      leaves)))
+
+(defun test-follow-end-lead (pg)
+  (mapcar #'node-key
+	  (follow
+	   (node-key (car (sort (end-leaves pg)
+				#'(lambda (a b)
+				    (> (node-priority a)
+				       (node-priority b))))))
+	   pg)))
+
