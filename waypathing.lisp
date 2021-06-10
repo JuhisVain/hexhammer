@@ -778,11 +778,15 @@ Will return count or MAX."
 
 		 ;;;;TODO: This is a job for searching after all.
                  ;; end condition should be a "dead end"
-
+  (declare (optimize debug))
   ;; As it is right now ht2-search searches recursively every child
   (ht2-search (list crd dir)
 	      #'(lambda (point)
-		  (alex:shuffle (point-neighbours point world)))
+		  (alex:shuffle
+		   ;;(mapcar #'vertex-key
+			   (point-neighbours point world))
+		   ;;)
+		  )
 	      #'(lambda (from to)
 		  (let ((from-point (vertex-exists (car from) (cadr from) world))
 			(to-point (vertex-exists (car to) (cadr to) world)))
