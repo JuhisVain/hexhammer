@@ -222,18 +222,20 @@
 			  (old-top-node (first (get-nodes neigh pg))))
 
 		     (cond ((and max-range (> total-cost max-range))
+			    ;;(format t "Out of range!~%")
 			    NIL)
 			   ((and shortest-path old-top-node
 				 (>= total-cost (node-priority old-top-node)))
+			    ;;(format t "Total cost is too much!~%")
 			    NIL)
 			   (t
+			    ;;(format t "That's good!~%")
 			    (seek
 			     (add-child neigh
 					total-cost
 					current-node
 					pg))
-			    (funcall backtrack-func (node-key current-node) neigh)))))
-		 )))
+			    (funcall backtrack-func (node-key current-node) neigh))))))))
       (seek (prigraph-root-node pg))
       pg)))
 
