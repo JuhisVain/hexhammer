@@ -203,10 +203,19 @@
 		   )
   (let ((pg (make-prigraph start)))
     (labels ((seek (current-node)
-	       (dolist (neigh (remove (when (node-parent current-node)
-					(node-key (node-parent current-node)))
-				      (funcall get-neighbours-func (node-key current-node))
-				      :test #'equalp))
+	       (declare (optimize speed))
+
+	       (unless current-node (return-from seek))
+	       
+	       (dolist (neigh (remove-if (if shortest-path
+					     #'(lambda (n)
+						 (gethash n (prigraph-priorities pg)))
+					     #'(lambda (n)
+						 (when (node-parent current-node)
+						   (equalp (node-key (node-parent current-node))
+							   n))))
+					 (funcall get-neighbours-func (node-key current-node))
+					 ))
 		 (when (funcall moveable-func (node-key current-node) neigh)
 		   (let* ((move-cost (funcall move-cost-func (node-key current-node) neigh))
 			  (total-cost (+ (node-priority current-node) move-cost))
