@@ -765,7 +765,7 @@ Will return count or MAX."
   "Pick randomly from elements in sequence OPTION-SEQ."
   (elt option-seq (random (length option-seq))))
 
-(defun run-river-from (crd dir world)
+(defun run-river-from (crd dir world &key (max-range 100) (pooling-size 40))
   "Generate river from source point (CRD DIR), running downhill."
 		 ;;TODO: Get best options
 		 ;; Prefer water over steep downhill over downhill over off-map
