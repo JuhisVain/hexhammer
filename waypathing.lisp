@@ -796,9 +796,31 @@ Will return count or MAX."
 		  (declare (ignore from to))
 		  1)
 	      #'(lambda (from to)
-		  (declare (ignore from to))
-		  nil)
-	      :max-range 50))
+		  (when (< (point-elevation (vertex-exists (car to) (cadr to) world))
+			   (point-elevation (vertex-exists (car from) (cadr from) world)))
+		    ;;(format t "That's elevations ~a < ~a !~%"to from)
+		    (let ((elevation
+			    (point-elevation
+			     (vertex-exists (car to) (cadr to) world))))
+		      (cond ((>= (count-connected
+				  (car to) (cadr to)
+				  #'(lambda (vert)
+				      (<= (point-elevation
+					   (vertex-exists (car vert) (cadr vert) world))
+					  elevation))
+				  world
+				  :max pooling-size)
+				 pooling-size)
+			     ;; This should be a "sea"
+			     (format t "End pool detected at ~a~%" to))
+			    (t
+			     ;; This is a lake or something
+			     (format t "A puddle found at ~a~%" to)
+			     ))
+		      
+		      nil)))
+	      ;;:shortest-path nil ; not a good idea
+	      :max-range max-range))
 
 ;;;   (defparameter *test* (run-river-from (crd 61 34) :w *world*))
 ;;;   (mapcar #'node-key (follow (list (crd 58 26) :nnw) *test*))
