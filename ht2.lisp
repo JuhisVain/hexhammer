@@ -163,6 +163,19 @@ May modify LIST."
       (rec-el (prigraph-root-node prigraph))
       leaves)))
 
+(defun high-end-leaf (prigraph)
+  "Returns an end node from PRIGRAPH with highest priority."
+  (let ((high-leaf (prigraph-root-node prigraph)))
+    (labels ((rec-hel (node)
+	       (if (node-children node)
+		   (dolist (child (node-children node))
+		     (rec-hel child))
+		   (when (> (node-priority node)
+			    (node-priority high-leaf))
+		     (setf high-leaf node)))))
+      (rec-hel high-leaf)
+      high-leaf)))
+
 (defun test-follow-end-lead (pg)
   (mapcar #'node-key
 	  (follow
