@@ -7,6 +7,12 @@
   (parent nil)
   (children nil :type list))
 
+(defmethod print-object ((object node) stream)
+  (print-unreadable-object (object stream :type t :identity t)
+    (format stream "Key ~a, priority ~a,"
+	    (node-key object)
+	    (node-priority object))))
+
 (defstruct (prigraph
 	    (:constructor make-raw-priority-graph (root-node &optional (set nil))))
   (priorities (make-hash-table :test 'equalp
