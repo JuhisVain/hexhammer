@@ -825,3 +825,24 @@ Will return count or MAX."
 ;;;   (defparameter *test* (run-river-from (crd 61 34) :w *world*))
 ;;;   (mapcar #'node-key (follow (list (crd 58 26) :nnw) *test*))
 ;;;   etc..
+
+;; This thing is a hack to get rid of rivers looping back into themselves:
+(defun filter-river-path (vert-list)
+  (do* ((path (loop for verts on vert-list ;; verts before verts where crd changes
+		    when (not (equalp (caadr verts) (caar verts)))
+		      collect (car verts))
+	      (cdr path))
+	(whole-path path))
+       ((null path) whole-path)
+    (loop with current = (vertex-key (car path))
+	  for verts on (cdr path)
+	  when (equalp (vertex-key (car verts))
+		       current)
+	    do (rplacd path (cdr verts)))))
+
+(defun riverize (vert-list world)
+  "VERT-LIST should be list of (crd dir) verts."
+  (clrhash *crd-paths*) ;; remove when done
+
+  (loop for ((a-crd a-dir) (b-crd b-dir)) on vert-list
+	do (add-river-exit a-crd a-dir b-crd 0.1 world)))
