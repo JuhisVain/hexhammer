@@ -845,4 +845,6 @@ Will return count or MAX."
   (clrhash *crd-paths*) ;; remove when done
 
   (loop for ((a-crd a-dir) (b-crd b-dir)) on vert-list
-	do (add-river-exit a-crd a-dir b-crd 0.1 world)))
+	when b-crd
+	  do (add-river-exit a-crd a-dir b-crd 0.1 world)
+	finally (remhash b-crd *crd-paths*)))
