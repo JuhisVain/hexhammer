@@ -767,60 +767,81 @@ Will return count or MAX."
 
 (defun run-river-from (crd dir world &key (max-range 100) (pooling-size 40))
   "Generate river from source point (CRD DIR), running downhill."
-		 ;;TODO: Get best options
-		 ;; Prefer water over steep downhill over downhill over off-map
-		 ;; pick randomly from best
-		 ;; NOTE: Possible strategy: ignore above and choose exit dir option
-		 ;; closest to entry.
-
-		 ;;; NOTE: Will hace to take elevation on CEN into account when
-		 ;; determining direction
-
-		 ;;;;TODO: This is a job for searching after all.
-                 ;; end condition should be a "dead end"
   (declare (optimize debug))
   ;; As it is right now ht2-search searches recursively every child
-  (ht2-search (list crd dir)
-	      #'(lambda (point)
-		  (alex:shuffle
-		   ;;(mapcar #'vertex-key
-			   (point-neighbours point world))
-		   ;;)
-		  )
-	      #'(lambda (from to)
-		  (let ((from-point (vertex-exists (car from) (cadr from) world))
-			(to-point (vertex-exists (car to) (cadr to) world)))
-		    (<= (point-elevation to-point)
-			(point-elevation from-point))))
-	      #'(lambda (from to)
-		  (declare (ignore from to))
-		  1)
-	      #'(lambda (from to)
-		  (when (< (point-elevation (vertex-exists (car to) (cadr to) world))
-			   (point-elevation (vertex-exists (car from) (cadr from) world)))
-		    ;;(format t "That's elevations ~a < ~a !~%"to from)
-		    (let ((elevation
-			    (point-elevation
-			     (vertex-exists (car to) (cadr to) world))))
-		      (cond ((>= (count-connected
-				  (car to) (cadr to)
-				  #'(lambda (vert)
-				      (<= (point-elevation
-					   (vertex-exists (car vert) (cadr vert) world))
-					  elevation))
-				  world
-				  :max pooling-size)
-				 pooling-size)
-			     ;; This should be a "sea"
-			     (format t "End pool detected at ~a~%" to))
-			    (t
-			     ;; This is a lake or something
-			     (format t "A puddle found at ~a~%" to)
+  (let* ((prigraph
+	   (ht2-search (list crd dir)
+		       ;;;; Rivers should be composed of a single vert denoting exit
+		       #'(lambda (point)
+			   ;;(alex:shuffle
+			   ;;(point-neighbours point world))
+			   (when (eq (cadr point) :cen)
+			     (format t "Point ~a cannot be CEN!~%" point))
+
+			   ;;; TODO: (#S(CRD :X 60 :Y 28) . CEN)
+			   ;;; Graphical river passes through hill at CEN
+			   
+			   ;;(alex::shuffle will break
+			   (loop for np in (point-neighbours point world)
+				 if (eq (cadr np) :CEN)
+				   when (<=
+					 (point-elevation
+					  (vertex-exists (car np) (cadr np) world))
+					 (point-elevation
+					  (vertex-exists (car point) (cadr point) world)))
+				     append (remove :CEN (point-neighbours np world)
+						    :test #'eq :key #'cadr)
+				 end
+				 else collect np)
+			   ;;)
+			   )
+		       #'(lambda (from to)
+			   (let ((from-point (vertex-exists (car from) (cadr from) world))
+				 (to-point (vertex-exists (car to) (cadr to) world)))
+			     (<= (point-elevation to-point)
+				 (point-elevation from-point))
 			     ))
-		      
-		      nil)))
-	      ;;:shortest-path nil ; not a good idea
-	      :max-range max-range))
+		       #'(lambda (from to)
+			   (declare (ignore from to))
+			   1)
+		       #'(lambda (from to)
+			   (when (< (point-elevation (vertex-exists (car to) (cadr to) world))
+				    (point-elevation (vertex-exists (car from) (cadr from) world)))
+			     ;;(format t "That's elevations ~a < ~a !~%"to from)
+			     (let ((elevation
+				     (point-elevation
+				      (vertex-exists (car to) (cadr to) world))))
+			       (cond ((>= (count-connected
+					   (car to) (cadr to)
+					   #'(lambda (vert)
+					       (<= (point-elevation
+						    (vertex-exists (car vert) (cadr vert) world))
+						   elevation))
+					   world
+					   :max pooling-size)
+					  pooling-size)
+				      ;; This should be a "sea"
+				      (format t "End pool detected at ~a~%" to))
+				     (t
+				      ;; This is a lake or something
+				      (format t "A puddle found at ~a~%" to)
+				      ))
+			       
+			       nil)))
+		       ;;:key #'car
+		       ;;:shortest-path nil ; not a good idea
+		       :max-range max-range))
+	 (end (high-end-leaf prigraph)))
+    (defparameter *pg* prigraph)
+    (defparameter *end* (node-key end))
+    (riverize ;; TODO:: still broken
+     (filter-river-path
+      (mapcar #'node-key
+	      (follow (node-key end) prigraph) ;; There's some kind of path
+	      ))
+     world)
+    nil
+    ))
 
 ;;;   (defparameter *test* (run-river-from (crd 61 34) :w *world*))
 ;;;   (mapcar #'node-key (follow (list (crd 58 26) :nnw) *test*))
