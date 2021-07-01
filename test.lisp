@@ -212,10 +212,11 @@
 						 (gethash n (prigraph-priorities pg)))
 					     #'(lambda (n)
 						 (when (node-parent current-node)
-						   (equalp (node-key (node-parent current-node))
-							   n))))
-					 (funcall get-neighbours-func (node-key current-node))
-					 ))
+						   (equalp
+						    (node-key (node-parent current-node))
+						    n))))
+					 (funcall get-neighbours-func
+						  (node-key current-node))))
 		 (when (funcall moveable-func (node-key current-node) neigh)
 		   (let* ((move-cost (funcall move-cost-func (node-key current-node) neigh))
 			  (total-cost (+ (node-priority current-node) move-cost))
