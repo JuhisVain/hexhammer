@@ -765,6 +765,20 @@ Will return count or MAX."
   "Pick randomly from elements in sequence OPTION-SEQ."
   (elt option-seq (random (length option-seq))))
 
+#|
+TODO: Maybe revisit later.
+Pooling and river segments should be described by some custom data so
+they can be used to populate and check duplicates in the same data structures.
+Also choosing the longest path may not be the best solution, though neither is
+the shortest path any good...
+Graphical rivers either need to take (at least) CEN elevation into account
+when moving to farther verts OR pathfinding will need to be used to avoid wonkiness.
+
+(load "ht2.lisp") ; for prigraph 
+(load "test.lisp") ; for ht2-search
+
+
+
 (defun run-river-from (crd dir world &key (max-range 100) (pooling-size 40))
   "Generate river from source point (CRD DIR), running downhill."
   (declare (optimize debug))
@@ -869,3 +883,5 @@ Will return count or MAX."
 	when b-crd
 	  do (add-river-exit a-crd a-dir b-crd 0.1 world)
 	finally (remhash b-crd *crd-paths*)))
+
+|#
