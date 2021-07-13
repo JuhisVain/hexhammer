@@ -10,6 +10,7 @@
 (defstruct range-deque
   (initp nil :type boolean)
   (left 0 :type fixnum) ; aka. start
+  (step 1 :type fixnum)
   (range 0 :type fixnum))
 
 (defun reset-range-deque (range-deque)
@@ -23,13 +24,15 @@
 
 (defun (setf range-deque-right) (new-right ranged)
   (let ((diff (- new-right (range-deque-right ranged))))
-    (if (and (or (= (signum diff)
+    (if (and (or (= (signum diff) ;; Are we still going in same direction?
 		    (signum (range-deque-range ranged)))
-		 (zerop (range-deque-range ranged)))
-	     (= 1 (abs diff)))
+		 (zerop (range-deque-range ranged)))) ;; Initializing direction
 	(incf (range-deque-range ranged) diff)
-	(error "Bad values~%"))))
+	(error "Bad values~% ~a != ~a ? bad direction~%"
+	       (signum diff)
+	       (signum (range-deque-range ranged))))))
 
+;; currently UNUSED + most likely broken
 (defun push-left (element ranged)
   (let ((diff (- (range-deque-left ranged)
 		 element)))
@@ -51,16 +54,20 @@
     nil))
 
 (defun push-right (element ranged)
-  (cond ((not (range-deque-initp ranged)) ;; Initialize
-	 (setf (range-deque-left ranged) element
-	       (range-deque-initp ranged) t))
-	(t (setf (range-deque-right ranged) element))))
+  (if (= 0 (mod element (range-deque-step ranged)))
+      (cond ((not (range-deque-initp ranged)) ;; Initialize
+	     (setf (range-deque-left ranged) element
+		   (range-deque-initp ranged) t))
+	    (t (setf (range-deque-right ranged) element)))
+      (error "~a is not multiple of ~a!~%" element (range-deque-step ranged))))
 
 (defun pop-left (ranged)
   (cond ((zerop (range-deque-range ranged))
 	 (setf (range-deque-initp ranged) nil))
 	((range-deque-initp ranged)
-	 (let ((unit (signum (range-deque-range ranged))))
+	 (let ((unit (* (range-deque-step ranged)
+			(signum (range-deque-range ranged))
+		     )))
 	   (incf (range-deque-left ranged) unit)
 	   (decf (range-deque-range ranged) unit)))))
 
@@ -68,7 +75,9 @@
   (cond ((zerop (range-deque-range ranged))
 	 (setf (range-deque-initp ranged) nil))
 	((range-deque-initp ranged)
-	 (let ((unit (signum (range-deque-range ranged))))
+	 (let ((unit (* (range-deque-step ranged)
+			(signum (range-deque-range ranged))
+		     )))
 	   (decf (range-deque-range ranged) unit)))))
 
 (defun peek-left (ranged)

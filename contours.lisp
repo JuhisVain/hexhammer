@@ -19,6 +19,12 @@
 	     (origin-y (- window-centre-y-pix (centre-y view-state)))
 
 	     (r (hex-r view-state))
+	     (contour-step (cond ((< r 10) 20)
+				 ((< r 30) 10)
+				 ((< r 50) 5)
+				 ((< r 70) 2)
+				 (t 1)))
+	     
 	     (half-down-y (* +sin60+ r))
 	     (full-down-y (* half-down-y 2))
 	     (three-halfs-r (* 1.5 r))
@@ -35,55 +41,55 @@
 			      (* (mod (1- (x crd)) 2) ;apply on even x
 				 half-down-y))))
 
-	(let ((top (record-contours hex :n :nnw 1))
-	      (left (record-contours hex :nnw :nw 1))
-	      (bottom (record-contours hex :nw :cen 1))
-	      (right (record-contours hex :cen :n 1))
+	(let ((top (record-contours hex :n :nnw contour-step))
+	      (left (record-contours hex :nnw :nw contour-step))
+	      (bottom (record-contours hex :nw :cen contour-step))
+	      (right (record-contours hex :cen :n contour-step))
 	      (angle (* 5/6 +sf-pi+)))
 	  (draw-kite-contours top left bottom right
 			      angle hex-centre-x hex-centre-y
 			      (hex-r view-state) cairo-context))
 
-	(let ((top (record-contours hex :ne :nne 1))
-	      (left (record-contours hex :nne :n 1))
-	      (bottom (record-contours hex :n :cen 1))
-	      (right (record-contours hex :cen :ne 1))
+	(let ((top (record-contours hex :ne :nne contour-step))
+	      (left (record-contours hex :nne :n contour-step))
+	      (bottom (record-contours hex :n :cen contour-step))
+	      (right (record-contours hex :cen :ne contour-step))
 	      (angle (* 3/6 +sf-pi+)))
 	  (draw-kite-contours top left bottom right
 			      angle hex-centre-x hex-centre-y
 			      (hex-r view-state) cairo-context))
 
-	(let ((top (record-contours hex :se :e 1))
-	      (left (record-contours hex :e :ne 1))
-	      (bottom (record-contours hex :ne :cen 1))
-	      (right (record-contours hex :cen :se 1))
+	(let ((top (record-contours hex :se :e contour-step))
+	      (left (record-contours hex :e :ne contour-step))
+	      (bottom (record-contours hex :ne :cen contour-step))
+	      (right (record-contours hex :cen :se contour-step))
 	      (angle (* 1/6 +sf-pi+)))
 	  (draw-kite-contours top left bottom right
 			      angle hex-centre-x hex-centre-y
 			      (hex-r view-state) cairo-context))
 
-	(let ((top (record-contours hex :s :sse 1))
-	      (left (record-contours hex :sse :se 1))
-	      (bottom (record-contours hex :se :cen 1))
-	      (right (record-contours hex :cen :s 1))
+	(let ((top (record-contours hex :s :sse contour-step))
+	      (left (record-contours hex :sse :se contour-step))
+	      (bottom (record-contours hex :se :cen contour-step))
+	      (right (record-contours hex :cen :s contour-step))
 	      (angle (* 11/6 +sf-pi+)))
 	  (draw-kite-contours top left bottom right
 			      angle hex-centre-x hex-centre-y
 			      (hex-r view-state) cairo-context))
 
-	(let ((top (record-contours hex :sw :ssw 1))
-	      (left (record-contours hex :ssw :s 1))
-	      (bottom (record-contours hex :s :cen 1))
-	      (right (record-contours hex :cen :sw 1))
+	(let ((top (record-contours hex :sw :ssw contour-step))
+	      (left (record-contours hex :ssw :s contour-step))
+	      (bottom (record-contours hex :s :cen contour-step))
+	      (right (record-contours hex :cen :sw contour-step))
 	      (angle (* 9/6 +sf-pi+)))
 	  (draw-kite-contours top left bottom right
 			      angle hex-centre-x hex-centre-y
 			      (hex-r view-state) cairo-context))
 	
-	(let ((top (record-contours hex :nw :w 1))
-	      (left (record-contours hex :w :sw 1))
-	      (bottom (record-contours hex :sw :cen 1))
-	      (right (record-contours hex :cen :nw 1))
+	(let ((top (record-contours hex :nw :w contour-step))
+	      (left (record-contours hex :w :sw contour-step))
+	      (bottom (record-contours hex :sw :cen contour-step))
+	      (right (record-contours hex :cen :nw contour-step))
 	      (angle (* 7/6 +sf-pi+)))
 	  (draw-kite-contours top left bottom right
 			      angle hex-centre-x hex-centre-y

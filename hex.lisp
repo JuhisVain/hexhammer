@@ -52,13 +52,11 @@
   (water 0 :type (signed-byte 8))
   (deque nil :type range-deque))
 
-(defun record-contours (hex left right divisor)
+(defun record-contours (hex left right step)
   (let* ((left-point (hex-vertex hex left))
 	 (right-point (hex-vertex hex right))
-	 (left-ele (round (point-elevation left-point)
-			  divisor))
-	 (right-ele (round (point-elevation right-point)
-			   divisor))
+	 (left-ele (point-elevation left-point))
+	 (right-ele (point-elevation right-point))
 	 (difference (- right-ele left-ele))
 	 (contours
 	   (make-contours
@@ -66,13 +64,18 @@
 	    :range difference
 	    :water (max (point-water left-point)
 			(point-water right-point))
-	    ;:water-right (point-water right-point)
-	    :deque (make-range-deque))))
-    (cond ((> difference 0)
-	   (loop for elevation from (1+ left-ele) to right-ele
+	    ;;:water-right (point-water right-point)
+	    :deque (make-range-deque :step step))))
+    (set-all-contours contours)
+    '(cond ((> difference 0)
+	   (loop for elevation
+		 from (* (ceiling left-ele step) step) ; round to higher step multiple
+		   to right-ele by step
 		 do (push-right elevation (contours-deque contours))))
 	  ((< difference 0)
-	   (loop for elevation from left-ele downto (1+ right-ele)
+	   (loop for elevation
+		 from (* (floor left-ele step) step) ; round to lower step multiple
+		 downto right-ele by step
 		 do (push-right elevation (contours-deque contours)))))
     contours))
 
@@ -84,17 +87,45 @@
   (max (contours-left contours)
        (contours-right contours)))
 
+;;;; TODO: Screwed up contours at at least some step levels
 (defun set-all-contours (contours)
   (reset-range-deque (contours-deque contours))
-  (cond ((plusp (contours-range contours))
-	 (loop for elevation from (1+ (contours-left contours))
+  (let ((step (range-deque-step (contours-deque contours))))
+    (cond ((plusp (contours-range contours))
+	   '(format t "Loop from ~a to ~a by ~a~%"
+		   (* (ceiling (1+ (contours-left contours)) step) step)
+		   (contours-right contours)
+		   step)
+	   (loop for elevation
+		 from ;; round to higher step multiple
+		 (* (ceiling (1+ (contours-left contours)) step) step)
+		   to (contours-right contours) by step
+		 do (push-right elevation (contours-deque contours))
+		    '(format t "   ---UP PUSHING ~a~%" elevation)
+		 ))
+	  ((minusp (contours-range contours))
+	   '(format t "Loop from ~a DOWN to ~a by ~a~%"
+		   (* (floor (contours-left contours) step) step)
+		   (1+ (contours-right contours))
+		   step)
+	   (loop for elevation
+		 from (* (floor (contours-left contours) step) step) ; round to lower step multiple
+		 downto (1+ (contours-right contours)) by step
+		 do (push-right elevation (contours-deque contours))
+		    '(format t "   ---DOWN PUSHING ~a~%" elevation)
+		 )))))
+
+#|
+	((plusp (contours-range contours))
+	 (loop for elevation
+	       from (1+ (contours-left contours))
 		 to (contours-right contours)
 	       do (push-right elevation (contours-deque contours))))
 	((minusp (contours-range contours))
 	 (loop for elevation from (contours-left contours)
 	       downto (1+ (contours-right contours))
 	       do (push-right elevation (contours-deque contours))))))
-
+|#
 (defun set-land-contours (contours)
   "Sets CONTOURS' range-deque to hold only land contours."
   (reset-range-deque (contours-deque contours))
@@ -156,7 +187,8 @@ If CONTOURS is totally submerged or totally dry returns NIL."
 	      (abs (- elevation (contours-left contours))))))
     (if (and (<= 0 index)
 	     (< index (abs (contours-range contours))))
-	index)))
+	index
+	(error "~a is not a contour of ~a!~%" elevation contours))))
 
 (defun is-contour-of (elevation contours)
   (or (= elevation
