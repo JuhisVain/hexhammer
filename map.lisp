@@ -123,5 +123,17 @@
 		   (hex-edge neighbour (opposite direction)))))
 	
 
+(defparameter *test-world-stack* nil)
 
+(defun pop-test-world ()
+  (setf *world* (pop *test-world-stack*)))
 
+(defun push-test-world (origin)
+  (push *world* *test-world-stack*)
+  (setf *world* nil)
+  (typecase origin
+    (hex
+     (setf *world* (make-world))
+     (setf (hex-at (crd 0 0) *world*) origin)))
+  (when (null *world*)
+    (pop-test-world)))
