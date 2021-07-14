@@ -80,7 +80,7 @@
       (:NNW (is-there-then (:NW :E) (:N :SSW)))
       (t (error "~a is not a valid vertex name!~%" vertex)))))
 
-(defun translate-data (x y direction width height data)
+(defun translate-data (x y direction width height data &optional (divisor 1))
   (round
    (2faref data
 	   (+ (* (xofs direction)
@@ -89,7 +89,7 @@
 	   (+ (* (yofs direction)
 		 (/ 1.0 height))
 	      (/ y height)))
-   2))
+   divisor))
 
 (defun filter-read-edge (x y direction width height data world)
   (mapcar #'(lambda (point dir)
