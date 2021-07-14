@@ -33,6 +33,8 @@
 		  (test-world
 		    (progn
 		      (defvar *world* (make-world))
+		      (when (null *world*)
+			(setf *world* (make-world)))
 		      (when (zerop (hash-table-count (world-map *world*)))
 			(generate-map 100 100
 				      ;;"mhmap.pgm" ;; mini mars
