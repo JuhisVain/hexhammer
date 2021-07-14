@@ -18,14 +18,20 @@
    (buffer :initarg :buffer
 	   :accessor buffer)
    (hex-r :initform 75.0 ; ZOOM
-	  :accessor hex-r)))
+	  :accessor hex-r)
+   (contour-step :initform 1
+		 :reader contour-step)))
 
 (defmethod (setf hex-r) :around (new-r view-state)
   (let ((old-r (hex-r view-state)))
     (call-next-method)
-    (with-slots (centre-x centre-y hex-r) view-state
+    (with-slots (centre-x centre-y hex-r contour-step) view-state
       (setf centre-x (* (/ centre-x old-r) hex-r)
-	    centre-y (* (/ centre-y old-r) hex-r)))))
+	    centre-y (* (/ centre-y old-r) hex-r)
+	    contour-step (cond ((< hex-r 10) 10)
+			       ((< hex-r 30) 5)
+			       ((< hex-r 50) 2)
+			       (t 1))))))
 
 (defmethod (setf hex-r) :after (new-r view-state)
   (when (<= (hex-r view-state) 0)

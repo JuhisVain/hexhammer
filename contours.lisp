@@ -19,11 +19,7 @@
 	     (origin-y (- window-centre-y-pix (centre-y view-state)))
 
 	     (r (hex-r view-state))
-	     (contour-step (cond ((< r 10) 20)
-				 ((< r 30) 10)
-				 ((< r 50) 5)
-				 ((< r 70) 2)
-				 (t 1)))
+	     (contour-step (contour-step view-state))
 	     
 	     (half-down-y (* +sin60+ r))
 	     (full-down-y (* half-down-y 2))
