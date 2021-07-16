@@ -42,11 +42,12 @@
 
 (defun contour-offset (contour-index contour-count edge-vector-pix)
   "Returns contour's position on edge in pixels clockwise."
-  (declare (fixnum contour-index contour-count)
+  (declare (optimize speed)
+	   (fixnum contour-index contour-count)
 	   (single-float edge-vector-pix))
   (let* ((margin (/ edge-vector-pix 4))
 	 (width (/ (- edge-vector-pix
 		      (* 2 margin))
-		   (+ 1 (abs contour-count)))))
-    (+ margin (* (1+ contour-index)
+		   (+ 1.0 (the fixnum (abs contour-count))))))
+    (+ margin (* (+ 1.0 contour-index)
 		 width))))

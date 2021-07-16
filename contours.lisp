@@ -99,26 +99,32 @@
 		offset-bottom offset-left offset-right offset-top))
 
 (defun offset-bottom (elevation contours hex-r)
+  (declare (optimize speed (compilation-speed 0)))
   (let ((half-down-y (* +sin60+ hex-r)))
     (- half-down-y
-       (contour-offset (contour-index elevation contours)
-		       (contours-range contours)
-		       half-down-y))))
+       (the single-float
+	    (contour-offset (contour-index elevation contours)
+			    (contours-range contours)
+			    half-down-y)))))
 
 (defun offset-left (elevation contours hex-r)
+  (declare (optimize speed (compilation-speed 0)))
   (let ((half-r (/ hex-r 2.0)))
     (- half-r
-       (contour-offset (contour-index elevation contours)
-		       (contours-range contours)
-		       half-r))))
+       (the single-float 
+	    (contour-offset (contour-index elevation contours)
+			    (contours-range contours)
+			    half-r)))))
 
 (defun offset-right (elevation contours hex-r)
+  (declare (optimize speed (compilation-speed 0)))
   (let ((half-down-y (* +sin60+ hex-r)))
     (contour-offset (contour-index elevation contours)
 		    (contours-range contours)
 		    half-down-y)))
 
 (defun offset-top (elevation contours hex-r)
+  (declare (optimize speed (compilation-speed 0)))
   (let ((minus-half-r (/ hex-r -2.0)))
     (contour-offset (contour-index elevation contours)
 		    (contours-range contours)
@@ -127,7 +133,8 @@
 (defun draw-kite-contours (top left bottom right
 			   angle hex-centre-x hex-centre-y
 			   hex-radius cairo-context)
-  (declare ;(optimize speed)
+  (declare (optimize speed
+		     (compilation-speed 0))
 	   (contours top left bottom right)
 	   (single-float angle hex-centre-x hex-centre-y hex-radius)
 	   (cairo:context cairo-context)
