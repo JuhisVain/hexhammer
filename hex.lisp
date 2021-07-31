@@ -376,11 +376,22 @@ and exist in world WORLD."
        (cairo:stroke)
        )))
 
-(defun hex-at (crd world)
+(defun data-at (crd world)
   (gethash crd (world-map world)))
 
+(defun (setf data-at) (new-data crd world)
+  (setf (gethash crd (world-map world)) new-data))
+
+(defun hex-at (crd world)
+  (car (data-at crd world)))
+
 (defun (setf hex-at) (new-hex crd world)
-  (setf (gethash crd (world-map world)) new-hex))
+  (if (data-at crd world)
+      (setf (car (data-at crd world))
+		 ;(gethash crd (world-map world))
+		 new-hex)
+      (setf (data-at crd world)
+	    (list new-hex))))
 
 (defun hex-vertex (hex vert-direction)
   (declare ;(type hex hex)
