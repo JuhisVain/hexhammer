@@ -377,21 +377,15 @@ and exist in world WORLD."
        )))
 
 (defun data-at (crd world)
-  (gethash crd (world-map world)))
-
-(defun (setf data-at) (new-data crd world)
-  (setf (gethash crd (world-map world)) new-data))
+  (list 
+   (gethash crd (world-map world))
+   (gethash crd (world-features world))))
 
 (defun hex-at (crd world)
-  (car (data-at crd world)))
+  (gethash crd (world-map world)))
 
 (defun (setf hex-at) (new-hex crd world)
-  (if (data-at crd world)
-      (setf (car (data-at crd world))
-		 ;(gethash crd (world-map world))
-		 new-hex)
-      (setf (data-at crd world)
-	    (list new-hex))))
+  (setf (gethash crd (world-map world)) new-hex))
 
 (defun hex-vertex (hex vert-direction)
   (declare ;(type hex hex)

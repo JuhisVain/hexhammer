@@ -2,6 +2,7 @@
 
 (defstruct world
   (map (make-hash-table :test 'equalp))
+  (features (make-hash-table :test 'equalp))
   )
 
 (defconstant +primary-directions+
