@@ -28,9 +28,9 @@
     (with-slots (centre-x centre-y hex-r contour-step) view-state
       (setf centre-x (* (/ centre-x old-r) hex-r)
 	    centre-y (* (/ centre-y old-r) hex-r)
-	    contour-step (cond ((< hex-r 10) 10)
-			       ((< hex-r 30) 5)
-			       ((< hex-r 50) 2)
+	    contour-step (cond ((< hex-r 7) 10)
+			       ((< hex-r 15) 5)
+			       ((< hex-r 20) 2)
 			       (t 1))))))
 
 (defmethod (setf hex-r) :after (new-r view-state)
