@@ -3,6 +3,7 @@
 (deftype pointspec ()
   `(cons crd (cons (member ,@+vertex-directions+) null)))
 (defstruct (point (:constructor point (elevation &optional (raw-water 0))))
+  (terrain (list 'plains 'dry)) ;; TODO ??(base-type weather-state . mod-types)??
   (elevation 0 :type elevation)
   (raw-water 0 :type elevation))
 
