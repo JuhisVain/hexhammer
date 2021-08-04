@@ -1,8 +1,16 @@
 (in-package :hexhammer)
 
+(defun point-base-terrain (point)
+  (car (point-terrain point)))
+
 (defun record-terrain-border (hex left right)
-  (list (point-terrain (hex-vertex hex left))
-	(point-terrain (hex-vertex hex right))))
+  "Returns a !!!border!!! between two terrain types.
+Forest at left and forest at right produces no border.
+Forest at left and swamp at right produces (FOREST . SWAMP) border."
+  (let ((left-point (point-base-terrain (hex-vertex hex left)))
+	(right-point (point-base-terrain (hex-vertex hex right))))
+    (when (not (equal left-point right-point)) ;; base terrain type WIP
+      (cons left-point right-point))))
 
 ;;; TODO: repurpose contour routines for this.
 (defun draw-terrain (crd map view-state)
