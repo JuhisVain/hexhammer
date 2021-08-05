@@ -12,7 +12,17 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
     (when (not (equal left-point right-point)) ;; base terrain type WIP
       (cons left-point right-point))))
 
-;;; TODO: repurpose contour routines for this.
+(defun point-edge-terrain (hex left right)
+  "List terrains at vertices LEFT & RIGHT."
+  (list (car (point-base-terrain (hex-vertex hex left)))
+	(car (point-base-terrain (hex-vertex hex right)))))
+
+(defun terrain-borderp (point-edge-terrain)
+  "Returns T when terrain border found."
+  (not (equal (car point-edge-terrain)
+	      (cadr point-edge-terrain))))
+
+;; Contours don't fit this problem
 (defun draw-terrain (crd map view-state)
   (let ((hex (hex-at crd map)))
     (unless hex (return-from draw-terrain))
@@ -29,7 +39,6 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	     (origin-y (- window-centre-y-pix (centre-y view-state)))
 
 	     (r (hex-r view-state))
-	     ;;(contour-step (contour-step view-state))
 	     
 	     (half-down-y (* +sin60+ r))
 	     (full-down-y (* half-down-y 2))
@@ -47,24 +56,23 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			      (* (mod (1- (x crd)) 2) ;apply on even x
 				 half-down-y))))
 
-	(let ((top (record-terrain-border hex :n :nnw))
-	      (left (record-terrain-border hex :nnw :nw))
-	      (bottom (record-terrain-border hex :nw :cen))
-	      (right (record-terrain-border hex :cen :n))
+	(let ((top (point-edge-terrain hex :n :nnw))
+	      (left (point-edge-terrain hex :nnw :nw))
+	      (bottom (point-edge-terrain hex :nw :cen))
+	      (right (point-edge-terrain hex :cen :n))
 	      (angle (* 5/6 +sf-pi+)))
-	  (draw-terrain-borders top left bottom right
-				angle hex-centre-x hex-centre-y
-				(hex-r view-state) cairo-context))
+	  (draw-kite-terrain top left bottom right
+			     angle hex-centre-x hex-centre-y
+			     (hex-r view-state) cairo-context))
 	;;rest
 	)
       (cairo:destroy cairo-context)
       (cairo:destroy cairo-surface))))
 
-'(defun draw-terrain-borders (top left bottom right
-			     angle hex-centre-x hex-centre-y
-			     hex-radius cairo-context)
-  (let* (;; Angle to rotate top & right contours:
-	 (angle-d (+ angle
+(defun draw-kite-terrain (top left bottom right
+			  angle hex-centre-x hex-centre-y
+			  hex-radius cairo-context)
+  (let* ((angle-d (+ angle
 		     (/ +sf-pi+ -3)))
 	 (sin-d (sin angle-d))
 	 (cos-d (cos angle-d))
@@ -113,17 +121,29 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	(cairo:set-line-width 0.5)
 	(cairo:set-antialias :none)
 
-	(prog1 nil
-	  (dolist (borders (list top left bottom right))
-	    (let* ((left (car borders))
-		   (right (cadr borders))
-		   (left-base (list (car left) (car left)))
-		   (right-base (list (car right) (car right)))
+	(when (and (equal (car bottom) (car right))
+		   (equal (car bottom) (car top))
+		   (equal (car bottom) (car left)))
+	  ;;; Whole kite is of same terrain type
+	  ;; TODO: draw fill
+	  (return-from draw-kite-terrain))
+	
+	(when (terrain-borderp bottom)
+	  (let ((probe (car bottom)))
+	    (cond ((and (terrain-borderp left)
+			(eq probe (cadr left)))
+		   ;; bottom-left corner
 		   )
-	      (if (equal left-base right-base)
-		  ))
+		  ((and (terrain-borderp top)
+			(eq probe (cadr top)))
+		   ;; left side
+		   )
+		  ((and (terrain-borderp right)
+			(eq probe (cadr right)))
+		   ;; all except bottom right corner
+		   
+		   ))))
 
-
-	    ))
+	;; rest
       
       ))))
