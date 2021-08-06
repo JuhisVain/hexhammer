@@ -3,6 +3,7 @@
 (defun render (world view-state)
   (do-visible (x y view-state)
     (when (hex-at (crd x y) world)
+      (draw-terrain (crd x y) world view-state)
       (draw-gouraud-shading (crd x y) world view-state)
       (draw-contours (crd x y) world view-state)
       (draw-hex-borders (crd x y) view-state)))

@@ -69,6 +69,12 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
       (cairo:destroy cairo-context)
       (cairo:destroy cairo-surface))))
 
+;; Insert some test borders in there:
+(defun test-terrain ()
+  (dolist (v (list :n :nw :sw :s :se :ne))
+    (setf (point-terrain (hex-vertex (hex-at (crd 1 1) *world*) v))
+	  (list (cons 'forest 'dry)))))
+
 (defun draw-kite-terrain (top left bottom right
 			  angle hex-centre-x hex-centre-y
 			  hex-radius cairo-context)
@@ -95,7 +101,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	 (r-t-corner
 	   (nrotate (crd half-down-y 0.0) () sin-d cos-d
 		    hex-centre-x hex-centre-y)))
-
+    
     (macrolet ((rotation (bot-lefts top-rights)
 		 `(progn
 		    ,@(loop
@@ -108,14 +114,14 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			collect `(nrotate ,symbol ()
 					  sin-d cos-d
 					  hex-centre-x hex-centre-y))))
-	       (move-curve ()
-		 '(progn
-		   (cairo:move-to (x xy0) (y xy0))
-		   (cairo:curve-to (x xy1) (y xy1)
-		    (x xy2) (y xy2)
-		    (x xy3) (y xy3))))
+	       ;;(move-curve ()
+	       ;;'(progn
+	       ;;  (cairo:move-to (x xy0) (y xy0))
+	       ;;  (cairo:curve-to (x xy1) (y xy1)
+	       ;;  (x xy2) (y xy2)
+	       ;;  (x xy3) (y xy3))))
 	       )
-
+      
       (cairo:with-context (cairo-context)
 	(cairo:set-source-rgb 0.5 0.5 0.5)
 	(cairo:set-line-width 0.5)
@@ -133,17 +139,30 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	    (cond ((and (terrain-borderp left)
 			(eq probe (cadr left)))
 		   ;; bottom-left corner
-		   )
+		   (let ((terrain-type (car bottom))
+			 (xy0 (crd half-r 0))
+			 (xy1 (crd half-r (/ half-r 2)))
+			 (xyn (crd half-down-y (/ half-r 2))))
+		     (rotation (xy0 xy1 xyn) ())
+		     (cairo:move-to (x xy0) (y xy0))
+		     (cairo:line-to (x xy1)
+				    (y xy1))
+		     (cairo:line-to (x xyn) (y xyn))
+		     (cairo:line-to (x l-b-corner)
+				    (y l-b-corner))
+		     (cairo:close-path)
+		     (cairo:fill-path)))
 		  ((and (terrain-borderp top)
 			(eq probe (cadr top)))
 		   ;; left side
+		   nil
 		   )
 		  ((and (terrain-borderp right)
 			(eq probe (cadr right)))
 		   ;; all except bottom right corner
-		   
+		   nil
 		   ))))
 
 	;; rest
-      
-      ))))
+	
+	))))
