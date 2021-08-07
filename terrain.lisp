@@ -87,6 +87,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	 (cos (cos angle))
 
 	 (half-down-y (* +sin60+ hex-radius))
+	 (half-kite-long (/ half-down-y 2.0)) ; half of a long edge of kite
 	 (half-r (/ hex-radius 2.0))
 
 	 (l-b-corner
@@ -133,15 +134,16 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	  ;;; Whole kite is of same terrain type
 	  ;; TODO: draw fill
 	  (return-from draw-kite-terrain))
-	
+        
 	(when (terrain-borderp bottom)
+	  
 	  (let ((probe (car bottom)))
 	    (cond ((and (terrain-borderp left)
 			(eq probe (cadr left)))
 		   ;; bottom-left corner
 		   (let ((terrain-type (car bottom))
-			 (xy0 (crd half-r 0))
-			 (xy1 (crd half-r (/ half-r 2)))
+			 (xy0 (crd half-kite-long 0))
+			 (xy1 (crd half-kite-long (/ half-r 2)))
 			 (xyn (crd half-down-y (/ half-r 2))))
 		     (rotation (xy0 xy1 xyn) ())
 		     (cairo:move-to (x xy0) (y xy0))
@@ -151,15 +153,42 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		     (cairo:line-to (x l-b-corner)
 				    (y l-b-corner))
 		     (cairo:close-path)
+		     
+		     (case terrain-type
+		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
+		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
+		     
 		     (cairo:fill-path)))
+		  
 		  ((and (terrain-borderp top)
 			(eq probe (cadr top)))
 		   ;; left side
-		   nil
-		   )
+		   (let ((terrain-type (car bottom))
+			 (xy0 (crd half-kite-long 0))
+			 (xy1 (crd half-kite-long (/ half-r 2)))
+			 (xyn (crd half-down-y (/ half-r -2))))
+		     (rotation (xy0 xy1) (xyn))
+		     (cairo:move-to (x xy0) (y xy0))
+		     (cairo:line-to (x xy1)
+				    (y xy1))
+		     (cairo:line-to (x xyn) (y xyn))
+		     (cairo:line-to (x t-l-corner)
+				    (y t-l-corner))
+		     (cairo:line-to (x l-b-corner)
+				    (y l-b-corner))
+		     (cairo:close-path)
+
+		     (case terrain-type
+		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
+		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
+		     
+		     (cairo:fill-path)
+		     ))
+		  
 		  ((and (terrain-borderp right)
 			(eq probe (cadr right)))
 		   ;; all except bottom right corner
+		   (format t "left-side and top-right~%")
 		   nil
 		   ))))
 
