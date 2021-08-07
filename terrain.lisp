@@ -71,9 +71,23 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 
 ;; Insert some test borders in there:
 (defun test-terrain ()
+
+  ;; Reset screw-ups:
+  (dolist (v +vertex-directions+)
+    (dolist (crd (list (crd 1 1)
+		       (crd 3 2)))
+      (setf (point-terrain (hex-vertex (hex-at crd *world*) v))
+	    (list (cons 'cultivated 'dry)))))
+  
   (dolist (v (list :n :nw :sw :s :se :ne))
     (setf (point-terrain (hex-vertex (hex-at (crd 1 1) *world*) v))
-	  (list (cons 'forest 'dry)))))
+	  (list (cons 'forest 'dry))))
+
+  (dolist (v (list :nw :nnw :ne :e :s :ssw))
+    (format t "Setting ~a ---> " v)
+    (setf (point-terrain (hex-vertex (hex-at (crd 3 2) *world*) v))
+	  (list (cons 'forest 'dry)))
+    (format t "it is now: ~a~%" (point-terrain (hex-vertex (hex-at (crd 3 2) *world*) v)))))
 
 (defun draw-kite-terrain (top left bottom right
 			  angle hex-centre-x hex-centre-y
