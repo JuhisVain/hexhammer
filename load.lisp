@@ -15,4 +15,5 @@
   (load "shading.lisp")
   (load "contours.lisp")
   (load "waypathing.lisp")
+  (load "terrain.lisp")
   (load "window.lisp"))
