@@ -76,7 +76,9 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
   (dolist (v +vertex-directions+)
     (dolist (crd (list (crd 1 1)
 		       (crd 3 2)
-		       (crd 1 3)))
+		       (crd 1 3)
+		       (crd 5 1)
+		       (crd 4 0)))
       (setf (point-terrain (hex-vertex (hex-at crd *world*) v))
 	    (list (cons 'cultivated 'dry)))))
   
@@ -90,6 +92,16 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 
   (dolist (v (list :nw :nnw :n :ne :e :se :s :ssw :sw))
     (setf (point-terrain (hex-vertex (hex-at (crd 1 3) *world*) v))
+	  (list (cons 'forest 'dry))))
+
+  ;; top-left-corner:
+  (dolist (v (list :nw :n :ne :se :s :sw)) ;actually makes cultivated drawn parts
+    (setf (point-terrain (hex-vertex (hex-at (crd 5 1) *world*) v))
+	  (list (cons 'forest 'dry))))
+
+  ;;top
+  (dolist (v (list :nnw :n :e :se :ssw :sw))
+    (setf (point-terrain (hex-vertex (hex-at (crd 4 0) *world*) v))
 	  (list (cons 'forest 'dry)))))
 
 (defun draw-kite-terrain (top left bottom right
@@ -210,6 +222,55 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		   
 		   ))))
 
+	
+	(when (terrain-borderp left)
+	  (let ((probe (car left)))
+	    (cond ((and (terrain-borderp top)
+			(eq probe (cadr top)))
+		   (let ((terrain-type (car left))
+			 (xy0 (crd half-down-y (/ half-r 2)))
+			 (xy1 (crd half-kite-long (/ half-r 2)))
+			 (xy2 (crd half-down-y (/ half-r -2))))
+		     (rotation (xy0 xy1) (xy2))
+
+		     (path-through xy0 xy1 xy2 t-l-corner)
+
+		     (case terrain-type
+		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
+		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
+		     
+		     (cairo:fill-path)))
+		  ((and (terrain-borderp right)
+			(eq probe (cadr right)))
+		   (let ((terrain-type (car left))
+			 (xy0 (crd half-down-y (/ half-r 2)))
+			 (xy1 (crd half-kite-long (/ half-r 2)))
+			 (xy2 (crd half-kite-long 0)))
+		     (rotation (xy0 xy1) (xy2))
+
+		     (path-through xy0 xy1 xy2 r-t-corner t-l-corner)
+
+		     (case terrain-type
+		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
+		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
+		     
+		     (cairo:fill-path)))
+		  ((and (terrain-borderp bottom)
+			(eq probe (cadr bottom)))
+		   (let ((terrain-type (car left))
+			 (xy0 (crd half-down-y (/ half-r 2)))
+			 (xy1 (crd half-kite-long (/ half-r 2)))
+			 (xy2 (crd half-kite-long 0)))
+		     (rotation (xy0 xy1 xy2) ())
+
+		     (path-through xy0 xy1 xy2 b-r-corner r-t-corner t-l-corner)
+
+		     (case terrain-type
+		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
+		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
+		     
+		     (cairo:fill-path))))))
+	
 	;; rest
 	
 	))))
