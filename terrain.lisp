@@ -75,7 +75,8 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
   ;; Reset screw-ups:
   (dolist (v +vertex-directions+)
     (dolist (crd (list (crd 1 1)
-		       (crd 3 2)))
+		       (crd 3 2)
+		       (crd 1 3)))
       (setf (point-terrain (hex-vertex (hex-at crd *world*) v))
 	    (list (cons 'cultivated 'dry)))))
   
@@ -84,10 +85,12 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	  (list (cons 'forest 'dry))))
 
   (dolist (v (list :nw :nnw :ne :e :s :ssw))
-    (format t "Setting ~a ---> " v)
     (setf (point-terrain (hex-vertex (hex-at (crd 3 2) *world*) v))
-	  (list (cons 'forest 'dry)))
-    (format t "it is now: ~a~%" (point-terrain (hex-vertex (hex-at (crd 3 2) *world*) v)))))
+	  (list (cons 'forest 'dry))))
+
+  (dolist (v (list :nw :nnw :n :ne :e :se :s :ssw :sw))
+    (setf (point-terrain (hex-vertex (hex-at (crd 1 3) *world*) v))
+	  (list (cons 'forest 'dry)))))
 
 (defun draw-kite-terrain (top left bottom right
 			  angle hex-centre-x hex-centre-y
@@ -203,7 +206,26 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			(eq probe (cadr right)))
 		   ;; all except bottom right corner
 		   (format t "left-side and top-right~%")
-		   nil
+
+		   (let ((terrain-type (car bottom))
+			 (xy0 (crd half-kite-long 0))
+			 (xy1 (crd half-kite-long (/ half-r 2)))
+			 (xy2 (crd half-kite-long 0)))
+		     (rotation (xy0 xy1) (xy2))
+		     (cairo:move-to (x xy0) (y xy0))
+		     (cairo:line-to (x xy1) (y xy1))
+		     (cairo:line-to (x xy2) (y xy2))
+		     (cairo:line-to (x r-t-corner) (y r-t-corner))
+		     (cairo:line-to (x t-l-corner) (y t-l-corner))
+		     (cairo:line-to (x l-b-corner) (y l-b-corner))
+		     (cairo:close-path)
+
+		     (case terrain-type
+		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
+		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
+		     
+		     (cairo:fill-path))
+		   
 		   ))))
 
 	;; rest
