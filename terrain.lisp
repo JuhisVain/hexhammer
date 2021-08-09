@@ -132,13 +132,12 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			collect `(nrotate ,symbol ()
 					  sin-d cos-d
 					  hex-centre-x hex-centre-y))))
-	       ;;(move-curve ()
-	       ;;'(progn
-	       ;;  (cairo:move-to (x xy0) (y xy0))
-	       ;;  (cairo:curve-to (x xy1) (y xy1)
-	       ;;  (x xy2) (y xy2)
-	       ;;  (x xy3) (y xy3))))
-	       )
+	       
+	       (path-through (&rest crds)
+		 `(progn (cairo:move-to (x ,(car crds)) (y ,(car crds)))
+			 ,@(loop for crd in (cdr crds)
+				 collect `(cairo:line-to (x ,crd) (y ,crd)))
+			 (cairo:close-path))))
       
       (cairo:with-context (cairo-context)
 	(cairo:set-source-rgb 0.5 0.5 0.5)
@@ -163,13 +162,8 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			 (xy1 (crd half-kite-long (/ half-r 2)))
 			 (xyn (crd half-down-y (/ half-r 2))))
 		     (rotation (xy0 xy1 xyn) ())
-		     (cairo:move-to (x xy0) (y xy0))
-		     (cairo:line-to (x xy1)
-				    (y xy1))
-		     (cairo:line-to (x xyn) (y xyn))
-		     (cairo:line-to (x l-b-corner)
-				    (y l-b-corner))
-		     (cairo:close-path)
+
+		     (path-through xy0 xy1 xyn l-b-corner)
 		     
 		     (case terrain-type
 		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
@@ -185,16 +179,9 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			 (xy1 (crd half-kite-long (/ half-r 2)))
 			 (xyn (crd half-down-y (/ half-r -2))))
 		     (rotation (xy0 xy1) (xyn))
-		     (cairo:move-to (x xy0) (y xy0))
-		     (cairo:line-to (x xy1)
-				    (y xy1))
-		     (cairo:line-to (x xyn) (y xyn))
-		     (cairo:line-to (x t-l-corner)
-				    (y t-l-corner))
-		     (cairo:line-to (x l-b-corner)
-				    (y l-b-corner))
-		     (cairo:close-path)
 
+		     (path-through xy0 xy1 xyn t-l-corner l-b-corner)
+		     
 		     (case terrain-type
 		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
 		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
@@ -212,14 +199,9 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			 (xy1 (crd half-kite-long (/ half-r 2)))
 			 (xy2 (crd half-kite-long 0)))
 		     (rotation (xy0 xy1) (xy2))
-		     (cairo:move-to (x xy0) (y xy0))
-		     (cairo:line-to (x xy1) (y xy1))
-		     (cairo:line-to (x xy2) (y xy2))
-		     (cairo:line-to (x r-t-corner) (y r-t-corner))
-		     (cairo:line-to (x t-l-corner) (y t-l-corner))
-		     (cairo:line-to (x l-b-corner) (y l-b-corner))
-		     (cairo:close-path)
 
+		     (path-through xy0 xy1 xy2 r-t-corner t-l-corner l-b-corner)
+		     
 		     (case terrain-type
 		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
 		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
