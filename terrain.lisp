@@ -296,7 +296,41 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
 		     
 		     (cairo:fill-path))))))
-	
-	;;rest
+
+	(when (terrain-borderp right)
+	  (let ((probe (car right)))
+	    (cond ((and (terrain-borderp bottom)
+			(eq probe (cadr bottom)))
+		   (let ((terrain-type (car right)))
+
+		     (path-through r-mid kite-mid b-mid b-r-corner)
+		     
+		     (case terrain-type
+		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
+		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
+		     
+		     (cairo:fill-path)))
+		  ((and (terrain-borderp left)
+			(eq probe (cadr left)))
+		   (let ((terrain-type (car right)))
+
+		     (path-through r-mid kite-mid l-mid l-b-corner b-r-corner)
+
+		     (case terrain-type
+		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
+		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
+		     
+		     (cairo:fill-path)))
+		  ((and (terrain-borderp top)
+			(eq probe (cadr top)))
+		   (let ((terrain-type (car right)))
+
+		     (path-through r-mid kite-mid t-mid t-l-corner l-b-corner b-r-corner)
+
+		     (case terrain-type
+		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
+		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
+		     
+		     (cairo:fill-path))))))
 	
 	))))
