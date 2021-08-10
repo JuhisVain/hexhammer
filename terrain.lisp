@@ -78,7 +78,8 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		       (crd 3 2)
 		       (crd 1 3)
 		       (crd 5 1)
-		       (crd 4 0)))
+		       (crd 4 0)
+		       (crd 0 0)))
       (setf (point-terrain (hex-vertex (hex-at crd *world*) v))
 	    (list (cons 'cultivated 'dry)))))
   
@@ -102,6 +103,10 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
   ;;top
   (dolist (v (list :nnw :n :e :se :ssw :sw))
     (setf (point-terrain (hex-vertex (hex-at (crd 4 0) *world*) v))
+	  (list (cons 'forest 'dry))))
+
+  (dolist (v (list :cen :nw :n :ne :se :s :sw))
+    (setf (point-terrain (hex-vertex (hex-at (crd 0 0) *world*) v))
 	  (list (cons 'forest 'dry)))))
 
 (defun draw-kite-terrain (top left bottom right
@@ -255,7 +260,43 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
 		     
 		     (cairo:fill-path))))))
+	
+	(when (terrain-borderp top)
+	  (let ((probe (car top)))
+	    (cond ((and (terrain-borderp right)
+			(eq probe (cadr right)))
+		   (let ((terrain-type (car top)))
+		     
+		     (path-through t-mid kite-mid r-mid r-t-corner)
 
-	;; rest
+		     (case terrain-type
+		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
+		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
+
+		     (cairo:fill-path)))
+		  ((and (terrain-borderp bottom)
+			(eq probe (cadr bottom)))
+		   (let ((terrain-type (car top)))
+
+		     (path-through t-mid kite-mid b-mid b-r-corner r-t-corner)
+
+		     (case terrain-type
+		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
+		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
+
+		     (cairo:fill-path)))
+		  ((and (terrain-borderp left)
+			(eq probe (cadr left)))
+		   (let ((terrain-type (car top)))
+		     
+		     (path-through t-mid kite-mid l-mid l-b-corner b-r-corner r-t-corner)
+		     
+		     (case terrain-type
+		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
+		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
+		     
+		     (cairo:fill-path))))))
+	
+	;;rest
 	
 	))))
