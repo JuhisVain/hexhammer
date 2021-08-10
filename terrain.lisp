@@ -101,6 +101,15 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			     angle hex-centre-x hex-centre-y
 			     (hex-r view-state) cairo-context))
 
+	(let ((top (point-edge-terrain hex :nw :w))
+	      (left (point-edge-terrain hex :w :sw))
+	      (bottom (point-edge-terrain hex :sw :cen))
+	      (right (point-edge-terrain hex :cen :nw))
+	      (angle (* -5/6 +sf-pi+)))
+	  (draw-kite-terrain top left bottom right
+			     angle hex-centre-x hex-centre-y
+			     (hex-r view-state) cairo-context))
+
 	)
       (cairo:destroy cairo-context)
       (cairo:destroy cairo-surface))))
