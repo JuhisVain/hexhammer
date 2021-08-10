@@ -64,7 +64,43 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	  (draw-kite-terrain top left bottom right
 			     angle hex-centre-x hex-centre-y
 			     (hex-r view-state) cairo-context))
-	;;rest
+
+	(let ((top (point-edge-terrain hex :ne :nne))
+	      (left (point-edge-terrain hex :nne :n))
+	      (bottom (point-edge-terrain hex :n :cen))
+	      (right (point-edge-terrain hex :cen :ne))
+	      (angle (* 3/6 +sf-pi+)))
+	  (draw-kite-terrain top left bottom right
+			     angle hex-centre-x hex-centre-y
+			     (hex-r view-state) cairo-context))
+
+	(let ((top (point-edge-terrain hex :se :e))
+	      (left (point-edge-terrain hex :e :ne))
+	      (bottom (point-edge-terrain hex :ne :cen))
+	      (right (point-edge-terrain hex :cen :se))
+	      (angle (* 1/6 +sf-pi+)))
+	  (draw-kite-terrain top left bottom right
+			     angle hex-centre-x hex-centre-y
+			     (hex-r view-state) cairo-context))
+
+	(let ((top (point-edge-terrain hex :s :sse))
+	      (left (point-edge-terrain hex :sse :se))
+	      (bottom (point-edge-terrain hex :se :cen))
+	      (right (point-edge-terrain hex :cen :s))
+	      (angle (* -1/6 +sf-pi+)))
+	  (draw-kite-terrain top left bottom right
+			     angle hex-centre-x hex-centre-y
+			     (hex-r view-state) cairo-context))
+
+	(let ((top (point-edge-terrain hex :sw :ssw))
+	      (left (point-edge-terrain hex :ssw :s))
+	      (bottom (point-edge-terrain hex :s :cen))
+	      (right (point-edge-terrain hex :cen :sw))
+	      (angle (* -3/6 +sf-pi+)))
+	  (draw-kite-terrain top left bottom right
+			     angle hex-centre-x hex-centre-y
+			     (hex-r view-state) cairo-context))
+
 	)
       (cairo:destroy cairo-context)
       (cairo:destroy cairo-surface))))
