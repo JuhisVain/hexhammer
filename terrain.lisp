@@ -130,7 +130,14 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		    hex-centre-x hex-centre-y))
 	 (r-t-corner
 	   (nrotate (crd half-down-y 0.0) () sin-d cos-d
-		    hex-centre-x hex-centre-y)))
+		    hex-centre-x hex-centre-y))
+
+	 ;; rotation later:
+	 (kite-mid (crd half-kite-long (/ half-r 2)))
+	 (b-mid (crd half-kite-long 0))
+	 (l-mid (crd half-down-y (/ half-r 2)))
+	 (t-mid (crd half-down-y (/ half-r -2)))
+	 (r-mid (crd half-kite-long 0)))
     
     (macrolet ((rotation (bot-lefts top-rights)
 		 `(progn
@@ -150,6 +157,8 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			 ,@(loop for crd in (cdr crds)
 				 collect `(cairo:line-to (x ,crd) (y ,crd)))
 			 (cairo:close-path))))
+
+      (rotation (kite-mid b-mid l-mid) (t-mid r-mid))
       
       (cairo:with-context (cairo-context)
 	(cairo:set-source-rgb 0.5 0.5 0.5)
@@ -169,13 +178,9 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	    (cond ((and (terrain-borderp left)
 			(eq probe (cadr left)))
 		   ;; bottom-left corner
-		   (let ((terrain-type (car bottom))
-			 (xy0 (crd half-kite-long 0))
-			 (xy1 (crd half-kite-long (/ half-r 2)))
-			 (xyn (crd half-down-y (/ half-r 2))))
-		     (rotation (xy0 xy1 xyn) ())
-
-		     (path-through xy0 xy1 xyn l-b-corner)
+		   (let ((terrain-type (car bottom)))
+		     
+		     (path-through b-mid kite-mid l-mid l-b-corner)
 		     
 		     (case terrain-type
 		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
@@ -186,13 +191,9 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		  ((and (terrain-borderp top)
 			(eq probe (cadr top)))
 		   ;; left side
-		   (let ((terrain-type (car bottom))
-			 (xy0 (crd half-kite-long 0))
-			 (xy1 (crd half-kite-long (/ half-r 2)))
-			 (xyn (crd half-down-y (/ half-r -2))))
-		     (rotation (xy0 xy1) (xyn))
-
-		     (path-through xy0 xy1 xyn t-l-corner l-b-corner)
+		   (let ((terrain-type (car bottom)))
+		     
+		     (path-through b-mid kite-mid t-mid t-l-corner l-b-corner)
 		     
 		     (case terrain-type
 		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
@@ -206,13 +207,9 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		   ;; all except bottom right corner
 		   (format t "left-side and top-right~%")
 
-		   (let ((terrain-type (car bottom))
-			 (xy0 (crd half-kite-long 0))
-			 (xy1 (crd half-kite-long (/ half-r 2)))
-			 (xy2 (crd half-kite-long 0)))
-		     (rotation (xy0 xy1) (xy2))
+		   (let ((terrain-type (car bottom)))
 
-		     (path-through xy0 xy1 xy2 r-t-corner t-l-corner l-b-corner)
+		     (path-through b-mid kite-mid r-mid r-t-corner t-l-corner l-b-corner)
 		     
 		     (case terrain-type
 		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
@@ -227,13 +224,9 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	  (let ((probe (car left)))
 	    (cond ((and (terrain-borderp top)
 			(eq probe (cadr top)))
-		   (let ((terrain-type (car left))
-			 (xy0 (crd half-down-y (/ half-r 2)))
-			 (xy1 (crd half-kite-long (/ half-r 2)))
-			 (xy2 (crd half-down-y (/ half-r -2))))
-		     (rotation (xy0 xy1) (xy2))
+		   (let ((terrain-type (car left)))
 
-		     (path-through xy0 xy1 xy2 t-l-corner)
+		     (path-through l-mid kite-mid t-mid t-l-corner)
 
 		     (case terrain-type
 		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
@@ -242,13 +235,9 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		     (cairo:fill-path)))
 		  ((and (terrain-borderp right)
 			(eq probe (cadr right)))
-		   (let ((terrain-type (car left))
-			 (xy0 (crd half-down-y (/ half-r 2)))
-			 (xy1 (crd half-kite-long (/ half-r 2)))
-			 (xy2 (crd half-kite-long 0)))
-		     (rotation (xy0 xy1) (xy2))
+		   (let ((terrain-type (car left)))
 
-		     (path-through xy0 xy1 xy2 r-t-corner t-l-corner)
+		     (path-through l-mid kite-mid r-mid r-t-corner t-l-corner)
 
 		     (case terrain-type
 		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
@@ -257,20 +246,16 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		     (cairo:fill-path)))
 		  ((and (terrain-borderp bottom)
 			(eq probe (cadr bottom)))
-		   (let ((terrain-type (car left))
-			 (xy0 (crd half-down-y (/ half-r 2)))
-			 (xy1 (crd half-kite-long (/ half-r 2)))
-			 (xy2 (crd half-kite-long 0)))
-		     (rotation (xy0 xy1 xy2) ())
+		   (let ((terrain-type (car left)))
 
-		     (path-through xy0 xy1 xy2 b-r-corner r-t-corner t-l-corner)
+		     (path-through l-mid kite-mid b-mid b-r-corner r-t-corner t-l-corner)
 
 		     (case terrain-type
 		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
 		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
 		     
 		     (cairo:fill-path))))))
-	
+
 	;; rest
 	
 	))))
