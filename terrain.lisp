@@ -219,7 +219,11 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		   (equal (car bottom) (car top))
 		   (equal (car bottom) (car left)))
 	  ;;; Whole kite is of same terrain type
-	  ;; TODO: draw fill
+	  (path-through b-r-corner r-t-corner t-l-corner l-b-corner)
+	  (case (car bottom)
+	    (forest (cairo:set-source-rgb 0.0 1.0 0.0))
+	    (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
+	  (cairo:fill-path)
 	  (return-from draw-kite-terrain))
         
 	(when (terrain-borderp bottom)
