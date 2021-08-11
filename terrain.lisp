@@ -154,6 +154,45 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
     (setf (point-terrain (hex-vertex (hex-at (crd 0 0) *world*) v))
 	  (list (cons 'forest 'dry)))))
 
+(defmacro render-terrain-path-form (terrain-type with-lines without-lines)
+  (let ((lined
+	  `((cairo:move-to (x ,(car with-lines)) (y ,(car with-lines)))
+	    ,@(loop for crd in (cdr with-lines)
+		    collect `(cairo:line-to (x ,crd) (y ,crd)))))
+	(lineless
+	  `(,@(when (null with-lines)
+	       `((cairo:move-to (x ,(car without-lines)) (y ,(car without-lines)))))
+	    ,@(loop for crd in (if with-lines
+				   without-lines
+				   (cdr without-lines))
+		    collect `(cairo:line-to (x ,crd) (y ,crd))))))
+    
+    `(let ((type ,terrain-type))
+       ,@(when with-lines
+	   lined)
+       ,@(when without-lines
+	   lineless)
+       (set-terrain-fill type)
+       (cairo:close-path)
+       (cairo:fill-path)
+       ,@(when with-lines
+	   `(,@lined
+	     (set-terrain-line type)
+	     (cairo:stroke)
+	     (cairo:set-antialias :none))))))
+
+(defun set-terrain-fill (terrain-type)
+  (case terrain-type
+    (forest (cairo:set-source-rgb 0.83 0.87 0.80))
+    (cultivated (cairo:set-source-rgb 0.96 0.95 0.94))))
+
+(defun set-terrain-line (terrain-type)
+  (cairo:set-antialias :default)
+  (cairo:set-line-width 5.0) ;;;; TESTING
+  (case terrain-type
+    (forest (cairo:set-source-rgb 0.1 0.7 0.1))
+    (cultivated (cairo:set-source-rgb 0.0 0.0 0.0))))
+
 (defun render-terrain-path (terrain-type)
   (case terrain-type
     (forest (cairo:set-source-rgb 0.83 0.87 0.80))
@@ -217,7 +256,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
       (rotation (kite-mid b-mid l-mid) (t-mid r-mid))
       
       (cairo:with-context (cairo-context)
-	(cairo:set-source-rgb 0.5 0.5 0.5)
+	(cairo:set-source-rgb 1.0 0.0 1.0)
 	(cairo:set-line-width 0.5)
 	(cairo:set-antialias :none)
 
@@ -235,8 +274,13 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			(eq probe (cadr left)))
 		   ;; bottom-left corner
 		   (let ((terrain-type (car bottom)))
-		     (path-through b-mid kite-mid l-mid l-b-corner)
-		     (render-terrain-path terrain-type)))
+		     ;(path-through b-mid kite-mid l-mid l-b-corner)
+		     ;(render-terrain-path terrain-type)
+		     (render-terrain-path-form ;; seems OK!
+		      terrain-type
+		      (b-mid kite-mid l-mid)
+		      (l-b-corner))
+		     ))
 		  ((and (terrain-borderp top)
 			(eq probe (cadr top)))
 		   ;; left side
