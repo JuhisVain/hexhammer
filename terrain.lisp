@@ -154,6 +154,12 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
     (setf (point-terrain (hex-vertex (hex-at (crd 0 0) *world*) v))
 	  (list (cons 'forest 'dry)))))
 
+(defun render-terrain-path (terrain-type)
+  (case terrain-type
+    (forest (cairo:set-source-rgb 0.83 0.87 0.80))
+    (cultivated (cairo:set-source-rgb 0.96 0.95 0.94)))
+  (cairo:fill-path))
+
 (defun draw-kite-terrain (top left bottom right
 			  angle hex-centre-x hex-centre-y
 			  hex-radius cairo-context)
@@ -220,166 +226,83 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		   (equal (car bottom) (car left)))
 	  ;;; Whole kite is of same terrain type
 	  (path-through b-r-corner r-t-corner t-l-corner l-b-corner)
-	  (case (car bottom)
-	    (forest (cairo:set-source-rgb 0.0 1.0 0.0))
-	    (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
-	  (cairo:fill-path)
+	  (render-terrain-path (car bottom))
 	  (return-from draw-kite-terrain))
         
 	(when (terrain-borderp bottom)
-	  
 	  (let ((probe (car bottom)))
 	    (cond ((and (terrain-borderp left)
 			(eq probe (cadr left)))
 		   ;; bottom-left corner
 		   (let ((terrain-type (car bottom)))
-		     
 		     (path-through b-mid kite-mid l-mid l-b-corner)
-		     
-		     (case terrain-type
-		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
-		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
-		     
-		     (cairo:fill-path)))
-		  
+		     (render-terrain-path terrain-type)))
 		  ((and (terrain-borderp top)
 			(eq probe (cadr top)))
 		   ;; left side
 		   (let ((terrain-type (car bottom)))
-		     
 		     (path-through b-mid kite-mid t-mid t-l-corner l-b-corner)
-		     
-		     (case terrain-type
-		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
-		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
-		     
-		     (cairo:fill-path)
-		     ))
-		  
+		     (render-terrain-path terrain-type)))
 		  ((and (terrain-borderp right)
 			(eq probe (cadr right)))
 		   ;; all except bottom right corner
 		   (format t "left-side and top-right~%")
-
 		   (let ((terrain-type (car bottom)))
-
 		     (path-through b-mid kite-mid r-mid r-t-corner t-l-corner l-b-corner)
-		     
-		     (case terrain-type
-		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
-		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
-		     
-		     (cairo:fill-path))
-		   
-		   ))))
-
+		     (render-terrain-path terrain-type))))))
 	
 	(when (terrain-borderp left)
 	  (let ((probe (car left)))
 	    (cond ((and (terrain-borderp top)
 			(eq probe (cadr top)))
 		   (let ((terrain-type (car left)))
-
 		     (path-through l-mid kite-mid t-mid t-l-corner)
-
-		     (case terrain-type
-		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
-		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
-		     
-		     (cairo:fill-path)))
+		     (render-terrain-path terrain-type)))
 		  ((and (terrain-borderp right)
 			(eq probe (cadr right)))
 		   (let ((terrain-type (car left)))
-
 		     (path-through l-mid kite-mid r-mid r-t-corner t-l-corner)
-
-		     (case terrain-type
-		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
-		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
-		     
-		     (cairo:fill-path)))
+		     (render-terrain-path terrain-type)))
 		  ((and (terrain-borderp bottom)
 			(eq probe (cadr bottom)))
 		   (let ((terrain-type (car left)))
-
 		     (path-through l-mid kite-mid b-mid b-r-corner r-t-corner t-l-corner)
-
-		     (case terrain-type
-		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
-		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
-		     
-		     (cairo:fill-path))))))
+		     (render-terrain-path terrain-type))))))
 	
 	(when (terrain-borderp top)
 	  (let ((probe (car top)))
 	    (cond ((and (terrain-borderp right)
 			(eq probe (cadr right)))
 		   (let ((terrain-type (car top)))
-		     
 		     (path-through t-mid kite-mid r-mid r-t-corner)
-
-		     (case terrain-type
-		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
-		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
-
-		     (cairo:fill-path)))
+		     (render-terrain-path terrain-type)))
 		  ((and (terrain-borderp bottom)
 			(eq probe (cadr bottom)))
 		   (let ((terrain-type (car top)))
-
 		     (path-through t-mid kite-mid b-mid b-r-corner r-t-corner)
-
-		     (case terrain-type
-		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
-		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
-
-		     (cairo:fill-path)))
+		     (render-terrain-path terrain-type)))
 		  ((and (terrain-borderp left)
 			(eq probe (cadr left)))
 		   (let ((terrain-type (car top)))
-		     
 		     (path-through t-mid kite-mid l-mid l-b-corner b-r-corner r-t-corner)
-		     
-		     (case terrain-type
-		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
-		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
-		     
-		     (cairo:fill-path))))))
+		     (render-terrain-path terrain-type))))))
 
 	(when (terrain-borderp right)
 	  (let ((probe (car right)))
 	    (cond ((and (terrain-borderp bottom)
 			(eq probe (cadr bottom)))
 		   (let ((terrain-type (car right)))
-
 		     (path-through r-mid kite-mid b-mid b-r-corner)
-		     
-		     (case terrain-type
-		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
-		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
-		     
-		     (cairo:fill-path)))
+		     (render-terrain-path terrain-type)))
 		  ((and (terrain-borderp left)
 			(eq probe (cadr left)))
 		   (let ((terrain-type (car right)))
-
 		     (path-through r-mid kite-mid l-mid l-b-corner b-r-corner)
-
-		     (case terrain-type
-		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
-		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
-		     
-		     (cairo:fill-path)))
+		     (render-terrain-path terrain-type)))
 		  ((and (terrain-borderp top)
 			(eq probe (cadr top)))
 		   (let ((terrain-type (car right)))
-
 		     (path-through r-mid kite-mid t-mid t-l-corner l-b-corner b-r-corner)
-
-		     (case terrain-type
-		       (forest (cairo:set-source-rgb 0.0 1.0 0.0))
-		       (cultivated (cairo:set-source-rgb 1.0 0.0 0.0)))
-		     
-		     (cairo:fill-path))))))
+		     (render-terrain-path terrain-type))))))
 	
 	))))
