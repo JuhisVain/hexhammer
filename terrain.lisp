@@ -141,9 +141,13 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	  (list (cons 'forest 'dry))))
 
   ;; top-left-corner:
-  (dolist (v (list :nw :n :ne :se :s :sw)) ;actually makes cultivated drawn parts
+  (dolist (v (list :nw :ne :se :sw))
     (setf (point-terrain (hex-vertex (hex-at (crd 5 1) *world*) v))
 	  (list (cons 'forest 'dry))))
+
+  (dolist (v (list :nnw :e :ssw))
+    (setf (point-terrain (hex-vertex (hex-at (crd 5 1) *world*) v))
+	  (list (cons 'lake 'dry))))
 
   ;;top
   (dolist (v (list :nnw :n :e :se :ssw :sw))
@@ -181,17 +185,31 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	     (cairo:stroke)
 	     (cairo:set-antialias :none))))))
 
+(defmacro rtp (terrain-type &rest control-points)
+  `(case ,terrain-type
+     ((FOREST CULTIVATED)
+      (render-terrain-path-form ,terrain-type
+				()
+				,control-points))
+     ((LAKE)
+      (render-terrain-path-form ,terrain-type
+				,(subseq control-points 0 3)
+				,(subseq control-points 3)))))
+
+
 (defun set-terrain-fill (terrain-type)
   (case terrain-type
     (forest (cairo:set-source-rgb 0.83 0.87 0.80))
-    (cultivated (cairo:set-source-rgb 0.96 0.95 0.94))))
+    (cultivated (cairo:set-source-rgb 0.96 0.95 0.94))
+    (lake (cairo:set-source-rgb 0.67 0.86 0.95))))
 
 (defun set-terrain-line (terrain-type)
   (cairo:set-antialias :default)
-  (cairo:set-line-width 5.0) ;;;; TESTING
+  (cairo:set-line-width 3.0)
   (case terrain-type
-    (forest (cairo:set-source-rgb 0.1 0.7 0.1))
-    (cultivated (cairo:set-source-rgb 0.0 0.0 0.0))))
+    (forest (cairo:set-source-rgb 1.0 0.0 1.0))
+    (cultivated (cairo:set-source-rgb 1.0 0.0 1.0))
+    (lake (cairo:set-source-rgb 0.2 0.58 0.69))))
 
 (defun render-terrain-path (terrain-type)
   (case terrain-type
@@ -260,93 +278,159 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	(cairo:set-line-width 0.5)
 	(cairo:set-antialias :none)
 
-	(when (and (equal (car bottom) (car right))
-		   (equal (car bottom) (car top))
-		   (equal (car bottom) (car left)))
-	  ;;; Whole kite is of same terrain type
-	  (path-through b-r-corner r-t-corner t-l-corner l-b-corner)
-	  (render-terrain-path (car bottom))
-	  (return-from draw-kite-terrain))
-        
-	(when (terrain-borderp bottom)
-	  (let ((probe (car bottom)))
-	    (cond ((and (terrain-borderp left)
-			(eq probe (cadr left)))
-		   ;; bottom-left corner
-		   (let ((terrain-type (car bottom)))
-		     ;(path-through b-mid kite-mid l-mid l-b-corner)
-		     ;(render-terrain-path terrain-type)
-		     (render-terrain-path-form ;; seems OK!
-		      terrain-type
-		      (b-mid kite-mid l-mid)
-		      (l-b-corner))
-		     ))
-		  ((and (terrain-borderp top)
-			(eq probe (cadr top)))
-		   ;; left side
-		   (let ((terrain-type (car bottom)))
-		     (path-through b-mid kite-mid t-mid t-l-corner l-b-corner)
-		     (render-terrain-path terrain-type)))
-		  ((and (terrain-borderp right)
-			(eq probe (cadr right)))
-		   ;; all except bottom right corner
-		   (format t "left-side and top-right~%")
-		   (let ((terrain-type (car bottom)))
-		     (path-through b-mid kite-mid r-mid r-t-corner t-l-corner l-b-corner)
-		     (render-terrain-path terrain-type))))))
-	
-	(when (terrain-borderp left)
-	  (let ((probe (car left)))
-	    (cond ((and (terrain-borderp top)
-			(eq probe (cadr top)))
-		   (let ((terrain-type (car left)))
-		     (path-through l-mid kite-mid t-mid t-l-corner)
-		     (render-terrain-path terrain-type)))
-		  ((and (terrain-borderp right)
-			(eq probe (cadr right)))
-		   (let ((terrain-type (car left)))
-		     (path-through l-mid kite-mid r-mid r-t-corner t-l-corner)
-		     (render-terrain-path terrain-type)))
-		  ((and (terrain-borderp bottom)
-			(eq probe (cadr bottom)))
-		   (let ((terrain-type (car left)))
-		     (path-through l-mid kite-mid b-mid b-r-corner r-t-corner t-l-corner)
-		     (render-terrain-path terrain-type))))))
-	
-	(when (terrain-borderp top)
-	  (let ((probe (car top)))
-	    (cond ((and (terrain-borderp right)
-			(eq probe (cadr right)))
-		   (let ((terrain-type (car top)))
-		     (path-through t-mid kite-mid r-mid r-t-corner)
-		     (render-terrain-path terrain-type)))
-		  ((and (terrain-borderp bottom)
-			(eq probe (cadr bottom)))
-		   (let ((terrain-type (car top)))
-		     (path-through t-mid kite-mid b-mid b-r-corner r-t-corner)
-		     (render-terrain-path terrain-type)))
-		  ((and (terrain-borderp left)
-			(eq probe (cadr left)))
-		   (let ((terrain-type (car top)))
-		     (path-through t-mid kite-mid l-mid l-b-corner b-r-corner r-t-corner)
-		     (render-terrain-path terrain-type))))))
+	(flet ((priority-at-cen (left top right cen)
+		 ;; If left and right are same there will be no border
+		 ;; if different the border will be a straight line:
+		 (render-terrain-path-form
+		  left nil
+		  (t-l-corner l-b-corner b-r-corner))
+		 (render-terrain-path-form
+		  right nil
+		  (t-l-corner b-r-corner r-t-corner))
+		 
+		 ;; Need to draw top's terrain?
+		 (unless (eq top left) 
+		   (let ((xy1 (crd (- half-down-y
+				      (* 0.67 (/ half-r 2.0)))
+				   (/ half-r 2.0)))
+			 (xy2 (crd (- half-down-y
+				      (* 0.67 (/ half-r 2.0)))
+				   (/ half-r -2.0))))
+		     (rotation (xy1) (xy2))
 
-	(when (terrain-borderp right)
-	  (let ((probe (car right)))
-	    (cond ((and (terrain-borderp bottom)
-			(eq probe (cadr bottom)))
-		   (let ((terrain-type (car right)))
-		     (path-through r-mid kite-mid b-mid b-r-corner)
-		     (render-terrain-path terrain-type)))
-		  ((and (terrain-borderp left)
-			(eq probe (cadr left)))
-		   (let ((terrain-type (car right)))
-		     (path-through r-mid kite-mid l-mid l-b-corner b-r-corner)
-		     (render-terrain-path terrain-type)))
-		  ((and (terrain-borderp top)
-			(eq probe (cadr top)))
-		   (let ((terrain-type (car right)))
-		     (path-through r-mid kite-mid t-mid t-l-corner l-b-corner b-r-corner)
-		     (render-terrain-path terrain-type))))))
-	
-	))))
+		     (cairo:set-source-rgb 1.0 0.0 0.7)
+		     (cairo:move-to (x l-mid) (y l-mid))
+		     (cairo:line-to (x xy1) (y xy1))
+		     (cairo:line-to (x xy2) (y xy2))
+		     (cairo:line-to (x t-mid) (y t-mid))
+		     (cairo:set-line-width 1.0)
+		     (cairo:stroke)
+		     
+		     (cairo:move-to (x l-mid) (y l-mid))
+		     (cairo:curve-to (x xy1) (y xy1)
+				     (x xy2) (y xy2)
+				     (x t-mid) (y t-mid))
+		     (cairo:line-to (x t-l-corner) (y t-l-corner))
+		     (cairo:close-path)
+		     (set-terrain-fill top)
+		     ;;(set-terrain-line cen)
+		     ;; No line! 
+		     (cairo:fill-path)))
+
+		 ;; Drawing priority terrain:
+		 ;; May need to shift control points based on elevation differences
+		 (let ((xy1 (crd half-kite-long
+				 (* 0.36 half-kite-long)))
+		       (xy2 (crd half-kite-long
+				 (* -0.36 half-kite-long))))
+		   (rotation (xy1) (xy2))
+		   (cairo:move-to (x b-mid) (y b-mid))
+		   (cairo:curve-to (x xy1) (y xy1)
+				   (x xy2) (y xy2)
+				   (x r-mid) (y r-mid))
+		   (cairo:line-to (x b-r-corner) (y b-r-corner))
+		   (cairo:close-path)
+		   (set-terrain-fill cen)
+		   ;;(set-terrain-line cen)
+		   ;; No line! 
+		   (cairo:fill-path))))
+
+	  (when (and (equal (car bottom) (car right))
+		     (equal (car bottom) (car top))
+		     (equal (car bottom) (car left)))
+	  ;;; Whole kite is of same terrain type
+	    (path-through b-r-corner r-t-corner t-l-corner l-b-corner)
+	    (render-terrain-path (car bottom))
+	    (return-from draw-kite-terrain))
+
+	  (when (and (eq 'lake (car right))
+		     (not (member 'lake (list (car left) (car top) (car bottom)))))
+	    (priority-at-cen (car left) (car top) (car bottom) (car right)))
+	  
+          #|
+	  (when (terrain-borderp bottom)
+	    (let ((probe (car bottom)))
+	      (cond ((and (terrain-borderp left)
+			  (eq probe (cadr left)))
+		     ;; bottom-left corner
+		     (let ((terrain-type (car bottom)))
+		       ;;(path-through b-mid kite-mid l-mid l-b-corner)
+		       ;;(render-terrain-path terrain-type)
+
+		       '(rtp terrain-type
+			 b-mid kite-mid l-mid l-b-corner)
+		       
+		       (render-terrain-path-form
+			terrain-type
+			nil
+			(b-mid kite-mid l-mid l-b-corner))
+		       ))
+		    ((and (terrain-borderp top)
+			  (eq probe (cadr top)))
+		     ;; left side
+		     (let ((terrain-type (car bottom)))
+		       (path-through b-mid kite-mid t-mid t-l-corner l-b-corner)
+		       (render-terrain-path terrain-type)))
+		    ((and (terrain-borderp right)
+			  (eq probe (cadr right)))
+		     ;; all except bottom right corner
+		     (format t "left-side and top-right~%")
+		     (let ((terrain-type (car bottom)))
+		       (path-through b-mid kite-mid r-mid r-t-corner t-l-corner l-b-corner)
+		       (render-terrain-path terrain-type))))))
+	  
+	  (when (terrain-borderp left)
+	    (let ((probe (car left)))
+	      (cond ((and (terrain-borderp top)
+			  (eq probe (cadr top)))
+		     (let ((terrain-type (car left)))
+		       (path-through l-mid kite-mid t-mid t-l-corner)
+		       (render-terrain-path terrain-type)))
+		    ((and (terrain-borderp right)
+			  (eq probe (cadr right)))
+		     (let ((terrain-type (car left)))
+		       (path-through l-mid kite-mid r-mid r-t-corner t-l-corner)
+		       (render-terrain-path terrain-type)))
+		    ((and (terrain-borderp bottom)
+			  (eq probe (cadr bottom)))
+		     (let ((terrain-type (car left)))
+		       (path-through l-mid kite-mid b-mid b-r-corner r-t-corner t-l-corner)
+		       (render-terrain-path terrain-type))))))
+	  
+	  (when (terrain-borderp top)
+	    (let ((probe (car top)))
+	      (cond ((and (terrain-borderp right)
+			  (eq probe (cadr right)))
+		     (let ((terrain-type (car top)))
+		       (path-through t-mid kite-mid r-mid r-t-corner)
+		       (render-terrain-path terrain-type)))
+		    ((and (terrain-borderp bottom)
+			  (eq probe (cadr bottom)))
+		     (let ((terrain-type (car top)))
+		       (path-through t-mid kite-mid b-mid b-r-corner r-t-corner)
+		       (render-terrain-path terrain-type)))
+		    ((and (terrain-borderp left)
+			  (eq probe (cadr left)))
+		     (let ((terrain-type (car top)))
+		       (path-through t-mid kite-mid l-mid l-b-corner b-r-corner r-t-corner)
+		       (render-terrain-path terrain-type))))))
+
+	  (when (terrain-borderp right)
+	    (let ((probe (car right)))
+	      (cond ((and (terrain-borderp bottom)
+			  (eq probe (cadr bottom)))
+		     (let ((terrain-type (car right)))
+		       (path-through r-mid kite-mid b-mid b-r-corner)
+		       (render-terrain-path terrain-type)))
+		    ((and (terrain-borderp left)
+			  (eq probe (cadr left)))
+		     (let ((terrain-type (car right)))
+		       (path-through r-mid kite-mid l-mid l-b-corner b-r-corner)
+		       (render-terrain-path terrain-type)))
+		    ((and (terrain-borderp top)
+			  (eq probe (cadr top)))
+		     (let ((terrain-type (car right)))
+		       (path-through r-mid kite-mid t-mid t-l-corner l-b-corner b-r-corner)
+		       (render-terrain-path terrain-type))))))
+	  |#
+	  )))))
