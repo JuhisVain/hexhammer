@@ -200,6 +200,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 (defun set-terrain-fill (terrain-type)
   (case terrain-type
     (forest (cairo:set-source-rgb 0.83 0.87 0.80))
+    (swamp (cairo:set-source-rgb 0.3 0.68 0.90))
     (cultivated (cairo:set-source-rgb 0.96 0.95 0.94))
     (lake (cairo:set-source-rgb 0.67 0.86 0.95))))
 
@@ -216,6 +217,23 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
     (forest (cairo:set-source-rgb 0.83 0.87 0.80))
     (cultivated (cairo:set-source-rgb 0.96 0.95 0.94)))
   (cairo:fill-path))
+
+(defun test-rounded ()
+  (setf (point-terrain (hex-vertex (hex-at (crd 2 2) *world*) :cen))
+	(list (cons 'lake 'dry)))
+  (dolist (v (list :n :nne :ne :se :s))
+    (setf (point-terrain (hex-vertex (hex-at (crd 2 2) *world*) v))
+	  (list (cons 'forest 'dry)))))
+
+(defun terrain-naturalp (terrain)
+  (or (eq terrain 'forest)
+      (eq terrain 'swamp)))
+
+(defun terrain-artificialp (terrain)
+  (eq terrain 'cultivated))
+
+(defun terrain-waterp (terrain)
+  (eq terrain 'lake))
 
 (defun draw-kite-terrain (top left bottom right
 			  angle hex-centre-x hex-centre-y
@@ -333,8 +351,69 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		   (set-terrain-fill cen)
 		   ;;(set-terrain-line cen)
 		   ;; No line! 
-		   (cairo:fill-path))))
+		   (cairo:fill-path)))
 
+	       (render-natural-terrain (top left bottom right)
+		 (symbol-macrolet ((kite-perimeter
+				     (progn
+				       (cairo:move-to (x t-l-corner) (y t-l-corner))
+				       (cairo:line-to (x l-b-corner) (y l-b-corner))
+				       (cairo:line-to (x b-r-corner) (y b-r-corner))
+				       (cairo:line-to (x r-t-corner) (y r-t-corner))
+				       (cairo:close-path))))
+		   (let ((selector (+ (if (terrain-naturalp top) 8 0)
+				      (if (terrain-naturalp left) 4 0)
+				      (if (terrain-naturalp bottom) 2 0)
+				      (if (terrain-naturalp right) 1 0))))
+
+		     (format t "Selector ~a~%" selector)
+		     
+		     (case selector
+		       (0 ; No natural land terrain
+			nil)
+		       ((1 2 4 8) ; No natural land terrain boundaries
+			(format t "WOW ~a~%" selector)
+			kite-perimeter
+			(set-terrain-fill (case selector
+					    (1 right)
+					    (2 bottom)
+					    (4 left)
+					    (8 top)))
+			(cairo:fill-path))
+		       (3 ; bottom & right
+			(format t "BOTTOM & RIGHT!~%")
+			(cond ((eq bottom right)
+			       kite-perimeter
+			       (set-terrain-fill bottom)
+			       (cairo:fill-path))
+			      (t;;(or (terrain-artificialp left)
+				;;    (terrain-artificialp top))
+			       (set-terrain-fill right)
+			       (cairo:move-to (x r-mid) (y r-mid))
+			       (cairo:line-to (x l-b-corner) (y l-b-corner))
+			       (cairo:line-to (x t-l-corner) (y t-l-corner))
+			       (cairo:line-to (x r-t-corner) (y r-t-corner))
+			       (cairo:close-path)
+			       (cairo:fill-path)
+			       
+			       (set-terrain-fill bottom)
+			       (cairo:move-to (x r-mid) (y r-mid))
+			       (cairo:line-to (x l-b-corner) (y l-b-corner))
+			       (cairo:line-to (x b-r-corner) (y b-r-corner))
+			       (cairo:close-path)
+			       (cairo:fill-path)))))))))
+	  
+	  ;;;; 3^4 = 81 permutations, have to render in layers
+	  (let ((top (car left)) ;; kite verts
+		(left (car bottom))
+		(bottom (car right))
+		(right (car top)))
+	    (render-natural-terrain top left bottom right)
+	    ;(render-artificial-terrain top left bottom right)
+	    ;(render-water-terrain top left bottom right)
+	    )
+	  
+	  #|
 	  (when (and (equal (car bottom) (car right))
 		     (equal (car bottom) (car top))
 		     (equal (car bottom) (car left)))
@@ -346,6 +425,8 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	  (when (and (eq 'lake (car right))
 		     (not (member 'lake (list (car left) (car top) (car bottom)))))
 	    (priority-at-cen (car left) (car top) (car bottom) (car right)))
+	  |#
+	  
 	  
           #|
 	  (when (terrain-borderp bottom)
