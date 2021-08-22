@@ -200,7 +200,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 (defun set-terrain-fill (terrain-type)
   (case terrain-type
     (forest (cairo:set-source-rgb 0.83 0.87 0.80))
-    (swamp (cairo:set-source-rgb 0.3 0.68 0.90))
+    (swamp (cairo:set-source-rgb 0.3 0.7 0.80))
     (cultivated (cairo:set-source-rgb 0.96 0.95 0.94))
     (lake (cairo:set-source-rgb 0.67 0.86 0.95))))
 
