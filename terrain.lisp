@@ -269,7 +269,8 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	 (half-down-y (* +sin60+ hex-radius))
 	 (half-kite-long (/ half-down-y 2.0)) ; half of a long edge of kite
 	 (half-r (/ hex-radius 2.0))
-
+	 (quarter-r (/ half-r 2.0))
+	 
 	 (l-b-corner
 	   (nrotate (crd half-down-y 0.0) () sin cos
 		    hex-centre-x hex-centre-y))
@@ -288,7 +289,22 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	 (b-mid (crd half-kite-long 0))
 	 (l-mid (crd half-down-y (/ half-r 2)))
 	 (t-mid (crd half-down-y (/ half-r -2)))
-	 (r-mid (crd half-kite-long 0)))
+	 (r-mid (crd half-kite-long 0))
+
+	 ;; from mid-short move perpendicular to opposing long:
+	 (mid-short-at-long (/ quarter-r +cos30+))
+	 (b-msal (crd mid-short-at-long 0))
+	 (r-msal (crd mid-short-at-long 0))
+
+	 ;; from mid-kite straight line to long edges:
+	 (mid-kite-at-long (/ half-r +cos30+))
+	 (b-mkal (crd mid-kite-at-long 0))
+	 (r-mkal (crd mid-kite-at-long 0))
+
+	 ;; First control point of curve from t-l-corner to a long-mid
+	 ;; Might also be center point of straight from short-long corner to opposing
+	 (top-to-l/r-cpoint (crd (* +cos30+ (* 0.75 hex-radius))
+				 (* +sin30+ (* 0.75 hex-radius)))))
     
     (macrolet ((rotation (bot-lefts top-rights)
 		 `(progn
@@ -309,7 +325,8 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 				 collect `(cairo:line-to (x ,crd) (y ,crd)))
 			 (cairo:close-path))))
 
-      (rotation (kite-mid b-mid l-mid) (t-mid r-mid))
+      (rotation (kite-mid b-mid l-mid b-msal b-mkal top-to-l/r-cpoint)
+		(t-mid r-mid r-msal r-mkal))
       
       (cairo:with-context (cairo-context)
 	(cairo:set-source-rgb 1.0 0.0 1.0)
