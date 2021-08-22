@@ -403,13 +403,13 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 				      (if (terrain-naturalp bottom) 2 0)
 				      (if (terrain-naturalp right) 1 0))))
 
-		     (format t "Selector ~a~%" selector)
+		     ;;(format t "Selector ~a~%" selector)
 		     
 		     (case selector
 		       (0 ; No natural land terrain
 			nil)
 		       ((1 2 4 8) ; No natural land terrain boundaries
-			(format t "WOW ~a~%" selector)
+					;(format t "WOW ~a~%" selector)
 			kite-perimeter
 			(set-terrain-fill (case selector
 					    (1 right)
@@ -418,13 +418,11 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 					    (8 top)))
 			(cairo:fill-path))
 		       (3 ; bottom & right
-			(format t "BOTTOM & RIGHT!~%")
 			(cond ((eq bottom right)
 			       kite-perimeter
 			       (set-terrain-fill bottom)
 			       (cairo:fill-path))
-			      (t;;(or (terrain-artificialp left)
-				;;    (terrain-artificialp top))
+			      (t
 			       (set-terrain-fill right)
 			       (cairo:move-to (x r-mid) (y r-mid))
 			       (cairo:line-to (x l-b-corner) (y l-b-corner))
@@ -438,7 +436,153 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			       (cairo:line-to (x l-b-corner) (y l-b-corner))
 			       (cairo:line-to (x b-r-corner) (y b-r-corner))
 			       (cairo:close-path)
-			       (cairo:fill-path)))))))))
+			       (cairo:fill-path))))
+		       (6 ; bottom & left
+			(cond ((eq bottom left)
+			       kite-perimeter
+			       (set-terrain-fill bottom)
+			       (cairo:fill-path))
+			      (t
+			       (set-terrain-fill left)
+			       (cairo:move-to (x b-mid) (y b-mid))
+			       (cairo:line-to (x r-t-corner) (y r-t-corner))
+			       (cairo:line-to (x t-l-corner) (y t-l-corner))
+			       (cairo:line-to (x l-b-corner) (y l-b-corner))
+			       (cairo:close-path)
+			       (cairo:fill-path)
+			       
+			       (set-terrain-fill bottom)
+			       (cairo:move-to (x b-mid) (y b-mid))
+			       (cairo:line-to (x r-t-corner) (y r-t-corner))
+			       (cairo:line-to (x b-r-corner) (y b-r-corner))
+			       (cairo:close-path)
+			       (cairo:fill-path))))
+		       (12 ; top & left
+			(cond ((eq top left)
+			       kite-perimeter
+			       (set-terrain-fill top)
+			       (cairo:fill-path))
+			      (t
+			       (set-terrain-fill left)
+			       (new-lines l-mid r-msal b-r-corner l-b-corner)
+			       (cairo:close-path)
+			       (cairo:fill-path)
+
+			       (set-terrain-fill top)
+			       (new-lines l-mid r-msal r-t-corner t-l-corner)
+			       (cairo:close-path)
+			       (cairo:fill-path))))
+		       (9 ; top & right
+			(cond ((eq top right)
+			       kite-perimeter
+			       (set-terrain-fill top)
+			       (cairo:fill-path))
+			      (t
+			       (set-terrain-fill right)
+			       (new-lines t-mid b-msal b-r-corner r-t-corner)
+			       (cairo:close-path)
+			       (cairo:fill-path)
+
+			       (set-terrain-fill top)
+			       (new-lines t-mid b-msal l-b-corner t-l-corner)
+			       (cairo:close-path)
+			       (cairo:fill-path))))
+		       (10 ; top & bottom
+			(cond ((eq top bottom)
+			       kite-perimeter
+			       (set-terrain-fill top)
+			       (cairo:fill-path))
+			      (t
+			       (set-terrain-fill bottom)
+			       (new-lines r-mkal b-mkal b-r-corner)
+			       (cairo:close-path)
+			       (cairo:fill-path)
+
+			       (set-terrain-fill top)
+			       (new-lines r-mkal b-mkal l-b-corner t-l-corner r-t-corner)
+			       (cairo:close-path)
+			       (cairo:fill-path)
+			       )))
+		       (7 ; all but top
+			(cond ((and (eq left right) ; all same
+				    (eq left bottom))
+			       kite-perimeter
+			       (set-terrain-fill left)
+			       (cairo:fill-path))
+			      ((terrain-artificialp top)
+			       (cond ((eq left bottom)
+				      kite-perimeter
+				      (set-terrain-fill left)
+				      (cairo:fill-path)
+
+				      (set-terrain-fill right)
+				      (new-lines r-mid kite-mid t-mid r-t-corner)
+				      (cairo:close-path)
+				      (cairo:fill-path))
+				     ((eq right bottom)
+				      kite-perimeter
+				      (set-terrain-fill right)
+				      (cairo:fill-path)
+
+				      (set-terrain-fill left)
+				      (new-lines l-mid kite-mid b-mid l-b-corner)
+				      (cairo:close-path)
+				      (cairo:fill-path))
+				     (t ; (eq left right)
+				      kite-perimeter
+				      (set-terrain-fill right)
+				      (cairo:fill-path)
+
+				      (set-terrain-fill bottom)
+				      (let ((xy1 (crd half-kite-long
+						      (* 0.36 half-kite-long)))
+					    (xy2 (crd half-kite-long
+						      (* -0.36 half-kite-long))))
+					(rotation (xy1) (xy2))
+					(new-curves b-mid xy1 xy2 r-mid)
+					(lines b-r-corner)
+					(cairo:close-path)
+					(cairo:fill-path)))))
+			      (t ; (terrain-waterp top)
+			       (cond ((eq left bottom)
+				      kite-perimeter
+				      (set-terrain-fill left)
+				      (cairo:fill-path)
+
+				      (set-terrain-fill right)
+				      (let ((xy1 (crd half-kite-long (- quarter-r))))
+					(rotation () (xy1))
+					(new-curves r-mid xy1 top-to-l/r-cpoint t-l-corner)
+					(lines r-t-corner)
+					(cairo:close-path)
+					(cairo:fill-path)))
+				     ((eq right bottom)
+				      kite-perimeter
+				      (set-terrain-fill right)
+				      (cairo:fill-path)
+
+				      (set-terrain-fill left)
+				      (let ((xy1 (crd half-kite-long quarter-r)))
+					(rotation (xy1) ())
+					(new-curves b-mid xy1 top-to-l/r-cpoint t-l-corner)
+					(lines l-b-corner)
+					(cairo:close-path)
+					(cairo:fill-path)))
+				     (t ; (eq left right)
+				      kite-perimeter
+				      (set-terrain-fill right)
+				      (cairo:fill-path)
+
+				      (set-terrain-fill bottom)
+				      (let ((xy1 (crd half-kite-long
+						      (* 0.36 half-kite-long)))
+					    (xy2 (crd half-kite-long
+						      (* -0.36 half-kite-long))))
+					(rotation (xy1) (xy2))
+					(new-curves b-mid xy1 xy2 r-mid)
+					(lines b-r-corner)
+					(cairo:close-path)
+					(cairo:fill-path))))))))))))
 	  
 	  ;;;; 3^4 = 81 permutations, have to render in layers
 	  (let ((top (car left)) ;; kite verts
