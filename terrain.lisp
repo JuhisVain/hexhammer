@@ -235,6 +235,26 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 (defun terrain-waterp (terrain)
   (eq terrain 'lake))
 
+(defmacro lines (&rest lines)
+  `(progn ,@(loop for crd in lines
+		 collect `(cairo:line-to (x ,crd) (y ,crd)))))
+
+(defmacro new-lines (start &rest lines)
+  `(progn (cairo:move-to (x ,start) (y ,start))
+	  (lines ,@lines)))
+
+(defmacro curves (&rest crds)
+  `(progn ,@(loop for (a b c) on crds by #'cdddr
+		  if (and a b c)
+		    collect `(cairo:curve-to (x ,a) (y ,a)
+					     (x ,b) (y ,b)
+					     (x ,c) (y ,c))
+		  else do (error "Not enough arguments (~a ~a ~a)" a b c))))
+
+(defmacro new-curves (start &rest crds)
+  `(progn (cairo:move-to (x ,start) (y ,start))
+	  (curves ,@crds)))
+
 (defun draw-kite-terrain (top left bottom right
 			  angle hex-centre-x hex-centre-y
 			  hex-radius cairo-context)
