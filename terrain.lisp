@@ -275,7 +275,37 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	  (list (cons 'swamp 'dry))))
   (dolist (v (list :nnw :nne :sse))
     (setf (point-terrain (hex-vertex (hex-at (crd 1 1) *world*) v))
-	  (list (cons 'forest 'dry)))))
+	  (list (cons 'forest 'dry))))
+
+  (setf (point-terrain (hex-vertex (hex-at (crd 1 3) *world*) :cen))
+	(list (cons 'lake 'dry)))
+  (dolist (v (list :nw :ne :nne :nnw :nnw :sw))
+    (setf (point-terrain (hex-vertex (hex-at (crd 1 3) *world*) v))
+	  (list (cons 'forest 'dry))))
+  (dolist (v (list :n :e :w))
+    (setf (point-terrain (hex-vertex (hex-at (crd 1 3) *world*) v))
+	  (list (cons 'swamp 'dry))))
+
+  (dolist (v (list :n))
+    (setf (point-terrain (hex-vertex (hex-at (crd 3 0) *world*) v))
+	  (list (cons 'lake 'dry))))
+  (dolist (v (list :nne :cen))
+    (setf (point-terrain (hex-vertex (hex-at (crd 3 0) *world*) v))
+	  (list (cons 'forest 'dry))))
+  (dolist (v (list :ne))
+    (setf (point-terrain (hex-vertex (hex-at (crd 3 0) *world*) v))
+	  (list (cons 'swamp 'dry))))
+
+  (dolist (v (list :n))
+    (setf (point-terrain (hex-vertex (hex-at (crd 5 0) *world*) v))
+	  (list (cons 'lake 'dry))))
+  (dolist (v (list :nne))
+    (setf (point-terrain (hex-vertex (hex-at (crd 5 0) *world*) v))
+	  (list (cons 'forest 'dry))))
+  (dolist (v (list :cen :ne))
+    (setf (point-terrain (hex-vertex (hex-at (crd 5 0) *world*) v))
+	  (list (cons 'swamp 'dry))))
+  )
 
 (defun draw-kite-terrain (top left bottom right
 			  angle hex-centre-x hex-centre-y
@@ -312,6 +342,8 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	 (l-mid (crd half-down-y quarter-r))
 	 (t-mid (crd half-down-y (- quarter-r)))
 	 (r-mid (crd half-kite-long 0))
+
+	 (softness 0.6) ; for left & right corner curves
 
 	 ;; from mid-short move perpendicular to opposing long:
 	 (mid-short-at-long (/ quarter-r +cos30+))
@@ -434,6 +466,18 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			   (new-lines t-l-corner l-b-corner b-r-corner r-t-corner)
 			   (cairo:close-path)
 			   (cairo:fill-path)))
+		      (top-kite-perimeter (terrain)
+			`(progn
+			   (set-terrain-fill ,terrain)
+			   (new-lines l-b-corner r-t-corner t-l-corner)
+			   (cairo:close-path)
+			   (cairo:fill-path)))
+		      (bottom-kite-perimeter (terrain)
+			`(progn
+			   (set-terrain-fill ,terrain)
+			   (new-lines l-b-corner r-t-corner b-r-corner)
+			   (cairo:close-path)
+			   (cairo:fill-path)))
 		      (left-kite-perimeter (terrain)
 			`(progn
 			   (set-terrain-fill ,terrain)
@@ -488,12 +532,40 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			   (let ((xy1 (crd (- half-down-y
 					      (* 0.67 quarter-r))
 					   quarter-r))
-				 (xy2 (crd (+ half-down-y
+				 (xy2 (crd (- half-down-y
 					      (* 0.67 quarter-r))
-					   quarter-r)))
+					   (- quarter-r))))
 			     (rotation (xy1) (xy2))
 			     (new-curves l-mid xy1 xy2 t-mid)
 			     (lines t-l-corner)
+			     (cairo:close-path)
+			     (cairo:fill-path))))
+		      (natural-right (terrain)
+			`(progn
+			   (set-terrain-fill ,terrain)
+			   (let ((xy1 (crd half-kite-long
+					   (- (* softness quarter-r))))
+				 (xy2 (crd (- half-down-y
+					      (* half-kite-long
+						 softness))
+					   (- quarter-r))))
+			     (rotation () (xy1 xy2))
+			     (new-curves r-mid xy1 xy2 t-mid)
+			     (lines r-t-corner)
+			     (cairo:close-path)
+			     (cairo:fill-path))))
+		      (natural-left (terrain)
+			`(progn
+			   (set-terrain-fill ,terrain)
+			   (let ((xy1 (crd half-kite-long
+					   (* softness quarter-r)))
+				 (xy2 (crd (- half-down-y
+					      (* half-kite-long
+						 softness))
+					   quarter-r)))
+			     (rotation (xy1 xy2) ())
+			     (new-curves b-mid xy1 xy2 l-mid)
+			     (lines r-t-corner)
 			     (cairo:close-path)
 			     (cairo:fill-path))))
 		      (right-curve-rmid-top (terrain)
@@ -514,7 +586,54 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			     (lines l-b-corner)
 			     (cairo:close-path)
 			     (cairo:fill-path))))
-		      ;()
+		      (right-curve-bottom-tmid (terrain)
+			`(progn
+			   (set-terrain-fill ,terrain)
+			   (let ((xy1 (crd (* +cos30+ half-r)
+					   (* +sin30+ half-r)))
+				 (xy2 (crd (+ half-kite-long quarter-r)
+					   (- quarter-r))))
+			     (rotation (xy1) (xy2))
+			     (new-curves b-r-corner xy1 xy2 t-mid)
+			     (lines r-t-corner)
+			     (cairo:close-path)
+			     (cairo:fill-path))))
+		      (left-curve-bottom-lmid (terrain)
+			`(progn
+			   (set-terrain-fill ,terrain)
+			   (let ((xy1 (crd (* +cos30+ half-r)
+					   (* +sin30+ half-r)))
+				 (xy2 (crd (+ half-kite-long quarter-r)
+					   quarter-r)))
+			     (rotation (xy1 xy2) ())
+			     (new-curves b-r-corner xy1 xy2 l-mid)
+			     (lines l-b-corner)
+			     (cairo:close-path)
+			     (cairo:fill-path))))
+		      (kite-left-bottom (terrain)
+			`(progn
+			   (set-terrain-fill ,terrain)
+			   (new-lines r-mid l-b-corner b-r-corner)
+			   (cairo:close-path)
+			   (cairo:fill-path)))
+		      (kite-right-bottom (terrain)
+			`(progn
+			   (set-terrain-fill ,terrain)
+			   (new-lines b-mid r-t-corner b-r-corner)
+			   (cairo:close-path)
+			   (cairo:fill-path)))
+		      (left-curve-left-tmid (terrain)
+			`(progn
+			   (set-terrain-fill ,terrain)
+			   (let ((xy1 (crd half-kite-long
+					   quarter-r))
+				 (xy2 (crd (* half-kite-long 1.5)
+					   (- quarter-r))))
+			     (rotation (xy1) (xy2))
+			     (new-curves l-b-corner xy1 xy2 t-mid)
+			     (lines t-l-corner)
+			     (cairo:close-path)
+			     (cairo:fill-path))))
 		      )
 		   
 		   (let ((selector (+ (if (terrain-naturalp top) 8 0)
@@ -522,8 +641,15 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 				      (if (terrain-naturalp bottom) 2 0)
 				      (if (terrain-naturalp right) 1 0))))
 
+		     #|
+		     (defun check (caselist)
+		       (sort (loop for x in caselist
+			     when (listp x)
+			       if (listp (car x))
+				 append (car x)
+			     else collect (car x)) #'<))
+		     |#
 		     ;;(format t "Selector ~a~%" selector)
-		     
 		     (case selector
 		       (0 ; No natural land terrain
 			nil)
@@ -669,8 +795,59 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 				      (right-kite-perimeter right)
 				      (natural-top top))))
 			      (t ; (terrain-waterp bottom)
-			       nil ;; todo
-			       ))))))))
+			       (cond ((eq left top)
+				      (kite-perimeter left)
+				      (right-curve-bottom-tmid right))
+				     ((eq top right)
+				      (kite-perimeter top)
+				      (left-curve-bottom-lmid left))
+				     ((eq left right)
+				      (kite-perimeter left)
+				      (natural-top top))
+				     (t ; all different
+				      (left-kite-perimeter left)
+				      (right-kite-perimeter right)
+				      (natural-top top))))))
+		       (5 ; left & right
+			(cond ((eq left right)
+			       (kite-perimeter left))
+			      (t
+			       (left-kite-perimeter left)
+			       (right-kite-perimeter right))))
+		       (11 ; all but left
+			(cond ((and (eq top right) ; all same
+				    (eq top bottom))
+			       (kite-perimeter top))
+			      ((terrain-artificialp left)
+			       (cond ((eq top right)
+				      (kite-perimeter right)
+				      (artificial-bottom bottom))
+				     ((eq top bottom)
+				      (kite-perimeter top)
+				      (natural-right right))
+				     ((eq right bottom)
+				      (kite-perimeter right)
+				      (artificial-top top))
+				     (t ; all different
+				      (artificial-top top)
+				      (artificial-bottom bottom)
+				      (artificial-right right))))
+			      (t ; (terrain-waterp left)
+			       (cond ((eq top right)
+				      (kite-perimeter top)
+				      (kite-left-bottom bottom))
+				     ((eq top bottom)
+				      (kite-perimeter top)
+				      (natural-right right))
+				     ((eq right bottom)
+				      (kite-perimeter bottom)
+				      (left-curve-left-tmid top))
+				     (t ; all different
+				       ;; NOTE : could also draw between long mids
+				      (top-kite-perimeter top)
+				      (bottom-kite-perimeter bottom)
+				      (natural-right right))))))
+		       )))))
 	  
 	  ;;;; 3^4 = 81 permutations, have to render in layers
 	  (let ((top (car left)) ;; kite verts
