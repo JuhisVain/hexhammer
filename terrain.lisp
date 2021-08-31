@@ -305,6 +305,17 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
   (dolist (v (list :cen :ne))
     (setf (point-terrain (hex-vertex (hex-at (crd 5 0) *world*) v))
 	  (list (cons 'swamp 'dry))))
+
+  (dolist (v (list :n :se :sw))
+    (setf (point-terrain (hex-vertex (hex-at (crd 5 2) *world*) v))
+	  (list (cons 'lake 'dry))))
+  (dolist (v (list :cen :nw :e))
+    (setf (point-terrain (hex-vertex (hex-at (crd 5 2) *world*) v))
+	  (list (cons 'forest 'dry))))
+  (dolist (v (list :nnw :ne :s :ssw))
+    (setf (point-terrain (hex-vertex (hex-at (crd 5 2) *world*) v))
+	  (list (cons 'swamp 'dry))))
+  
   )
 
 (defun draw-kite-terrain (top left bottom right
@@ -565,7 +576,63 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 					   quarter-r)))
 			     (rotation (xy1 xy2) ())
 			     (new-curves b-mid xy1 xy2 l-mid)
-			     (lines r-t-corner)
+			     (lines l-b-corner)
+			     (cairo:close-path)
+			     (cairo:fill-path))))
+		      (natural-top-right (terrain)
+			`(progn
+			   (set-terrain-fill ,terrain)
+			   (let ((xy1 (crd half-kite-long
+					   (* softness quarter-r)))
+				 (xy2 (crd (- half-down-y
+					      (* half-kite-long
+						 softness))
+					   quarter-r)))
+			     (rotation (xy2) (xy1))
+			     (new-curves r-mid xy1 xy2 l-mid)
+			     (lines t-l-corner r-t-corner)
+			     (cairo:close-path)
+			     (cairo:fill-path))))
+		      (natural-bottom-left (terrain) ; inverse of above
+			`(progn
+			   (set-terrain-fill ,terrain)
+			   (let ((xy1 (crd half-kite-long
+					   (* softness quarter-r)))
+				 (xy2 (crd (- half-down-y
+					      (* half-kite-long
+						 softness))
+					   quarter-r)))
+			     (rotation (xy2) (xy1))
+			     (new-curves r-mid xy1 xy2 l-mid)
+			     (lines l-b-corner b-r-corner)
+			     (cairo:close-path)
+			     (cairo:fill-path))))
+		      (natural-top-left (terrain)
+			`(progn
+			   (set-terrain-fill ,terrain)
+			   (let ((xy1 (crd half-kite-long
+					   (* softness quarter-r)))
+				 (xy2 (crd (- half-down-y
+					      (* half-kite-long
+						 softness))
+					   (- quarter-r))))
+			     (rotation (xy1) (xy2))
+			     (new-curves b-mid xy1 xy2 t-mid)
+			     (lines t-l-corner l-b-corner)
+			     (cairo:close-path)
+			     (cairo:fill-path))))
+		      (natural-bottom-right (terrain) ; inverse of above
+			`(progn
+			   (set-terrain-fill ,terrain)
+			   (let ((xy1 (crd half-kite-long
+					   (* softness quarter-r)))
+				 (xy2 (crd (- half-down-y
+					      (* half-kite-long
+						 softness))
+					   (- quarter-r))))
+			     (rotation (xy1) (xy2))
+			     (new-curves b-mid xy1 xy2 t-mid)
+			     (lines r-t-corner b-r-corner)
 			     (cairo:close-path)
 			     (cairo:fill-path))))
 		      (right-curve-rmid-top (terrain)
@@ -631,6 +698,18 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 					   (- quarter-r))))
 			     (rotation (xy1) (xy2))
 			     (new-curves l-b-corner xy1 xy2 t-mid)
+			     (lines t-l-corner)
+			     (cairo:close-path)
+			     (cairo:fill-path))))
+		      (right-curve-right-lmid (terrain)
+			`(progn
+			   (set-terrain-fill ,terrain)
+			   (let ((xy1 (crd half-kite-long
+					   (- quarter-r)))
+				 (xy2 (crd (* half-kite-long 1.5)
+					   quarter-r)))
+			     (rotation (xy2) (xy1))
+			     (new-curves r-t-corner xy1 xy2 l-mid)
 			     (lines t-l-corner)
 			     (cairo:close-path)
 			     (cairo:fill-path))))
@@ -847,7 +926,122 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 				      (top-kite-perimeter top)
 				      (bottom-kite-perimeter bottom)
 				      (natural-right right))))))
-		       )))))
+		       (14 ; all but right
+			(cond ((and (eq top left)
+				    (eq top bottom))
+			       (kite-perimeter top))
+			      ((terrain-artificialp right)
+			       (cond ((eq top left)
+				      (kite-perimeter left)
+				      (artificial-bottom bottom))
+				     ((eq top bottom)
+				      (kite-perimeter top)
+				      (natural-left left))
+				     ((eq left bottom)
+				      (kite-perimeter left)
+				      (artificial-top top))
+				     (t ; all different
+				      (artificial-top top)
+				      (artificial-bottom bottom)
+				      (artificial-left left))))
+			      (t ; (terrain-waterp right)
+			       (cond ((eq top left)
+				      (kite-perimeter top)
+				      (kite-right-bottom bottom))
+				     ((eq top bottom)
+				      (kite-perimeter top)
+				      (natural-left left))
+				     ((eq left bottom)
+				      (kite-perimeter bottom)
+				      (right-curve-right-lmid top))
+				     (t ; all different
+				       ;; NOTE : could also draw between long mids
+				      (top-kite-perimeter top)
+				      (bottom-kite-perimeter bottom)
+				      (natural-left left))))
+			      ))
+		       (15 ; 100% natural
+			(cond ((eq* top left right bottom) ;0000
+			       (kite-perimeter top))
+			      
+			      ((eq* top right bottom) ;1110
+			       (kite-perimeter top)
+			       (natural-left left))
+			      ((eq* top right left) ;1101
+			       (kite-perimeter top)
+			       (natural-bottom bottom))
+			      ((eq* top bottom left) ;1011
+			       (kite-perimeter top)
+			       (natural-right right))
+			      ((eq* right bottom left) ;0111
+			       (kite-perimeter right)
+			       (natural-top top))
+
+			      ((and (eq top right) ;0011
+				    (eq bottom left))
+			       (kite-perimeter bottom)
+			       (natural-top-right top))
+			      ((and (eq top left) ;0110
+				    (eq right bottom))
+			       (kite-perimeter bottom)
+			       (natural-top-left top))
+			      ((and (eq top bottom) ;1010
+				    (eq right left))
+			       ;;; NOTE: This stuff may have an effect on moving hex to hex!
+			       (kite-perimeter left)
+			       (natural-top top)
+			       (natural-bottom bottom)
+			       #|
+			       ;; Could also do:
+			       (kite-perimeter top)
+			       (natural-right right)
+			       (natural-left left)
+			       |#
+			       )
+			      ((eq top right) ;0012
+			       (kite-perimeter bottom)
+			       (natural-top-left left)
+			       (natural-top-right top))
+			      ((eq top bottom) ;0102
+			       ;;; NOTE: Gameplay effects! see above
+			       (left-kite-perimeter left)
+			       (right-kite-perimeter right)
+			       (natural-top top)
+			       (natural-bottom bottom))
+			      ((eq top left) ;0120
+			       (kite-perimeter bottom)
+			       (natural-top-right right)
+			       (natural-top-left left))
+
+			      ((eq right bottom) ;1002
+			       (kite-perimeter left)
+			       (natural-top-right top)
+			       (natural-bottom-right right))
+			      ((eq right left) ;1020
+			       ;;; NOTE: Gameplay effects! see above
+			       (kite-perimeter right)
+			       (natural-top top)
+			       (natural-bottom bottom))
+
+			      ((eq bottom left) ;1200
+			       (kite-perimeter right)
+			       (natural-top-left top)
+			       (natural-bottom-left left))
+			      
+			      ((not (or (eq top right)
+					(eq top bottom)
+					(eq top left)
+					(eq right bottom)
+					(eq right left)
+					(eq bottom left))) ; all different
+			       (artificial-top top)
+			       (artificial-right right)
+			       (artificial-bottom bottom)
+			       (artificial-left left))
+			      (t ;; SBCL compiler says this is unreachable
+			       (error
+				"All naturals~%~ttop:~a~%~tright:~a~%~tbottom:~a~%~tleft:~a~%No switch case specified!"
+				      top right bottom left)))))))))
 	  
 	  ;;;; 3^4 = 81 permutations, have to render in layers
 	  (let ((top (car left)) ;; kite verts
