@@ -3,4 +3,5 @@
 (defpackage :hexhammer
   (:use #:cl)
   (:local-nicknames (:alex :alexandria)
-		    (:sera :serapeum)))
+		    (:sera :serapeum))
+  (:import-from serapeum "EQ*"))
