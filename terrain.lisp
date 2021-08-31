@@ -388,8 +388,299 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		 `(progn (cairo:move-to (x ,(car crds)) (y ,(car crds)))
 			 ,@(loop for crd in (cdr crds)
 				 collect `(cairo:line-to (x ,crd) (y ,crd)))
-			 (cairo:close-path))))
-
+			 (cairo:close-path)))
+	       (kite-perimeter (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines t-l-corner l-b-corner b-r-corner r-t-corner)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (top-kite-perimeter (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines l-b-corner r-t-corner t-l-corner)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (bottom-kite-perimeter (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines l-b-corner r-t-corner b-r-corner)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (left-kite-perimeter (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines t-l-corner l-b-corner b-r-corner)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (right-kite-perimeter (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines t-l-corner b-r-corner r-t-corner)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (artificial-left (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines l-mid l-b-corner b-mid kite-mid)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (artificial-right (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines t-mid kite-mid r-mid r-t-corner)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (artificial-top (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines l-mid kite-mid t-mid t-l-corner)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (artificial-bottom (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines b-mid kite-mid r-mid b-r-corner)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (left-artificial-tmid-bottom (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines t-mid kite-mid b-r-corner r-t-corner)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (right-artificial-lmid-bottom (terrain) ; inverse of above
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines l-mid kite-mid b-r-corner l-b-corner)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (right-artificial-rmid-top (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines r-mid kite-mid t-l-corner r-t-corner)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (left-artificial-bmid-top (terrain) ; inverse of above
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines b-mid kite-mid t-l-corner l-b-corner)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (left-artificial-left-tmid (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines l-b-corner kite-mid t-mid t-l-corner)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (right-artificial-right-lmid (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines r-t-corner kite-mid l-mid t-l-corner)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (natural-bottom (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines b-r-corner b-mid)
+		    (let ((xy1 (crd half-kite-long
+				    (* 0.36 half-kite-long)))
+			  (xy2 (crd half-kite-long
+				    (* -0.36 half-kite-long))))
+		      (rotation (xy1) (xy2))
+		      (curves xy1 xy2 r-mid))
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (natural-top (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (let ((xy1 (crd (- half-down-y
+				       (* 0.67 quarter-r))
+				    quarter-r))
+			  (xy2 (crd (- half-down-y
+				       (* 0.67 quarter-r))
+				    (- quarter-r))))
+		      (rotation (xy1) (xy2))
+		      (new-curves l-mid xy1 xy2 t-mid)
+		      (lines t-l-corner)
+		      (cairo:close-path)
+		      (cairo:fill-path))))
+	       (natural-right (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (let ((xy1 (crd half-kite-long
+				    (- (* softness quarter-r))))
+			  (xy2 (crd (- half-down-y
+				       (* half-kite-long
+					  softness))
+				    (- quarter-r))))
+		      (rotation () (xy1 xy2))
+		      (new-curves r-mid xy1 xy2 t-mid)
+		      (lines r-t-corner)
+		      (cairo:close-path)
+		      (cairo:fill-path))))
+	       (natural-left (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (let ((xy1 (crd half-kite-long
+				    (* softness quarter-r)))
+			  (xy2 (crd (- half-down-y
+				       (* half-kite-long
+					  softness))
+				    quarter-r)))
+		      (rotation (xy1 xy2) ())
+		      (new-curves b-mid xy1 xy2 l-mid)
+		      (lines l-b-corner)
+		      (cairo:close-path)
+		      (cairo:fill-path))))
+	       (natural-top-right (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (let ((xy1 (crd half-kite-long
+				    (* softness quarter-r)))
+			  (xy2 (crd (- half-down-y
+				       (* half-kite-long
+					  softness))
+				    quarter-r)))
+		      (rotation (xy2) (xy1))
+		      (new-curves r-mid xy1 xy2 l-mid)
+		      (lines t-l-corner r-t-corner)
+		      (cairo:close-path)
+		      (cairo:fill-path))))
+	       (natural-bottom-left (terrain) ; inverse of above
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (let ((xy1 (crd half-kite-long
+				    (* softness quarter-r)))
+			  (xy2 (crd (- half-down-y
+				       (* half-kite-long
+					  softness))
+				    quarter-r)))
+		      (rotation (xy2) (xy1))
+		      (new-curves r-mid xy1 xy2 l-mid)
+		      (lines l-b-corner b-r-corner)
+		      (cairo:close-path)
+		      (cairo:fill-path))))
+	       (natural-top-left (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (let ((xy1 (crd half-kite-long
+				    (* softness quarter-r)))
+			  (xy2 (crd (- half-down-y
+				       (* half-kite-long
+					  softness))
+				    (- quarter-r))))
+		      (rotation (xy1) (xy2))
+		      (new-curves b-mid xy1 xy2 t-mid)
+		      (lines t-l-corner l-b-corner)
+		      (cairo:close-path)
+		      (cairo:fill-path))))
+	       (natural-bottom-right (terrain) ; inverse of above
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (let ((xy1 (crd half-kite-long
+				    (* softness quarter-r)))
+			  (xy2 (crd (- half-down-y
+				       (* half-kite-long
+					  softness))
+				    (- quarter-r))))
+		      (rotation (xy1) (xy2))
+		      (new-curves b-mid xy1 xy2 t-mid)
+		      (lines r-t-corner b-r-corner)
+		      (cairo:close-path)
+		      (cairo:fill-path))))
+	       (right-curve-rmid-top (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (let ((xy1 (crd half-kite-long (- quarter-r))))
+		      (rotation () (xy1))
+		      (new-curves r-mid xy1 top-to-l/r-cpoint t-l-corner)
+		      (lines r-t-corner)
+		      (cairo:close-path)
+		      (cairo:fill-path))))
+	       (left-curve-bmid-top (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (let ((xy1 (crd half-kite-long quarter-r)))
+		      (rotation (xy1) ())
+		      (new-curves b-mid xy1 top-to-l/r-cpoint t-l-corner)
+		      (lines l-b-corner)
+		      (cairo:close-path)
+		      (cairo:fill-path))))
+	       (right-curve-bottom-tmid (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (let ((xy1 (crd (* +cos30+ half-r)
+				    (* +sin30+ half-r)))
+			  (xy2 (crd (+ half-kite-long quarter-r)
+				    (- quarter-r))))
+		      (rotation (xy1) (xy2))
+		      (new-curves b-r-corner xy1 xy2 t-mid)
+		      (lines r-t-corner)
+		      (cairo:close-path)
+		      (cairo:fill-path))))
+	       (left-curve-bottom-lmid (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (let ((xy1 (crd (* +cos30+ half-r)
+				    (* +sin30+ half-r)))
+			  (xy2 (crd (+ half-kite-long quarter-r)
+				    quarter-r)))
+		      (rotation (xy1 xy2) ())
+		      (new-curves b-r-corner xy1 xy2 l-mid)
+		      (lines l-b-corner)
+		      (cairo:close-path)
+		      (cairo:fill-path))))
+	       (kite-left-bottom (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines r-mid l-b-corner b-r-corner)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (kite-right-top (terrain) ; inverse of above
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines r-mid l-b-corner t-l-corner r-t-corner)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (kite-right-bottom (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines b-mid r-t-corner b-r-corner)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (kite-left-top (terrain) ; inverse of above
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines b-mid r-t-corner t-l-corner l-b-corner)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (left-curve-left-tmid (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (let ((xy1 (crd half-kite-long
+				    quarter-r))
+			  (xy2 (crd (* half-kite-long 1.5)
+				    (- quarter-r))))
+		      (rotation (xy1) (xy2))
+		      (new-curves l-b-corner xy1 xy2 t-mid)
+		      (lines t-l-corner)
+		      (cairo:close-path)
+		      (cairo:fill-path))))
+	       (right-curve-right-lmid (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (let ((xy1 (crd half-kite-long
+				    (- quarter-r)))
+			  (xy2 (crd (* half-kite-long 1.5)
+				    quarter-r)))
+		      (rotation (xy2) (xy1))
+		      (new-curves r-t-corner xy1 xy2 l-mid)
+		      (lines t-l-corner)
+		      (cairo:close-path)
+		      (cairo:fill-path))))
+	       )
+      
       (rotation (kite-mid b-mid l-mid b-msal b-mkal top-to-l/r-cpoint)
 		(t-mid r-mid r-msal r-mkal))
       
@@ -456,264 +747,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		   (cairo:fill-path)))
 	       
 	       (render-natural-terrain (top left bottom right)
-		 (macrolet
-		     #| Maybe this is not such a good idea
-		     #.(mapcar ; :)
-			#'(lambda (shapedef)
-			    `(,(first shapedef)
-			      ,(second shapedef)
-			      `(progn
-				 (set-terrain-fill ,terrain)
-				 ,',@(nthcdr 2 shapedef)
-				 (cairo:close-path)
-				 (cairo:fill-path))))
-			'((kite-perimeter (terrain)
-			   (new-lines t-l-corner l-b-corner b-r-corner r-t-corner))
-			  (left-kite-perimeter (terrain)
-			   (new-lines t-l-corner l-b-corner b-r-corner r-t-corner))) |#
-		     ((kite-perimeter (terrain)
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (new-lines t-l-corner l-b-corner b-r-corner r-t-corner)
-			   (cairo:close-path)
-			   (cairo:fill-path)))
-		      (top-kite-perimeter (terrain)
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (new-lines l-b-corner r-t-corner t-l-corner)
-			   (cairo:close-path)
-			   (cairo:fill-path)))
-		      (bottom-kite-perimeter (terrain)
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (new-lines l-b-corner r-t-corner b-r-corner)
-			   (cairo:close-path)
-			   (cairo:fill-path)))
-		      (left-kite-perimeter (terrain)
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (new-lines t-l-corner l-b-corner b-r-corner)
-			   (cairo:close-path)
-			   (cairo:fill-path)))
-		      (right-kite-perimeter (terrain)
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (new-lines t-l-corner b-r-corner r-t-corner)
-			   (cairo:close-path)
-			   (cairo:fill-path)))
-		      (artificial-left (terrain)
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (new-lines l-mid l-b-corner b-mid kite-mid)
-			   (cairo:close-path)
-			   (cairo:fill-path)))
-		      (artificial-right (terrain)
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (new-lines t-mid kite-mid r-mid r-t-corner)
-			   (cairo:close-path)
-			   (cairo:fill-path)))
-		      (artificial-top (terrain)
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (new-lines l-mid kite-mid t-mid t-l-corner)
-			   (cairo:close-path)
-			   (cairo:fill-path)))
-		      (artificial-bottom (terrain)
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (new-lines b-mid kite-mid r-mid b-r-corner)
-			   (cairo:close-path)
-			   (cairo:fill-path)))
-		      (natural-bottom (terrain)
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (new-lines b-r-corner b-mid)
-			   (let ((xy1 (crd half-kite-long
-					   (* 0.36 half-kite-long)))
-				 (xy2 (crd half-kite-long
-					   (* -0.36 half-kite-long))))
-			     (rotation (xy1) (xy2))
-			     (curves xy1 xy2 r-mid))
-			   (cairo:close-path)
-			   (cairo:fill-path)))
-		      (natural-top (terrain)
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (let ((xy1 (crd (- half-down-y
-					      (* 0.67 quarter-r))
-					   quarter-r))
-				 (xy2 (crd (- half-down-y
-					      (* 0.67 quarter-r))
-					   (- quarter-r))))
-			     (rotation (xy1) (xy2))
-			     (new-curves l-mid xy1 xy2 t-mid)
-			     (lines t-l-corner)
-			     (cairo:close-path)
-			     (cairo:fill-path))))
-		      (natural-right (terrain)
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (let ((xy1 (crd half-kite-long
-					   (- (* softness quarter-r))))
-				 (xy2 (crd (- half-down-y
-					      (* half-kite-long
-						 softness))
-					   (- quarter-r))))
-			     (rotation () (xy1 xy2))
-			     (new-curves r-mid xy1 xy2 t-mid)
-			     (lines r-t-corner)
-			     (cairo:close-path)
-			     (cairo:fill-path))))
-		      (natural-left (terrain)
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (let ((xy1 (crd half-kite-long
-					   (* softness quarter-r)))
-				 (xy2 (crd (- half-down-y
-					      (* half-kite-long
-						 softness))
-					   quarter-r)))
-			     (rotation (xy1 xy2) ())
-			     (new-curves b-mid xy1 xy2 l-mid)
-			     (lines l-b-corner)
-			     (cairo:close-path)
-			     (cairo:fill-path))))
-		      (natural-top-right (terrain)
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (let ((xy1 (crd half-kite-long
-					   (* softness quarter-r)))
-				 (xy2 (crd (- half-down-y
-					      (* half-kite-long
-						 softness))
-					   quarter-r)))
-			     (rotation (xy2) (xy1))
-			     (new-curves r-mid xy1 xy2 l-mid)
-			     (lines t-l-corner r-t-corner)
-			     (cairo:close-path)
-			     (cairo:fill-path))))
-		      (natural-bottom-left (terrain) ; inverse of above
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (let ((xy1 (crd half-kite-long
-					   (* softness quarter-r)))
-				 (xy2 (crd (- half-down-y
-					      (* half-kite-long
-						 softness))
-					   quarter-r)))
-			     (rotation (xy2) (xy1))
-			     (new-curves r-mid xy1 xy2 l-mid)
-			     (lines l-b-corner b-r-corner)
-			     (cairo:close-path)
-			     (cairo:fill-path))))
-		      (natural-top-left (terrain)
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (let ((xy1 (crd half-kite-long
-					   (* softness quarter-r)))
-				 (xy2 (crd (- half-down-y
-					      (* half-kite-long
-						 softness))
-					   (- quarter-r))))
-			     (rotation (xy1) (xy2))
-			     (new-curves b-mid xy1 xy2 t-mid)
-			     (lines t-l-corner l-b-corner)
-			     (cairo:close-path)
-			     (cairo:fill-path))))
-		      (natural-bottom-right (terrain) ; inverse of above
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (let ((xy1 (crd half-kite-long
-					   (* softness quarter-r)))
-				 (xy2 (crd (- half-down-y
-					      (* half-kite-long
-						 softness))
-					   (- quarter-r))))
-			     (rotation (xy1) (xy2))
-			     (new-curves b-mid xy1 xy2 t-mid)
-			     (lines r-t-corner b-r-corner)
-			     (cairo:close-path)
-			     (cairo:fill-path))))
-		      (right-curve-rmid-top (terrain)
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (let ((xy1 (crd half-kite-long (- quarter-r))))
-			     (rotation () (xy1))
-			     (new-curves r-mid xy1 top-to-l/r-cpoint t-l-corner)
-			     (lines r-t-corner)
-			     (cairo:close-path)
-			     (cairo:fill-path))))
-		      (left-curve-bmid-top (terrain)
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (let ((xy1 (crd half-kite-long quarter-r)))
-			     (rotation (xy1) ())
-			     (new-curves b-mid xy1 top-to-l/r-cpoint t-l-corner)
-			     (lines l-b-corner)
-			     (cairo:close-path)
-			     (cairo:fill-path))))
-		      (right-curve-bottom-tmid (terrain)
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (let ((xy1 (crd (* +cos30+ half-r)
-					   (* +sin30+ half-r)))
-				 (xy2 (crd (+ half-kite-long quarter-r)
-					   (- quarter-r))))
-			     (rotation (xy1) (xy2))
-			     (new-curves b-r-corner xy1 xy2 t-mid)
-			     (lines r-t-corner)
-			     (cairo:close-path)
-			     (cairo:fill-path))))
-		      (left-curve-bottom-lmid (terrain)
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (let ((xy1 (crd (* +cos30+ half-r)
-					   (* +sin30+ half-r)))
-				 (xy2 (crd (+ half-kite-long quarter-r)
-					   quarter-r)))
-			     (rotation (xy1 xy2) ())
-			     (new-curves b-r-corner xy1 xy2 l-mid)
-			     (lines l-b-corner)
-			     (cairo:close-path)
-			     (cairo:fill-path))))
-		      (kite-left-bottom (terrain)
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (new-lines r-mid l-b-corner b-r-corner)
-			   (cairo:close-path)
-			   (cairo:fill-path)))
-		      (kite-right-bottom (terrain)
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (new-lines b-mid r-t-corner b-r-corner)
-			   (cairo:close-path)
-			   (cairo:fill-path)))
-		      (left-curve-left-tmid (terrain)
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (let ((xy1 (crd half-kite-long
-					   quarter-r))
-				 (xy2 (crd (* half-kite-long 1.5)
-					   (- quarter-r))))
-			     (rotation (xy1) (xy2))
-			     (new-curves l-b-corner xy1 xy2 t-mid)
-			     (lines t-l-corner)
-			     (cairo:close-path)
-			     (cairo:fill-path))))
-		      (right-curve-right-lmid (terrain)
-			`(progn
-			   (set-terrain-fill ,terrain)
-			   (let ((xy1 (crd half-kite-long
-					   (- quarter-r)))
-				 (xy2 (crd (* half-kite-long 1.5)
-					   quarter-r)))
-			     (rotation (xy2) (xy1))
-			     (new-curves r-t-corner xy1 xy2 l-mid)
-			     (lines t-l-corner)
-			     (cairo:close-path)
-			     (cairo:fill-path))))
-		      )
+		 
 		   
 		   (let ((selector (+ (if (terrain-naturalp top) 8 0)
 				      (if (terrain-naturalp left) 4 0)
@@ -1028,20 +1062,30 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			       (natural-top-left top)
 			       (natural-bottom-left left))
 			      
-			      ((not (or (eq top right)
-					(eq top bottom)
+			      (t ; all different
+			       #| also known as:
+			       (not (or (eq top right)
+				  	(eq top bottom)
 					(eq top left)
 					(eq right bottom)
 					(eq right left)
-					(eq bottom left))) ; all different
+					(eq bottom left)))|#
 			       (artificial-top top)
 			       (artificial-right right)
 			       (artificial-bottom bottom)
-			       (artificial-left left))
-			      (t ;; SBCL compiler says this is unreachable
-			       (error
-				"All naturals~%~ttop:~a~%~tright:~a~%~tbottom:~a~%~tleft:~a~%No switch case specified!"
-				      top right bottom left)))))))))
+			       (artificial-left left)))))))
+	       (render-artificial-terrain (top left bottom right)
+		 ;; This isn't gonna cut it
+		 ;; Gaps will be left between artificial and water points
+		 (when (terrain-artificialp top)
+		   (artificial-top top))
+		 (when (terrain-artificialp left)
+		   (artificial-left left))
+		 (when (terrain-artificialp bottom)
+		   (artificial-bottom bottom))
+		 (when (terrain-artificialp right)
+		   (artificial-right right))
+		 ))
 	  
 	  ;;;; 3^4 = 81 permutations, have to render in layers
 	  (let ((top (car left)) ;; kite verts
@@ -1049,7 +1093,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		(bottom (car right))
 		(right (car top)))
 	    (render-natural-terrain top left bottom right)
-	    ;(render-artificial-terrain top left bottom right)
+	    (render-artificial-terrain top left bottom right)
 	    ;(render-water-terrain top left bottom right)
 	    )
 	  
