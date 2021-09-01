@@ -443,13 +443,31 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		    (new-lines b-mid kite-mid r-mid b-r-corner)
 		    (cairo:close-path)
 		    (cairo:fill-path)))
+	       (artificial-top-right (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines l-mid kite-mid r-mid r-t-corner t-l-corner)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (artificial-top-left (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines b-mid kite-mid t-mid t-l-corner l-b-corner)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (artificial-bottom-right (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines b-mid kite-mid t-mid r-t-corner b-r-corner)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
 	       (left-artificial-tmid-bottom (terrain)
 		 `(progn
 		    (set-terrain-fill ,terrain)
 		    (new-lines t-mid kite-mid b-r-corner r-t-corner)
 		    (cairo:close-path)
 		    (cairo:fill-path)))
-	       (right-artificial-lmid-bottom (terrain) ; inverse of above
+	       (right-artificial-lmid-bottom (terrain) ; r-mirror of above
 		 `(progn
 		    (set-terrain-fill ,terrain)
 		    (new-lines l-mid kite-mid b-r-corner l-b-corner)
@@ -461,16 +479,28 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		    (new-lines r-mid kite-mid t-l-corner r-t-corner)
 		    (cairo:close-path)
 		    (cairo:fill-path)))
-	       (left-artificial-bmid-top (terrain) ; inverse of above
+	       (left-artificial-bmid-top (terrain) ; r-mirror of above
 		 `(progn
 		    (set-terrain-fill ,terrain)
 		    (new-lines b-mid kite-mid t-l-corner l-b-corner)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (right-artificial-bmid-top (terrain) ; inverse of above
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines b-mid kite-mid t-l-corner r-t-corner b-r-corner)
 		    (cairo:close-path)
 		    (cairo:fill-path)))
 	       (left-artificial-left-tmid (terrain)
 		 `(progn
 		    (set-terrain-fill ,terrain)
 		    (new-lines l-b-corner kite-mid t-mid t-l-corner)
+		    (cairo:close-path)
+		    (cairo:fill-path)))
+	       (right-artificial-left-tmid (terrain) ; inverse of above
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (new-lines l-b-corner kite-mid t-mid r-t-corner b-r-corner l-b-corner)
 		    (cairo:close-path)
 		    (cairo:fill-path)))
 	       (right-artificial-right-lmid (terrain)
@@ -1075,8 +1105,181 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			       (artificial-bottom bottom)
 			       (artificial-left left)))))))
 	       (render-artificial-terrain (top left bottom right)
-		 ;; This isn't gonna cut it
+
+		 (let ((selector (+ (if (terrain-artificialp top) 8 0)
+				    (if (terrain-artificialp left) 4 0)
+				    (if (terrain-artificialp bottom) 2 0)
+				    (if (terrain-artificialp right) 1 0)))
+		       (water (+ (if (terrain-waterp top) 8 0)
+				 (if (terrain-waterp left) 4 0)
+				 (if (terrain-waterp bottom) 2 0)
+				 (if (terrain-waterp right) 1 0))))
+		   (case selector
+		     (0 nil)
+		     (1 ; right
+		      (ecase water
+			((0 4 6 10 14) (artificial-right right))
+			(2 (left-artificial-tmid-bottom right))
+			(8 (right-artificial-rmid-top right))
+			(12 (artificial-top-right right))
+			((1 3 5 7 9 11 13 15) nil)))
+		     (2 ; bottom
+		      (ecase water
+			((0 8 13) (artificial-bottom bottom))
+			((1 9) (kite-right-bottom bottom))
+			((4 12) (kite-left-bottom bottom))
+			(5 (bottom-kite-perimeter bottom))
+			((2 3 6 7 10 11 14 15) nil)))
+		     (4 ; left
+		      (ecase water
+			((0 1 3 10 11) (artificial-left left))
+			(2 (right-artificial-lmid-bottom left))
+			(8 (left-artificial-bmid-top left))
+			(9 (artificial-top-left left))
+			((4 5 6 7 12 13 14 15) nil)))
+		     (8 ; top
+		      (ecase water
+			((0 2 3 6 7) (artificial-top top))
+			(1 (right-artificial-right-lmid top))
+			(4 (left-artificial-left-tmid top))
+			(5 (top-kite-perimeter top))
+			((8 9 10 11 12 13 14 15) nil)))
+		     (3 ; right & bottom
+		      (ecase water
+			(0
+			 (artificial-bottom bottom)
+			 (artificial-right right))
+			(4
+			 (artificial-right right)
+			 (kite-left-bottom bottom))
+			(8
+			 (artificial-bottom bottom)
+			 (right-artificial-rmid-top right))
+			(12
+			 (kite-left-bottom bottom)
+			 (kite-right-top right))
+			((1 2 3 5 6 7 9 10 11 13 14 15) nil)))
+		     (5 ; left & right
+		      (ecase water
+			((0 10)
+			 (artificial-left left)
+			 (artificial-right right))
+			(2
+			 (right-artificial-lmid-bottom left)
+			 (left-artificial-tmid-bottom right))
+			(8
+			 (left-artificial-bmid-top left)
+			 (right-artificial-rmid-top right))
+			((1 4 5 6 7 9 11 12 13 14 15) nil)))
+		     (6 ; left & bottom
+		      (ecase water
+			(0
+			 (artificial-left left)
+			 (artificial-bottom bottom))
+			(1
+			 (artificial-left left)
+			 (artificial-bottom-right bottom))
+			(8
+			 (left-artificial-bmid-top left)
+			 (artificial-bottom bottom))
+			(9
+			 (kite-right-bottom bottom)
+			 (kite-left-top left))
+			((2 3 4 5 6 7 10 11 12 13 14 15) nil)))
+		     (7 ; all but top
+		      (ecase water
+			(0
+			 (artificial-right right)
+			 (artificial-left left)
+			 (artificial-bottom bottom))
+			(8
+			 (artificial-bottom bottom)
+			 (left-artificial-bmid-top left)
+			 (right-artificial-rmid-top right))
+			((1 2 3 4 5 6 7 9 10 11 12 13 14 15) nil)))
+		     (9 ; top & right
+		      (ecase water
+			((0 6)
+			 (artificial-top top)
+			 (artificial-right right))
+			(2
+			 (artificial-top top)
+			 (left-artificial-tmid-bottom right))
+			(4
+			 (artificial-right right)
+			 (left-artificial-left-tmid top))
+			((1 3 5 7 8 9 10 11 12 13 14 15) nil)))
+		     (10 ; top & bottom
+		      (ecase water
+			(0
+			 (artificial-top top)
+			 (artificial-bottom bottom))
+			(1
+			 (right-artificial-right-lmid top)
+			 (kite-right-bottom bottom))
+			(4
+			 (left-artificial-left-tmid top)
+			 (kite-left-bottom bottom))
+			(5
+			 (top-kite-perimeter top)
+			 (bottom-kite-perimeter bottom))
+			((2 3 6 7 8 9 10 11 12 13 14 15) nil)))
+		     (11 ; all but left
+		      (ecase water
+			(0
+			 (artificial-right right)
+			 (artificial-top top)
+			 (artificial-bottom bottom))
+			(4
+			 (artificial-right right)
+			 (left-artificial-left-tmid top)
+			 (kite-left-bottom bottom))
+			((1 2 3 5 6 7 8 9 10 11 12 13 14 15) nil)))
+		     (12 ; top & left
+		      (ecase water
+			((0 3)
+			 (artificial-top top)
+			 (artificial-left left))
+			(1
+			 (artificial-left left)
+			 (right-artificial-right-lmid top))
+			(2
+			 (artificial-top top)
+			 (right-artificial-lmid-bottom left))
+			((4 5 6 7 8 9 10 11 12 13 14 15) nil)))
+		     (13 ; all but bottom
+		      (ecase water
+			(0
+			 (artificial-right right)
+			 (artificial-top top)
+			 (artificial-left left))
+			(2
+			 (artificial-top top)
+			 (right-artificial-lmid-bottom left)
+			 (left-artificial-tmid-bottom right))
+			((1 3 4 5 6 7 8 9 10 11 12 13 14 15) nil)))
+		     (14 ; all but right
+		      (ecase water
+			(0
+			 (artificial-top top)
+			 (artificial-left left)
+			 (artificial-bottom bottom))
+			(1
+			 (artificial-left left)
+			 (kite-right-bottom bottom)
+			 (right-artificial-right-lmid top))
+			((2 3 4 5 6 7 8 9 10 11 12 13 14 15) nil)))
+		     (15 ; 100% plastic
+		      (artificial-top top)
+		      (artificial-left left)
+		      (artificial-right right)
+		      (artificial-bottom bottom)))
+		   
+		   
+		   
+#|		 ;; This isn't gonna cut it
 		 ;; Gaps will be left between artificial and water points
+		 
 		 (when (terrain-artificialp top)
 		   (artificial-top top))
 		 (when (terrain-artificialp left)
@@ -1084,8 +1287,8 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		 (when (terrain-artificialp bottom)
 		   (artificial-bottom bottom))
 		 (when (terrain-artificialp right)
-		   (artificial-right right))
-		 ))
+		   (artificial-right right))|#
+		   )))
 	  
 	  ;;;; 3^4 = 81 permutations, have to render in layers
 	  (let ((top (car left)) ;; kite verts
