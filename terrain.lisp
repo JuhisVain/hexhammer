@@ -563,6 +563,28 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		      (lines l-b-corner)
 		      (cairo:close-path)
 		      (cairo:fill-path))))
+	       (natural-top-bottom (terrain)
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (let ((rxy1 (crd half-kite-long
+				     (- (* softness quarter-r))))
+			  (rxy2 (crd (- half-down-y
+					(* half-kite-long
+					   softness))
+				     (- quarter-r)))
+			  (lxy1 (crd half-kite-long
+				     (* softness quarter-r)))
+			  (lxy2 (crd (- half-down-y
+					(* half-kite-long
+					   softness))
+				     quarter-r)))
+		      (rotation (lxy1 lxy2) (rxy1 rxy2))
+		      (new-curves r-mid rxy1 rxy2 t-mid)
+		      (lines t-l-corner l-mid)
+		      (curves lxy1 lxy2 b-mid)
+		      (lines b-r-corner)
+		      (cairo:close-path)
+		      (cairo:fill-path))))
 	       (natural-top-right (terrain)
 		 `(progn
 		    (set-terrain-fill ,terrain)
@@ -617,6 +639,60 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		      (rotation (xy1) (xy2))
 		      (new-curves b-mid xy1 xy2 t-mid)
 		      (lines r-t-corner b-r-corner)
+		      (cairo:close-path)
+		      (cairo:fill-path))))
+	       (natural-top-bottom-left (terrain) ; inverse of natural-right
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (let ((xy1 (crd half-kite-long
+				    (- (* softness quarter-r))))
+			  (xy2 (crd (- half-down-y
+				       (* half-kite-long
+					  softness))
+				    (- quarter-r))))
+		      (rotation () (xy1 xy2))
+		      (new-curves r-mid xy1 xy2 t-mid)
+		      (lines t-l-corner l-b-corner b-r-corner)
+		      (cairo:close-path)
+		      (cairo:fill-path))))
+	       (natural-top-right-left (terrain) ; inverse of natural-bottom
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (let ((xy1 (crd half-kite-long
+				    (* 0.36 half-kite-long)))
+			  (xy2 (crd half-kite-long
+				    (* -0.36 half-kite-long))))
+		      (rotation (xy1) (xy2))
+		      (new-curves b-mid xy1 xy2 r-mid)
+		      (lines r-t-corner t-l-corner l-b-corner)
+		      (cairo:close-path)
+		      (cairo:fill-path))))
+	       (natural-top-bottom-right (terrain) ; inverse of natural-left
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (let ((xy1 (crd half-kite-long
+				    (* softness quarter-r)))
+			  (xy2 (crd (- half-down-y
+				       (* half-kite-long
+					  softness))
+				    quarter-r)))
+		      (rotation (xy1 xy2) ())
+		      (new-curves b-mid xy1 xy2 l-mid)
+		      (lines t-l-corner r-t-corner b-r-corner)
+		      (cairo:close-path)
+		      (cairo:fill-path))))
+	       (natural-bottom-right-left (terrain) ; inverse of natural-top
+		 `(progn
+		    (set-terrain-fill ,terrain)
+		    (let ((xy1 (crd (- half-down-y
+				       (* 0.67 quarter-r))
+				    quarter-r))
+			  (xy2 (crd (- half-down-y
+				       (* 0.67 quarter-r))
+				    (- quarter-r))))
+		      (rotation (xy1) (xy2))
+		      (new-curves l-mid xy1 xy2 t-mid)
+		      (lines r-t-corner b-r-corner l-b-corner)
 		      (cairo:close-path)
 		      (cairo:fill-path))))
 	       (right-curve-rmid-top (terrain)
@@ -793,7 +869,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			     else collect (car x)) #'<))
 		     |#
 		     ;;(format t "Selector ~a~%" selector)
-		     (case selector
+		     (ecase selector
 		       (0 ; No natural land terrain
 			nil)
 		       ((1 2 4 8) ; No natural land terrain boundaries
@@ -1178,7 +1254,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			 (artificial-bottom bottom))
 			(1
 			 (artificial-left left)
-			 (artificial-bottom-right bottom))
+			 (kite-right-bottom bottom))
 			(8
 			 (left-artificial-bmid-top left)
 			 (artificial-bottom bottom))
@@ -1274,20 +1350,34 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		      (artificial-left left)
 		      (artificial-right right)
 		      (artificial-bottom bottom)))
-		   
-		   
-		   
-#|		 ;; This isn't gonna cut it
-		 ;; Gaps will be left between artificial and water points
-		 
-		 (when (terrain-artificialp top)
-		   (artificial-top top))
-		 (when (terrain-artificialp left)
-		   (artificial-left left))
-		 (when (terrain-artificialp bottom)
-		   (artificial-bottom bottom))
-		 (when (terrain-artificialp right)
-		   (artificial-right right))|#
+		   NIL))
+
+	       (render-water-terrain (top left bottom right)
+		 (let ((selector (+ (if (terrain-waterp top) 8 0)
+				    (if (terrain-waterp left) 4 0)
+				    (if (terrain-waterp bottom) 2 0)
+				    (if (terrain-waterp right) 1 0))))
+		   (ecase selector
+		     (0 nil)
+		     (1 (natural-right right))
+		     (2 (natural-bottom bottom))
+		     (4 (natural-left left))
+		     (8 (natural-top top))
+		     ;;; TODO: water borders maybe
+		     ;; gradients would be easy for two points but hard for more
+		     (3 (natural-bottom-right bottom))
+		     (5
+		      (natural-left left)
+		      (natural-right right))
+		     (6 (natural-bottom-left bottom))
+		     (7 (natural-bottom-right-left bottom))
+		     (9 (natural-top-right right))
+		     (10 (natural-top-bottom bottom))
+		     (11 (natural-top-bottom-right bottom))
+		     (12 (natural-top-left left))
+		     (13 (natural-top-right-left right))
+		     (14 (natural-top-bottom-left bottom))
+		     (15 (kite-perimeter bottom)))
 		   )))
 	  
 	  ;;;; 3^4 = 81 permutations, have to render in layers
@@ -1297,7 +1387,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		(right (car top)))
 	    (render-natural-terrain top left bottom right)
 	    (render-artificial-terrain top left bottom right)
-	    ;(render-water-terrain top left bottom right)
+	    (render-water-terrain top left bottom right)
 	    )
 	  
 	  #|
