@@ -1,7 +1,18 @@
 (in-package :hexhammer)
 
-(defun point-base-terrain (point)
-  (car (point-terrain point)))
+(defstruct (terrain
+	    (:constructor
+		make-terrain (&optional (base 'cultivated) (state 'dry) mod)))
+  (base)
+  (state)
+  (mod))
+
+(defun point-terrain-base (point)
+  (terrain-base (point-terrain point)))
+(defun point-terrain-state (point)
+  (terrain-state (point-terrain point)))
+(defun point-terrain-mod (point)
+  (terrain-mod (point-terrain point)))
 
 (defun record-terrain-border (hex left right)
   "Returns a !!!border!!! between two terrain types.
