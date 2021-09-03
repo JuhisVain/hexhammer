@@ -125,50 +125,6 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
       (cairo:destroy cairo-context)
       (cairo:destroy cairo-surface))))
 
-;; Insert some test borders in there:
-(defun test-terrain ()
-
-  ;; Reset screw-ups:
-  (dolist (v +vertex-directions+)
-    (dolist (crd (list (crd 1 1)
-		       (crd 3 2)
-		       (crd 1 3)
-		       (crd 5 1)
-		       (crd 4 0)
-		       (crd 0 0)))
-      (setf (point-terrain (hex-vertex (hex-at crd *world*) v))
-	    (list (cons 'cultivated 'dry)))))
-  
-  (dolist (v (list :n :nw :sw :s :se :ne))
-    (setf (point-terrain (hex-vertex (hex-at (crd 1 1) *world*) v))
-	  (list (cons 'forest 'dry))))
-
-  (dolist (v (list :nw :nnw :ne :e :s :ssw))
-    (setf (point-terrain (hex-vertex (hex-at (crd 3 2) *world*) v))
-	  (list (cons 'forest 'dry))))
-
-  (dolist (v (list :nw :nnw :n :ne :e :se :s :ssw :sw))
-    (setf (point-terrain (hex-vertex (hex-at (crd 1 3) *world*) v))
-	  (list (cons 'forest 'dry))))
-
-  ;; top-left-corner:
-  (dolist (v (list :nw :ne :se :sw))
-    (setf (point-terrain (hex-vertex (hex-at (crd 5 1) *world*) v))
-	  (list (cons 'forest 'dry))))
-
-  (dolist (v (list :nnw :e :ssw))
-    (setf (point-terrain (hex-vertex (hex-at (crd 5 1) *world*) v))
-	  (list (cons 'lake 'dry))))
-
-  ;;top
-  (dolist (v (list :nnw :n :e :se :ssw :sw))
-    (setf (point-terrain (hex-vertex (hex-at (crd 4 0) *world*) v))
-	  (list (cons 'forest 'dry))))
-
-  (dolist (v (list :cen :nw :n :ne :se :s :sw))
-    (setf (point-terrain (hex-vertex (hex-at (crd 0 0) *world*) v))
-	  (list (cons 'forest 'dry)))))
-
 (defmacro render-terrain-path-form (terrain-type with-lines without-lines)
   (let ((lined
 	  `((cairo:move-to (x ,(car with-lines)) (y ,(car with-lines)))
