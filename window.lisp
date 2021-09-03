@@ -70,7 +70,6 @@
 				     (format t "That's hex ~a, clicked with ~a~%"
 					     (hex-xy-vert-at-pix x y test-state)
 					     button)
-				     ;; Hold down left CTRL and left click to paint water bodies
 				     (destructuring-bind (crd . vert)
 					 (hex-xy-vert-at-pix x y test-state)
 				       (cond ((null vert)
