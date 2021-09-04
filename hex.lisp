@@ -388,6 +388,7 @@ and exist in world WORLD."
 (defun (setf hex-at) (new-hex crd world)
   (setf (gethash crd (world-map world)) new-hex))
 
+(declaim (inline hex-vertex))
 (defun hex-vertex (hex vert-direction)
   (declare ;(type hex hex)
    (type hex-vertex vert-direction))
@@ -407,24 +408,6 @@ and exist in world WORLD."
     (:SW (hex-SW hex))
     (:W (hex-W hex))
     (:NW (hex-NW hex))))
-
-(define-compiler-macro hex-vertex (&whole form hex vert-direction)
-  (if (typep vert-direction 'hex-vertex)
-      (ecase vert-direction
-	(:CEN `(hex-CEN ,hex))
-	(:NNW `(hex-NNW ,hex))
-	(:N `(hex-N ,hex))
-	(:NNE `(hex-NNE ,hex))
-	(:NE `(hex-NE ,hex))
-	(:E `(hex-E ,hex))
-	(:SE `(hex-SE ,hex))
-	(:SSE `(hex-SSE ,hex))
-	(:S `(hex-S ,hex))
-	(:SSW `(hex-SSW ,hex))
-	(:SW `(hex-SW ,hex))
-	(:W `(hex-W ,hex))
-	(:NW `(hex-NW ,hex)))
-      form))
 
 (defun vertex-exists (crd dir world)
   (declare (crd crd)
