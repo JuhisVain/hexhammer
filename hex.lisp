@@ -248,14 +248,12 @@ and exist in world WORLD."
 		  when point collect vert)))
       neighbours)))
 
-(defun increase-water-level (crd dir world &optional (delta 1))
+(defun increase-water-level (crd dir world &optional (delta 1)) ; as it is, this is named wrong
   (let ((point (vertex-exists crd dir world)))
     (format t "in water level ~a ~a ~a~%" crd dir delta)
     (if (plusp delta)
 	(flood-fill crd dir
-		    (+ delta
-		       (max (point-water point)
-			    (point-elevation point)))
+		    (+ delta (point-elevation point))
 		    world)
 	;; else:
 	(let ((water-level (+ delta
@@ -264,8 +262,10 @@ and exist in world WORLD."
 	  (format t "new water level will be : ~a~%" water-level)
 	  (maphash #'(lambda (crd-vert cf)
 		       (declare (ignore cf))
-		       (setf (point-water (vertex-exists (car crd-vert) (cadr crd-vert) world))
-			     water-level))
+		       (let ((point (vertex-exists (car crd-vert) (cadr crd-vert) world)))
+			 (when point
+			   (setf (terrain-base (point-terrain point))
+				 'cultivated))))
 		   (breadth-first-search
 		    (list crd dir)
 		    0 world
@@ -273,10 +273,8 @@ and exist in world WORLD."
 		    #'(lambda (from to world)
 			(declare (ignore from))
 			(let ((to-point (vertex-exists (car to) (cadr to) world)))
-			  (if (and (>= (point-water to-point)
-				       water-level)
-				   (>= (point-water to-point)
-				       (point-elevation to-point)))
+			  (if (eq (point-terrain-base to-point)
+				  'lake)
 			      0 666)))
 		    #'(lambda (x) (declare (ignore x)) nil)))
 	  ))))
@@ -285,8 +283,10 @@ and exist in world WORLD."
 (defun flood-fill (crd dir water-level world)
   (maphash #'(lambda (crd-vert cf)
 	       (declare (ignore cf))
-	       (setf (point-water (vertex-exists (car crd-vert) (cadr crd-vert) world))
-		     water-level))
+	       (let ((point (vertex-exists (car crd-vert) (cadr crd-vert) world)))
+		 (when point
+		   (setf (terrain-base (point-terrain point))
+			 'lake))))
 	   (breadth-first-search
 	    (list crd dir)
 	    0 world
@@ -294,10 +294,8 @@ and exist in world WORLD."
 	    #'(lambda (from to world)
 		(declare (ignore from))
 		(let ((to-point (vertex-exists (car to) (cadr to) world)))
-		  (if (or (>= (point-water to-point)
-			      water-level)
-			  (>= (point-elevation to-point)
-			      water-level))
+		  (if (>= (point-elevation to-point)
+			  water-level)
 		      666 0)))
 	    #'(lambda (x) (declare (ignore x)) nil))))
 
