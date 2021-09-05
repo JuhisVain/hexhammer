@@ -554,7 +554,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		 `(progn
 		    (set-terrain-fill ,terrain)
 		    (let ((xy1 (crd half-kite-long
-				    (* softness quarter-r)))
+				    (- (* softness quarter-r))))
 			  (xy2 (crd (- half-down-y
 				       (* half-kite-long
 					  softness))
@@ -568,7 +568,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		 `(progn
 		    (set-terrain-fill ,terrain)
 		    (let ((xy1 (crd half-kite-long
-				    (* softness quarter-r)))
+				    (- (* softness quarter-r))))
 			  (xy2 (crd (- half-down-y
 				       (* half-kite-long
 					  softness))
