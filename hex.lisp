@@ -248,7 +248,9 @@ and exist in world WORLD."
 		  when point collect vert)))
       neighbours)))
 
-(defun increase-water-level (crd dir world &optional (delta 1)) ; as it is, this is named wrong
+
+;;; TODO: redo
+(defun increase-water-level (crd dir world &optional (delta 1))
   (let ((point (vertex-exists crd dir world)))
     (format t "in water level ~a ~a ~a~%" crd dir delta)
     (if (plusp delta)
@@ -265,7 +267,10 @@ and exist in world WORLD."
 		       (let ((point (vertex-exists (car crd-vert) (cadr crd-vert) world)))
 			 (when point
 			   (setf (terrain-base (point-terrain point))
-				 'cultivated))))
+				 'cultivated
+				 (terrain-mod (point-terrain point))
+				 (delete :depth (terrain-mod (point-terrain point))
+					 :test #'eq :key #'car)))))
 		   (breadth-first-search
 		    (list crd dir)
 		    0 world
@@ -285,8 +290,19 @@ and exist in world WORLD."
 	       (declare (ignore cf))
 	       (let ((point (vertex-exists (car crd-vert) (cadr crd-vert) world)))
 		 (when point
-		   (setf (terrain-base (point-terrain point))
-			 'lake))))
+		   (let ((terrain (point-terrain point))
+			 (water-depth (- water-level
+					 (point-elevation point))))
+		     (case (terrain-base terrain)
+		       (lake (setf (cdr (assoc :depth (terrain-mod (point-terrain point))))
+				   water-depth))
+		       (t
+			(setf (terrain-base terrain) 'lake)
+			(push (cons :depth water-depth) (terrain-mod terrain))))))))
+		       
+		 #|  (setf (terrain-base (point-terrain point))
+		    'lake))))
+		 |#
 	   (breadth-first-search
 	    (list crd dir)
 	    0 world
