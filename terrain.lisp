@@ -67,60 +67,60 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			      (* (mod (1- (x crd)) 2) ;apply on even x
 				 half-down-y))))
 
-	(let ((top (point-terrain (hex-vertex hex :nnw)))
-	      (left (point-terrain (hex-vertex hex :nw)))
-	      (bottom (point-terrain (hex-vertex hex :cen)))
-	      (right (point-terrain (hex-vertex hex :n)))
+	(let ((top (hex-vertex hex :nnw))
+	      (left (hex-vertex hex :nw))
+	      (bottom (hex-vertex hex :cen))
+	      (right (hex-vertex hex :n))
 	      (angle (* 5/6 +sf-pi+)))
 	  (draw-kite-terrain top left bottom right
 			     angle hex-centre-x hex-centre-y
 			     (hex-r view-state) cairo-context))
 
-	(let ((top (point-terrain (hex-vertex hex :nne)))
-	      (left (point-terrain (hex-vertex hex :n)))
-	      (bottom (point-terrain (hex-vertex hex :cen)))
-	      (right (point-terrain (hex-vertex hex :ne)))
+	(let ((top (hex-vertex hex :nne))
+	      (left (hex-vertex hex :n))
+	      (bottom (hex-vertex hex :cen))
+	      (right (hex-vertex hex :ne))
 	      (angle (* 3/6 +sf-pi+)))
 	  (draw-kite-terrain top left bottom right
 			     angle hex-centre-x hex-centre-y
 			     (hex-r view-state) cairo-context))
 
-	(let ((top (point-terrain (hex-vertex hex :e)))
-	      (left (point-terrain (hex-vertex hex :ne)))
-	      (bottom (point-terrain (hex-vertex hex :cen)))
-	      (right (point-terrain (hex-vertex hex :se)))
+	(let ((top (hex-vertex hex :e))
+	      (left (hex-vertex hex :ne))
+	      (bottom (hex-vertex hex :cen))
+	      (right (hex-vertex hex :se))
 	      (angle (* 1/6 +sf-pi+)))
 	  (draw-kite-terrain top left bottom right
 			     angle hex-centre-x hex-centre-y
 			     (hex-r view-state) cairo-context))
 
-	(let ((top (point-terrain (hex-vertex hex :sse)))
-	      (left (point-terrain (hex-vertex hex :se)))
-	      (bottom (point-terrain (hex-vertex hex :cen)))
-	      (right (point-terrain (hex-vertex hex :s)))
+	(let ((top (hex-vertex hex :sse))
+	      (left (hex-vertex hex :se))
+	      (bottom (hex-vertex hex :cen))
+	      (right (hex-vertex hex :s))
 	      (angle (* -1/6 +sf-pi+)))
 	  (draw-kite-terrain top left bottom right
 			     angle hex-centre-x hex-centre-y
 			     (hex-r view-state) cairo-context))
 
-	(let ((top (point-terrain (hex-vertex hex :ssw)))
-	      (left (point-terrain (hex-vertex hex :s)))
-	      (bottom (point-terrain (hex-vertex hex :cen)))
-	      (right (point-terrain (hex-vertex hex :sw)))
+	(let ((top (hex-vertex hex :ssw))
+	      (left (hex-vertex hex :s))
+	      (bottom (hex-vertex hex :cen))
+	      (right (hex-vertex hex :sw))
 	      (angle (* -3/6 +sf-pi+)))
 	  (draw-kite-terrain top left bottom right
 			     angle hex-centre-x hex-centre-y
 			     (hex-r view-state) cairo-context))
 
-	(let ((top (point-terrain (hex-vertex hex :w)))
-	      (left (point-terrain (hex-vertex hex :sw)))
-	      (bottom (point-terrain (hex-vertex hex :cen)))
-	      (right (point-terrain (hex-vertex hex :nw)))
+	(let ((top (hex-vertex hex :w))
+	      (left (hex-vertex hex :sw))
+	      (bottom (hex-vertex hex :cen))
+	      (right (hex-vertex hex :nw))
 	      (angle (* -5/6 +sf-pi+)))
 	  (draw-kite-terrain top left bottom right
 			     angle hex-centre-x hex-centre-y
 			     (hex-r view-state) cairo-context))
-
+	
 	)
       (cairo:destroy cairo-context)
       (cairo:destroy cairo-surface))))
@@ -185,7 +185,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
     (cultivated (cairo:set-source-rgb 0.96 0.95 0.94)))
   (cairo:fill-path))
 
-(defun test-rounded ()
+'(defun test-rounded ()
   (setf (point-terrain (hex-vertex (hex-at (crd 2 2) *world*) :cen))
 	(list (cons 'lake 'dry)))
   (dolist (v (list :n :nne :ne :se :s))
@@ -474,18 +474,57 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		    (new-lines r-t-corner kite-mid l-mid t-l-corner)
 		    (cairo:close-path)
 		    (cairo:fill-path)))
-	       (natural-bottom (terrain)
-		 `(progn
-		    (set-terrain-fill ,terrain)
-		    (new-lines b-r-corner b-mid)
-		    (let ((xy1 (crd half-kite-long
-				    (* 0.36 half-kite-long)))
-			  (xy2 (crd half-kite-long
-				    (* -0.36 half-kite-long))))
-		      (rotation (xy1) (xy2))
-		      (curves xy1 xy2 r-mid))
-		    (cairo:close-path)
-		    (cairo:fill-path)))
+	       (natural-bottom (terrain &optional (point-0 nil offsetp) point-2)
+		 (cond ((not offsetp)
+			`(progn
+			   (set-terrain-fill ,terrain)
+			   (new-lines b-r-corner b-mid)
+			   (let ((xy1 (crd half-kite-long
+					   (* 0.36 half-kite-long)))
+				 (xy2 (crd half-kite-long
+					   (* -0.36 half-kite-long))))
+			     (rotation (xy1) (xy2))
+			     (curves xy1 xy2 r-mid))
+			   (cairo:close-path)
+			   (cairo:fill-path)))
+		       (t
+			`(progn
+			   (set-terrain-fill (terrain-base (point-terrain ,terrain)))
+			   (let* ((depth (+ (depth (point-terrain ,terrain))
+					    (point-elevation ,terrain)))
+				  (bottom-offset
+				    (water-offset-bottom depth
+							 (point-elevation ,point-0)
+							 (point-elevation ,terrain)
+							 hex-radius))
+				  (right-offset
+				    (water-offset-right depth
+							(point-elevation ,terrain)
+							(point-elevation ,point-2)
+							hex-radius))
+				  (xy0 (crd bottom-offset 0))
+				  (xy1 (crd bottom-offset
+					    (* 0.36 bottom-offset)))
+				  (xy2 (crd right-offset
+					    (* -0.36 right-offset)))
+				  (xy3 (crd right-offset 0)))
+			     (rotation (xy0 xy1) (xy2 xy3))
+			     (new-curves xy0 xy1 xy2 xy3)
+			     (lines b-r-corner)
+			     (cairo:close-path)
+			     (cairo:fill-path)
+
+			     (cairo:set-source-rgb 1.0 0.0 0.0)
+			     (cairo:set-line-width 1.5)
+			     (new-lines xy0 xy1)
+			     (cairo:Stroke)
+			     (new-lines xy1 xy2)
+			     (cairo:set-source-rgb 0.0 1.0 0.0)
+			     (cairo:Stroke)
+			     (new-lines xy2 xy3)
+			     (cairo:set-source-rgb 0.0 0.0 1.0)
+			     (cairo:Stroke)
+			     )))))
 	       (natural-top (terrain)
 		 `(progn
 		    (set-terrain-fill ,terrain)
@@ -500,20 +539,54 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		      (lines t-l-corner)
 		      (cairo:close-path)
 		      (cairo:fill-path))))
-	       (natural-right (terrain)
-		 `(progn
-		    (set-terrain-fill ,terrain)
-		    (let ((xy1 (crd half-kite-long
-				    (- (* softness quarter-r))))
-			  (xy2 (crd (- half-down-y
-				       (* half-kite-long
-					  softness))
-				    (- quarter-r))))
-		      (rotation () (xy1 xy2))
-		      (new-curves r-mid xy1 xy2 t-mid)
-		      (lines r-t-corner)
-		      (cairo:close-path)
-		      (cairo:fill-path))))
+	       (natural-right (terrain &optional (point-0 nil offsetp) point-2)
+		 (cond ((not offsetp)
+			`(progn
+			   (set-terrain-fill ,terrain)
+			   (let ((xy1 (crd half-kite-long
+					   (- (* softness quarter-r))))
+				 (xy2 (crd (- half-down-y
+					      (* half-kite-long
+						 softness))
+					   (- quarter-r))))
+			     (rotation () (xy1 xy2))
+			     (new-curves r-mid xy1 xy2 t-mid)
+			     (lines r-t-corner)
+			     (cairo:close-path)
+			     (cairo:fill-path))))
+		       (t
+			`(progn
+			   (set-terrain-fill (terrain-base (point-terrain ,terrain)))
+			   (let* ((depth (+ (depth (point-terrain ,terrain))
+					    (point-elevation ,terrain)))
+				  (right-offset
+				    (water-offset-right depth
+							(point-elevation ,point-0)
+							(point-elevation ,terrain)
+							hex-radius))
+				  (top-offset
+				    (water-offset-top depth
+						      (point-elevation ,terrain)
+						      (point-elevation ,point-2)
+						      hex-radius))
+				  (xy0 (crd half-down-y top-offset))
+				  (xy1 (crd
+					(+ right-offset
+					   (* *soft*
+					      (- half-down-y
+						 right-offset)))
+					top-offset))
+				  (xy2 (crd right-offset
+					    (* *soft* top-offset)))
+				  (xy3 (crd right-offset 0)))
+			     (rotation () (xy0 xy1 xy2 xy3))
+			     (new-curves xy0 xy1 xy2 xy3)
+			     (lines r-t-corner)
+			     (cairo:close-path)
+			     (cairo:fill-path)
+
+			     
+			     )))))
 	       (natural-left (terrain)
 		 `(progn
 		    (set-terrain-fill ,terrain)
@@ -606,20 +679,67 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		      (lines r-t-corner b-r-corner)
 		      (cairo:close-path)
 		      (cairo:fill-path))))
-	       (natural-top-bottom-left (terrain) ; inverse of natural-right
-		 `(progn
-		    (set-terrain-fill ,terrain)
-		    (let ((xy1 (crd half-kite-long
-				    (- (* softness quarter-r))))
-			  (xy2 (crd (- half-down-y
-				       (* half-kite-long
-					  softness))
-				    (- quarter-r))))
-		      (rotation () (xy1 xy2))
-		      (new-curves r-mid xy1 xy2 t-mid)
-		      (lines t-l-corner l-b-corner b-r-corner)
-		      (cairo:close-path)
-		      (cairo:fill-path))))
+	       ;; inverse of natural-right:
+	       (natural-top-bottom-left
+		   (terrain &optional (point-0 nil offsetp) point-2 r-t-point)
+		 (cond ((not offsetp)
+			`(progn
+			   (set-terrain-fill ,terrain)
+			   (let ((xy1 (crd half-kite-long
+					   (- (* softness quarter-r))))
+				 (xy2 (crd (- half-down-y
+					      (* half-kite-long
+						 softness))
+					   (- quarter-r))))
+			     (rotation () (xy1 xy2))
+			     (new-curves r-mid xy1 xy2 t-mid)
+			     (lines t-l-corner l-b-corner b-r-corner)
+			     (cairo:close-path)
+			     (cairo:fill-path))))
+		       (t
+			`(progn
+			   (set-terrain-fill (terrain-base (point-terrain ,terrain)))
+			   (let* ((depth0 (+ (depth (point-terrain ,point-0))
+					     (point-elevation ,point-0)))
+				  (depth2 (+ (depth (point-terrain ,point-2))
+					     (point-elevation ,point-2)))
+				  (right-offset
+				    (water-offset-right depth0
+							(point-elevation ,point-0)
+							(point-elevation ,r-t-point)
+							hex-radius))
+				  (top-offset
+				    (water-offset-top depth2
+						      (point-elevation ,r-t-point)
+						      (point-elevation ,point-2)
+						      hex-radius))
+				  (xy0 (crd half-down-y top-offset))
+				  (xy1 (crd
+					(+ right-offset
+					   (* *soft*
+					      (- half-down-y
+						 right-offset)))
+					top-offset))
+				  (xy2 (crd right-offset
+					    (* *soft* top-offset)))
+				  (xy3 (crd right-offset 0)))
+			     (rotation () (xy0 xy1 xy2 xy3))
+			     (new-curves xy0 xy1 xy2 xy3)
+			     (lines b-r-corner l-b-corner t-l-corner)
+			     (cairo:close-path)
+			     (cairo:fill-path)
+
+			     (cairo:set-source-rgb 1.0 1.0 0.0)
+			     (cairo:set-line-width 1.5)
+			     (new-lines xy0 xy1)
+			     (cairo:Stroke)
+			     (new-lines xy1 xy2)
+			     (cairo:set-source-rgb 0.0 1.0 1.0)
+			     (cairo:Stroke)
+			     (new-lines xy2 xy3)
+			     (cairo:set-source-rgb 1.0 0.0 1.0)
+			     (cairo:Stroke)
+			     )))))
 	       (natural-top-right-left (terrain) ; inverse of natural-bottom
 		 `(progn
 		    (set-terrain-fill ,terrain)
@@ -760,64 +880,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	(cairo:set-line-width 0.5)
 	(cairo:set-antialias :none)
 
-	(flet ((priority-at-cen (left top right cen)
-		 ;; If left and right are same there will be no border
-		 ;; if different the border will be a straight line:
-		 (render-terrain-path-form
-		  left nil
-		  (t-l-corner l-b-corner b-r-corner))
-		 (render-terrain-path-form
-		  right nil
-		  (t-l-corner b-r-corner r-t-corner))
-		 
-		 ;; Need to draw top's terrain?
-		 (unless (eq top left) 
-		   (let ((xy1 (crd (- half-down-y
-				      (* 0.67 (/ half-r 2.0)))
-				   (/ half-r 2.0)))
-			 (xy2 (crd (- half-down-y
-				      (* 0.67 (/ half-r 2.0)))
-				   (/ half-r -2.0))))
-		     (rotation (xy1) (xy2))
-
-		     (cairo:set-source-rgb 1.0 0.0 0.7)
-		     (cairo:move-to (x l-mid) (y l-mid))
-		     (cairo:line-to (x xy1) (y xy1))
-		     (cairo:line-to (x xy2) (y xy2))
-		     (cairo:line-to (x t-mid) (y t-mid))
-		     (cairo:set-line-width 1.0)
-		     (cairo:stroke)
-		     
-		     (cairo:move-to (x l-mid) (y l-mid))
-		     (cairo:curve-to (x xy1) (y xy1)
-				     (x xy2) (y xy2)
-				     (x t-mid) (y t-mid))
-		     (cairo:line-to (x t-l-corner) (y t-l-corner))
-		     (cairo:close-path)
-		     (set-terrain-fill top)
-		     ;;(set-terrain-line cen)
-		     ;; No line! 
-		     (cairo:fill-path)))
-
-		 ;; Drawing priority terrain:
-		 ;; May need to shift control points based on elevation differences
-		 (let ((xy1 (crd half-kite-long
-				 (* 0.36 half-kite-long)))
-		       (xy2 (crd half-kite-long
-				 (* -0.36 half-kite-long))))
-		   (rotation (xy1) (xy2))
-		   (cairo:move-to (x b-mid) (y b-mid))
-		   (cairo:curve-to (x xy1) (y xy1)
-				   (x xy2) (y xy2)
-				   (x r-mid) (y r-mid))
-		   (cairo:line-to (x b-r-corner) (y b-r-corner))
-		   (cairo:close-path)
-		   (set-terrain-fill cen)
-		   ;;(set-terrain-line cen)
-		   ;; No line! 
-		   (cairo:fill-path)))
-	       
-	       (render-natural-terrain (top left bottom right)
+	(flet ((render-natural-terrain (top left bottom right)
 		 
 		   
 		   (let ((selector (+ (if (terrain-naturalp top) 8 0)
@@ -1318,14 +1381,17 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		   NIL))
 
 	       (render-water-terrain (top left bottom right)
-		 (let ((selector (+ (if (terrain-waterp top) 8 0)
-				    (if (terrain-waterp left) 4 0)
-				    (if (terrain-waterp bottom) 2 0)
-				    (if (terrain-waterp right) 1 0))))
-		   (ecase selector
+		 (let ((selector (+ (if (terrain-waterp (terrain-base (point-terrain top))) 8 0)
+				    (if (terrain-waterp (terrain-base (point-terrain left))) 4 0)
+				    (if (terrain-waterp (terrain-base (point-terrain bottom))) 2 0)
+				    (if (terrain-waterp (terrain-base (point-terrain right))) 1 0))))
+		   (case selector
 		     (0 nil)
-		     (1 (natural-right right))
-		     (2 (natural-bottom bottom))
+		     (1 (natural-right right bottom top))
+		     (2 (natural-bottom bottom left right))
+
+		     (14 (natural-top-bottom-left bottom bottom top right))
+		     )))#|
 		     (4 (natural-left left))
 		     (8 (natural-top top))
 		     ;;; TODO: water borders maybe
@@ -1341,17 +1407,69 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		     (11 (natural-top-bottom-right bottom))
 		     (12 (natural-top-left left))
 		     (13 (natural-top-right-left right))
-		     (14 (natural-top-bottom-left bottom))
 		     (15 (kite-perimeter bottom)))
-		   )))
+	  ))|#
+	       )
 	  
 	  ;;;; 3^4 = 81 permutations, have to render in layers
-	  (let ((top (terrain-base top))
-		(left (terrain-base left))
-		(bottom (terrain-base bottom))
-		(right (terrain-base right)))
-	    (render-natural-terrain top left bottom right)
-	    (render-artificial-terrain top left bottom right)
+	  (let* ((topt (point-terrain top))
+		 (leftt (point-terrain left))
+		 (bottomt (point-terrain bottom))
+		 (rightt (point-terrain right))
+		 (topb (terrain-base topt))
+		 (leftb (terrain-base leftt))
+		 (bottomb (terrain-base bottomt))
+		 (rightb (terrain-base rightt)))
+	    (render-natural-terrain topb leftb bottomb rightb)
+	    (render-artificial-terrain topb leftb bottomb rightb)
 	    (render-water-terrain top left bottom right))
 	  
 	  )))))
+
+(defun depth (terrain)
+  "Returns water depth of TERRAIN."
+  (cdr (assoc :depth (terrain-mod terrain) :test #'eq)))
+
+(defun water-offset-bottom (depth l-b-ele b-r-ele hex-r)
+  (let ((half-down-y (* +sin60+ hex-r))
+	(index (abs (- depth
+		       l-b-ele)))
+	(range (- b-r-ele l-b-ele)))
+    (- half-down-y
+       (the single-float
+	    (contour-offset index
+			    range
+			    half-down-y)))))
+
+(defun water-offset-left (depth t-l-ele l-b-ele hex-r)
+  (let ((half-r (/ hex-r 2.0))
+	(index (- (+ l-b-ele depth)
+		  (1+ t-l-ele)))
+	(range (- l-b-ele (1+ t-l-ele))))
+    (- half-r
+       (the single-float 
+	    (contour-offset index
+			    range
+			    half-r)))))
+
+(defun water-offset-right (depth b-r-ele r-t-ele hex-r)
+  (let ((half-down-y (* +sin60+ hex-r))
+	(index (abs (- depth
+		       (+ (if (< b-r-ele r-t-ele)
+			      1 0)
+			  b-r-ele))))
+	(range (- r-t-ele b-r-ele)))
+    (contour-offset index
+		    range
+		    half-down-y)))
+
+(defun water-offset-top (depth r-t-ele t-l-ele hex-r)
+  (let ((minus-half-r (/ hex-r -2.0))
+	(index (abs (- depth
+		       (+ (if (< r-t-ele t-l-ele)
+			      1 0)
+			  r-t-ele))))
+	(range (- t-l-ele r-t-ele)))
+    (contour-offset index
+		    range
+		    minus-half-r)))
