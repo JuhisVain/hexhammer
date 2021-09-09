@@ -1523,28 +1523,32 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		     (0 nil)
 		     (1 ; right
 		      (ecase water
-			((0 4 6 10 14) (artificial-right right))
+			(14 (kite-perimeter right))
+			((0 4 6 10) (artificial-right right))
 			(2 (left-artificial-tmid-bottom right))
 			(8 (right-artificial-rmid-top right))
 			(12 (artificial-top-right right))
 			((1 3 5 7 9 11 13 15) nil)))
 		     (2 ; bottom
 		      (ecase water
-			((0 8 13) (artificial-bottom bottom))
+			(13 (kite-perimeter bottom))
+			((0 8) (artificial-bottom bottom))
 			((1 9) (kite-right-bottom bottom))
 			((4 12) (kite-left-bottom bottom))
 			(5 (bottom-kite-perimeter bottom))
 			((2 3 6 7 10 11 14 15) nil)))
 		     (4 ; left
 		      (ecase water
-			((0 1 3 10 11) (artificial-left left))
+			(11 (kite-perimeter left))
+			((0 1 3 10) (artificial-left left))
 			(2 (right-artificial-lmid-bottom left))
 			(8 (left-artificial-bmid-top left))
 			(9 (artificial-top-left left))
 			((4 5 6 7 12 13 14 15) nil)))
 		     (8 ; top
 		      (ecase water
-			((0 2 3 6 7) (artificial-top top))
+			(7 (kite-perimeter top))
+			((0 2 3 6) (artificial-top top))
 			(1 (right-artificial-right-lmid top))
 			(4 (left-artificial-left-tmid top))
 			(5 (top-kite-perimeter top))
@@ -1642,7 +1646,10 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			((1 2 3 5 6 7 8 9 10 11 12 13 14 15) nil)))
 		     (12 ; top & left
 		      (ecase water
-			((0 3)
+			(3
+			 (right-kite-perimeter top)
+			 (left-kite-perimeter left))
+			(0
 			 (artificial-top top)
 			 (artificial-left left))
 			(1
