@@ -684,28 +684,107 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			     (cairo:set-source-rgb 0.0 0.8 0.0)
 			     (cairo:Stroke)
 			     )))))
-	       (natural-top-bottom (terrain)
-		 `(progn
-		    (set-terrain-fill ,terrain)
-		    (let ((rxy1 (crd half-kite-long
-				     (- (* softness quarter-r))))
-			  (rxy2 (crd (- half-down-y
-					(* half-kite-long
-					   softness))
-				     (- quarter-r)))
-			  (lxy1 (crd half-kite-long
-				     (* softness quarter-r)))
-			  (lxy2 (crd (- half-down-y
-					(* half-kite-long
-					   softness))
-				     quarter-r)))
-		      (rotation (lxy1 lxy2) (rxy1 rxy2))
-		      (new-curves r-mid rxy1 rxy2 t-mid)
-		      (lines t-l-corner l-mid)
-		      (curves lxy1 lxy2 b-mid)
-		      (lines b-r-corner)
-		      (cairo:close-path)
-		      (cairo:fill-path))))
+	       
+	       (natural-top-bottom (terrain &optional offsetp)
+		 (cond ((not offsetp)
+			`(progn
+			   (set-terrain-fill ,terrain)
+			   (let ((rxy1 (crd half-kite-long
+					    (- (* softness quarter-r))))
+				 (rxy2 (crd (- half-down-y
+					       (* half-kite-long
+						  softness))
+					    (- quarter-r)))
+				 (lxy1 (crd half-kite-long
+					    (* softness quarter-r)))
+				 (lxy2 (crd (- half-down-y
+					       (* half-kite-long
+						  softness))
+					    quarter-r)))
+			     (rotation (lxy1 lxy2) (rxy1 rxy2))
+			     (new-curves r-mid rxy1 rxy2 t-mid)
+			     (lines t-l-corner l-mid)
+			     (curves lxy1 lxy2 b-mid)
+			     (lines b-r-corner)
+			     (cairo:close-path)
+			     (cairo:fill-path))))
+		       (t
+			`(progn
+			   (set-terrain-fill (terrain-base (point-terrain ,terrain)))
+			   (let* ((depth-bot (+ (depth (point-terrain bottom))
+						(point-elevation bottom)))
+				  (depth-top (+ (depth (point-terrain top))
+						(point-elevation top)))
+				  
+				  (bottom-offset
+				    (water-offset-bottom depth-bot
+							 (point-elevation left)
+							 (point-elevation bottom)
+							 hex-radius))
+				  (left-offset
+				    (water-offset-left depth-top
+						       (point-elevation top)
+						       (point-elevation left)
+						       hex-radius))
+				  (xy0 (crd bottom-offset 0.0))
+				  (xy1 (crd bottom-offset
+					    (* left-offset *soft*)))
+				  (xy2 (crd (+ bottom-offset
+					       (* *soft* (- half-down-y
+							    bottom-offset)))
+					    left-offset))
+				  (xy3 (crd half-down-y left-offset))
+
+				  (top-offset
+				    (water-offset-top depth-top
+						      (point-elevation right)
+						      (point-elevation top)
+						      hex-radius))
+				  (right-offset
+				    (water-offset-right depth-bot
+							(point-elevation bottom)
+							(point-elevation right)
+							hex-radius))
+				  (xy4 (crd half-down-y top-offset))
+				  (xy5 (crd
+					(+ right-offset
+					   (* *soft*
+					      (- half-down-y
+						 right-offset)))
+					top-offset))
+				  (xy6 (crd right-offset
+					    (* *soft* top-offset)))
+				  (xy7 (crd right-offset 0))
+				  )
+			     (rotation (xy0 xy1 xy2 xy3) (xy4 xy5 xy6 xy7))
+			     (new-curves xy0 xy1 xy2 xy3)
+			     (lines t-l-corner xy4)
+			     (curves xy5 xy6 xy7)
+			     (lines b-r-corner)
+			     (cairo:close-path)
+			     (cairo:fill-path)
+
+			     (cairo:set-source-rgb 1.0 1.0 1.0)
+			     (cairo:set-line-width 1.5)
+			     (new-lines xy0 xy1)
+			     (cairo:Stroke)
+			     (new-lines xy1 xy2)
+			     (cairo:set-source-rgb 0.75 0.75 0.75)
+			     (cairo:Stroke)
+			     (new-lines xy2 xy3)
+			     (cairo:set-source-rgb 0.5 0.5 0.5)
+			     (cairo:Stroke)
+
+			     (new-lines xy4 xy5)
+			     (cairo:set-source-rgb 0.25 0.25 0.25)
+			     (cairo:Stroke)
+			     (new-lines xy5 xy6)
+			     (cairo:set-source-rgb 0.1 0.1 0.1)
+			     (cairo:Stroke)
+			     (new-lines xy6 xy7)
+			     (cairo:set-source-rgb 0.0 0.0 0.0)
+			     (cairo:Stroke)
+			     )))))
 	       (natural-top-right (terrain)
 		 `(progn
 		    (set-terrain-fill ,terrain)
@@ -720,20 +799,63 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		      (lines t-l-corner r-t-corner)
 		      (cairo:close-path)
 		      (cairo:fill-path))))
-	       (natural-bottom-left (terrain) ; inverse of above
-		 `(progn
-		    (set-terrain-fill ,terrain)
-		    (let ((xy1 (crd half-kite-long
-				    (- (* softness quarter-r))))
-			  (xy2 (crd (- half-down-y
-				       (* half-kite-long
-					  softness))
-				    quarter-r)))
-		      (rotation (xy2) (xy1))
-		      (new-curves r-mid xy1 xy2 l-mid)
-		      (lines l-b-corner b-r-corner)
-		      (cairo:close-path)
-		      (cairo:fill-path))))
+	       (natural-bottom-left (terrain &optional offsetp) ; inverse of above
+		 (cond ((not offsetp)
+			`(progn
+			   (set-terrain-fill ,terrain)
+			   (let ((xy1 (crd half-kite-long
+					   (- (* softness quarter-r))))
+				 (xy2 (crd (- half-down-y
+					      (* half-kite-long
+						 softness))
+					   quarter-r)))
+			     (rotation (xy2) (xy1))
+			     (new-curves r-mid xy1 xy2 l-mid)
+			     (lines l-b-corner b-r-corner)
+			     (cairo:close-path)
+			     (cairo:fill-path))))
+		       (t
+			`(progn
+			   (set-terrain-fill (terrain-base (point-terrain ,terrain)))
+			   (let* ((depth-left (point-water-elevation left))
+				  (depth-bot (point-water-elevation bottom))
+				  (left-offset
+				    (water-offset-left depth-left
+						       (point-elevation top)
+						       (point-elevation left)
+						       hex-radius))
+				  (right-offset
+				    (water-offset-right depth-bot
+							 (point-elevation bottom)
+							 (point-elevation right)
+							 hex-radius))
+				  (xy0 (crd right-offset 0))
+				  (xy1 (crd right-offset
+					    (* -0.36 right-offset)))
+				  (xy2 (crd (- half-down-y
+					       (* *soft*
+						  0.5
+						  right-offset))
+					    left-offset))
+				  (xy3 (crd half-down-y left-offset)))
+			     (rotation (xy2 xy3) (xy0 xy1))
+			     (new-curves xy0 xy1 xy2 xy3)
+			     (lines l-b-corner b-r-corner)
+			     (cairo:close-path)
+			     (cairo:fill-path)
+
+			     (cairo:set-source-rgb 1.0 1.0 0.6)
+			     (cairo:set-line-width 1.5)
+			     (new-lines xy0 xy1)
+			     (cairo:Stroke)
+			     (new-lines xy1 xy2)
+			     (cairo:set-source-rgb 0.7 1.0 0.2)
+			     (cairo:Stroke)
+			     (new-lines xy2 xy3)
+			     (cairo:set-source-rgb 0.4 0.7 0.0)
+			     (cairo:Stroke)
+			     ))
+			)))
 	       (natural-top-left (terrain &optional (waterp))
 		 (cond ((not waterp)
 			`(progn
@@ -825,11 +947,10 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 				  (xy0 (crd bottom-offset 0))
 				  (xy1 (crd bottom-offset
 					    (* 0.36 bottom-offset)))
-				  (xy2 (crd (+ bottom-offset
+				  (xy2 (crd (- half-down-y
 					       (* *soft*
 						  0.5
-						  (- half-down-y
-						     bottom-offset)))
+						  bottom-offset))
 					    top-offset))
 				  (xy3 (crd half-down-y top-offset)))
 			     (rotation (xy0 xy1) (xy2 xy3))
@@ -1703,25 +1824,26 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		     (3 (natural-bottom-right bottom t))
 		     (12 (natural-top-left left t))
 
+		     (5 (natural-left left top bottom)
+		      (natural-right right bottom top))
+		     (10 (natural-top-bottom bottom t))
+
+		     (6 (natural-bottom-left bottom t))
+
 		     (7 (natural-bottom-right-left bottom right left top))
 		     (11 (natural-top-bottom-right bottom top bottom left))
 		     (13 (natural-top-right-left right left right bottom))
 		     (14 (natural-top-bottom-left bottom bottom top right))
+		     (15 (kite-perimeter (terrain-base (point-terrain bottom))))
 		     )))#|
 		     
 		     ;;; TODO: water borders maybe
 		     ;; gradients would be easy for two points but hard for more
 		     
-		     (5
-		      (natural-left left)
-		      (natural-right right))
 		     (6 (natural-bottom-left bottom))
 		     (7 (natural-bottom-right-left bottom))
 		     (9 (natural-top-right right))
-		     (10 (natural-top-bottom bottom))
-		     (11 (natural-top-bottom-right bottom))
-		     (13 (natural-top-right-left right))
-		     (15 (kite-perimeter bottom)))
+		     )
 	  ))|#
 	       )
 	  
