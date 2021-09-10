@@ -90,9 +90,30 @@
 					      (render test-world test-state)
 					      )
 					     ((sdl2:keyboard-state-p 29) ;; Z key
-					      (format t "TEST!~%")
-					      ;; TODO: reduce water
 					      (increase-water-level crd vert test-world -1)
+					      (clear-all test-state)
+					      (render test-world test-state)
+					      )
+					     ((sdl2:keyboard-state-p 22) ;; S key
+					      ;; add one depth of water
+					      (incf
+					       (terrain-depth
+						(change-terrain (hex-vertex (hex-at crd test-world)
+									    vert)
+								:base 'lake)))
+					      (clear-all test-state)
+					      (render test-world test-state)
+					      )
+					     ((sdl2:keyboard-state-p 27) ;; X key
+					      ;; reduce one depth of water
+					      (let* ((point (hex-vertex (hex-at crd test-world)
+									vert))
+						     (ter (point-terrain point)))
+						(cond ((> (terrain-depth ter) 1)
+						       (decf (terrain-depth ter)))
+						      ((= (terrain-depth ter) 1)
+						       (decf (terrain-depth ter))
+						       (change-terrain point :base 'cultivated))))
 					      (clear-all test-state)
 					      (render test-world test-state)
 					      ))))
