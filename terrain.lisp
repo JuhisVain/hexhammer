@@ -222,6 +222,36 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
   `(progn (cairo:move-to (x ,start) (y ,start))
 	  (curves ,@crds)))
 
+(defun terrain-depth (terrain)
+  (or (cdr (assoc :depth (terrain-mod terrain)))
+      0))
+
+(defun (setf terrain-depth) (new-depth terrain)
+  (cond ((not (plusp new-depth))
+	 (setf (terrain-mod terrain) (delete :depth (terrain-mod terrain) :key #'car)))
+	(t
+	 (let ((depth-cons (assoc :depth (terrain-mod terrain))))
+	   (if depth-cons
+	       (setf (cdr depth-cons) new-depth)
+	       (push (cons :depth new-depth) (terrain-mod terrain)))))))
+
+(defun change-terrain(point &key
+			      (base nil supplied-base)
+			      (state nil supplied-state)
+			      (mod nil supplied-mod))
+  (let ((terrain (point-terrain point)))
+    (when supplied-base
+      (setf (terrain-base terrain) base)
+      #|(when (terrain-waterp base)
+	(unless (assoc :depth mod)
+	  (incf (terrain-depth terrain))))|#
+      )
+    (when supplied-state
+      (setf (terrain-state terrain) state))
+    (when supplied-mod
+      (setf (terrain-mod terrain) mod))
+    terrain))
+
 (defun more-test ()
 
   (dolist (v (list :nnw :nne :e))
