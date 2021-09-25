@@ -538,6 +538,12 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 				  (xy2 (crd right-offset
 					    (* -0.36 right-offset)))
 				  (xy3 (crd right-offset 0)))
+			     (format t "~a ~a ~a ~a~%Water offset right : ~a~%"
+				     depth
+				     (point-elevation ,terrain)
+				     (point-elevation ,point-2)
+				     hex-radius
+				     right-offset)
 			     (rotation (xy0 xy1) (xy2 xy3))
 			     (new-curves xy0 xy1 xy2 xy3)
 			     (lines b-r-corner)
@@ -563,14 +569,14 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			   (set-terrain-fill (terrain-base (point-terrain ,terrain)))
 			   (let* ((depth (point-water-elevation ,terrain))
 				  (left-offset
-				    (water-offset-left depth
+				    (water-offset-left depth :start
 						       (point-elevation ,terrain)
 						       (point-elevation ,point-2)
 						       hex-radius))
 				  (top-offset
 				    (water-offset-top depth :end
-						      (point-elevation ,point-0)
-						      (point-elevation ,terrain)
+						      (point-elevation right);,point-0)
+						      (point-elevation top);,terrain)
 						      hex-radius))
 				  (xy0 (crd half-down-y left-offset))
 				  (xy1 (crd (- half-down-y
@@ -653,7 +659,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			   (let* ((depth (+ (depth (point-terrain ,terrain))
 					    (point-elevation ,terrain)))
 				  (left-offset
-				    (water-offset-left depth
+				    (water-offset-left depth :end
 						       (point-elevation ,point-0)
 						       (point-elevation ,terrain)
 						       hex-radius))
@@ -712,7 +718,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 							 (point-elevation bottom)
 							 hex-radius))
 				  (left-offset
-				    (water-offset-left depth-top
+				    (water-offset-left depth-top :start
 						       (point-elevation top)
 						       (point-elevation left)
 						       hex-radius))
@@ -774,7 +780,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			   (let* ((depth-top (point-water-elevation top))
 				  (depth-right (point-water-elevation right))
 				  (left-offset
-				    (water-offset-left depth-top
+				    (water-offset-left depth-top :start
 						       (point-elevation top)
 						       (point-elevation left)
 						       hex-radius))
@@ -818,7 +824,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			   (let* ((depth-left (point-water-elevation left))
 				  (depth-bot (point-water-elevation bottom))
 				  (left-offset
-				    (water-offset-left depth-left
+				    (water-offset-left depth-left :end
 						       (point-elevation top)
 						       (point-elevation left)
 						       hex-radius))
@@ -1045,7 +1051,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			   (let* ((depth0 (point-water-elevation ,point-0))
 				  (depth2 (point-water-elevation ,point-2))
 				  (left-offset
-				    (water-offset-left depth0
+				    (water-offset-left depth0 :start
 						       (point-elevation ,point-0)
 						       (point-elevation ,l-b-point)
 						       hex-radius))
@@ -1090,7 +1096,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			   (let* ((depth0 (point-water-elevation ,point-0))
 				  (depth2 (point-water-elevation ,point-2))
 				  (left-offset
-				    (water-offset-left depth2
+				    (water-offset-left depth2 :end
 						       (point-elevation ,t-l-point)
 						       (point-elevation ,point-2)
 						       hex-radius))
@@ -1786,18 +1792,38 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			    range
 			    half-down-y)))))
 
-(defun water-offset-left (depth t-l-ele l-b-ele hex-r)
+(defun water-offset-left (depth water-at t-l-ele l-b-ele hex-r)
+  (declare ((member :start :end) water-at))
   (let ((half-r (/ hex-r 2.0))
-	(index (abs (- depth
-		       (+ (if (< t-l-ele l-b-ele)
-			      1 0)
-			  t-l-ele))))
+;;	(index (abs (- depth
+;;		       (+ (if (< t-l-ele l-b-ele)
+;;			      1 0)
+;;			  t-l-ele))))
 	(range (- l-b-ele t-l-ele)))
-    (- half-r
+    #|(- half-r
        (the single-float 
 	    (contour-offset index
 			    range
-			    half-r)))))
+    half-r)))|#
+
+    (case water-at
+      (:START
+       (cond ((plusp range)
+	      (contour-offset (- (abs range) depth)
+			      range
+			      half-r))
+	     ((zerop range)
+	      (contour-offset 0 depth half-r))
+	     ((minusp range)
+	      (setf range (* depth 2 range))
+	      (format t "start minus ~a ~a~%" depth range)
+		      ;; (1- (- range (1- depth)))
+	      (contour-offset 0 ;;;; TODO  something
+			      range
+			      half-r))))
+      (:END
+       half-r))
+    ))
 
 (defun water-offset-right (depth b-r-ele r-t-ele hex-r)
   (let ((half-down-y (* +sin60+ hex-r))
@@ -1826,27 +1852,26 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	     ((minusp range)
 	      (format t "minusp range ~a ~a~%" (- depth) range)
 	      (contour-offset (- depth) range minus-half-r))))
-      (:END ;;; THIS SHOULD BE OK!!
+      (:END
        (format t "Water at end ")
        (cond ((plusp range)
 	      (setf range (* depth range 2))
-	      (format t "plusp range ~a // ~a ~a~%"
-		      depth
-		      (1- (- range (1- depth)))
-		      range)
 	      (contour-offset (1- (- range (1- depth))) ;; ?
 			      range minus-half-r))
 	     ((zerop range)
-	      (format t "zero range -> ~a ~a~%" 0 depth)
 	      (contour-offset 0 depth minus-half-r))
 	     ((minusp range)
-	      (setf range (* depth range 2))
-	      (format t "minusp range ~a ~a~%"
-		      (1- (- range)) range)
-	      (contour-offset (1- (- range))
-			      range
-			      minus-half-r)
-	      ))))))
+	      (contour-offset
+	       (if (<= depth (abs range))
+		   (- (abs range)
+		      depth)
+		   0)
+	       (if (<= depth (abs range))
+		   range
+		   (+ (* (signum range)
+			 (- depth (abs range)))
+		      range))
+	       minus-half-r)))))))
 
 '(defun water-offset-top (depth #|water-at|# r-t-ele t-l-ele hex-r)
   ;;(declare ((member :start :end) water-at))
