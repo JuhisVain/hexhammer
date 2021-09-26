@@ -239,6 +239,8 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			      (base nil supplied-base)
 			      (state nil supplied-state)
 			      (mod nil supplied-mod))
+  (unless point
+    (return-from change-terrain))
   (let ((terrain (point-terrain point)))
     (when supplied-base
       (setf (terrain-base terrain) base)
