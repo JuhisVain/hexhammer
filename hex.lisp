@@ -48,9 +48,9 @@
 		       sw-edge nw-edge n-edge)))
 
 (defstruct contours
-  (left 0 :type (signed-byte 8))
-  (range 0 :type (signed-byte 8))
-  (water 0 :type (signed-byte 8))
+  (left 0 :type (unsigned-byte 8))
+  (range 0 :type (signed-byte 9))
+  (water 0 :type (unsigned-byte 8))
   (deque nil :type range-deque))
 
 (defun record-contours (hex left right step)
