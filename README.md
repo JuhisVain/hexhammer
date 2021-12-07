@@ -1,6 +1,7 @@
 A study into dynamically rendered vector graphics.
 
 Simple instructions:
+- You'll need a black and white 8-bit PGM format image named "getty.pgm" in same folder as code
 - Start your Lisp
 - (load "load.lisp")
 - (in-package :hexhammer)
