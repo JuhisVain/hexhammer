@@ -1854,7 +1854,16 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	      0.0)
 	     ((minusp range)
 	      0.0)))
-      )))
+	      (format t "- ~a <= ~a? " depth (abs range))
+	      (if (<= depth (abs range))
+		  (contour-offset #1=(- (abs range)
+					depth)
+				  range half-down-y)
+		  (let ((shift-range (+ (- depth (abs range))
+					(abs range))))
+		    (contour-offset (- (abs range) depth)
+				    shift-range
+				    half-down-y)))))))))
 
 '(defun water-offset-right (depth b-r-ele r-t-ele hex-r)
   (let ((half-down-y (* +sin60+ hex-r))
