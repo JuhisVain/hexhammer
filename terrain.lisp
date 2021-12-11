@@ -1861,7 +1861,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 				  range half-down-y)
 		  (let ((shift-range (+ (- depth (abs range))
 					(abs range))))
-		    (contour-offset (- (abs range) depth)
+		    (contour-offset 0
 				    shift-range
 				    half-down-y)))))))))
 
