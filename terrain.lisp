@@ -1946,8 +1946,13 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	      (format t "zero range -> ~a ~a~%" 0 1)
 	      (contour-offset 0 1 minus-half-r))
 	     ((minusp range)
-	      (format t "minusp range ~a ~a~%" (- depth) range)
-	      (contour-offset (- depth) range minus-half-r))))
+	      (format t "minusp range ~a ~a~%" depth range)
+	      ;; Great!
+	      (contour-offset (1- (- depth (abs range)))
+			      (* 2 (+ (abs range)
+				      (- depth
+					 (abs range))))
+			      minus-half-r))))
       (:END
        (format t "TOP TOP TOP Water at end~%")
        (cond ((plusp range)
@@ -1994,9 +1999,12 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
        (format t "LEFT LEFT LEFT Water at END~%")
        (cond ((plusp range)
 	      (format t "plusp range ~a ~a~%" (1- depth) range)
-	      (contour-offset (1- depth) range half-r)
-	      ;(contour-offset (- depth) range half-r)
-	      )
+	      ;; Great!
+	      (contour-offset (1- (- depth range))
+			      (* 2 (+ range
+				      (- depth
+					 range)))
+			      half-r))
 	     ((zerop range)
 	      (format t "zero range -> ~a ~a~%" 0 1)
 	      (contour-offset 0 1 half-r))
