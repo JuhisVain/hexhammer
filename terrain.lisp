@@ -1944,7 +1944,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 				  minus-half-r)))
 	     ((zerop range)
 	      (format t "zero range -> ~a ~a~%" 0 1)
-	      (contour-offset 0 1 minus-half-r))
+	      (contour-offset (1- depth) depth minus-half-r))
 	     ((minusp range)
 	      (format t "minusp range ~a ~a~%" depth range)
 	      ;; Great!
@@ -2007,7 +2007,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			      half-r))
 	     ((zerop range)
 	      (format t "zero range -> ~a ~a~%" 0 1)
-	      (contour-offset 0 1 half-r))
+	      (contour-offset (1- depth) depth half-r))
 	     ((minusp range)
 	      (format t "minusp range ~a ~a~%" depth range)
 	      (if (<= depth (abs range))
