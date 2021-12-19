@@ -1901,11 +1901,15 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	      (contour-offset (1- depth) depth minus-half-r))
 	     ((minusp range)
 	      ;;(format t "minusp range ~a ~a~%" depth range)
-	      ;; Great!
-	      (contour-offset (1- (- depth (abs range)))
+	      ;; Great! ;; Update: not so great!
+	      '(contour-offset (1- (- depth (abs range)))
 			      (* 2 (+ (abs range)
 				      (- depth
 					 (abs range))))
+		minus-half-r)
+	      ;; the new GREAT!
+	      (contour-offset (1- depth)
+			      (* depth (abs range) 2)
 			      minus-half-r))))
       (:END
        ;;(format t "TOP TOP TOP Water at end~%")
@@ -1939,12 +1943,9 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
       (:END
        ;;(format t "LEFT LEFT LEFT Water at END~%")
        (cond ((plusp range)
-	      ;;(format t "plusp range ~a ~a~%" (1- depth) range)
-	      ;; Great!
-	      (contour-offset (1- (- depth range))
-			      (* 2 (+ range
-				      (- depth
-					 range)))
+	      ;;(format t "LEFT plusp depth:~a range: ~a~%" (1- depth) range)
+	      (contour-offset (1- depth)
+			      (* depth range 2)
 			      half-r))
 	     ((zerop range)
 	      ;;(format t "zero range -> ~a ~a~%" 0 1)
@@ -1955,9 +1956,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		  (contour-offset (1- depth) (abs range) half-r)
 		  (contour-offset (1- (+ (abs range) depth))
 				  (+ (abs range) depth)
-				  half-r))
-	      ;(contour-offset (1- depth) range half-r)
-	      )))
+				  half-r)))))
       (:START
        ;;(format t "LEFT LEFT LEFT Water at START~%")
        (cond ((plusp range)
