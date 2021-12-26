@@ -1825,8 +1825,8 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	      (contour-offset 0 depth half-down-y))
 	     ((minusp range)
 	      ;;(format t "minusp depth: ~a range: ~a~%" depth range)
-	      (contour-offset (1- (+ (abs range) depth))
-			      (+ (abs range) depth)
+	      (contour-offset (- (* depth (abs range) 2) depth)
+			      (* depth (abs range) 2)
 			      half-down-y)))))))
 
 (defun water-offset-right (depth water-at b-r-ele r-t-ele hex-r)
@@ -1850,17 +1850,15 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	      (contour-offset (1- depth) depth half-down-y))
 	     ((minusp range)
 	      ;;(format t "MINUSP depth ~a range ~a~%" depth range)
-		  (contour-offset (1- depth)
-				  (* depth 2 (abs range))
-				  half-down-y))))
+	      (contour-offset (1- depth)
+			      (* depth 2 (abs range))
+			      half-down-y))))
       (:END
        ;;(format t "end ")
        (cond ((plusp range)
-	      ;;(format t "plusp~%")
-	      ;;; This will cause water border to move away
-	      ;; from cliff drop as depth increases:
-	      (contour-offset (1- (+ range depth))
-			      (+ range depth)
+	      ;;(format t "RIGHT END PLUSP depth ~a range ~a~%" depth range)
+	      (contour-offset (- (* depth range 2) depth)
+			      (* depth range 2)
 			      half-down-y))
 	     ((zerop range)
 	      ;;(format t "zerop~%")
@@ -1885,7 +1883,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
       (:START
        ;;(format t "TOP TOP TOP Water at start ")
        (cond ((plusp range)
-	      ;;(format t "plusp range ~a ~a~%" (1- depth) range)
+	      ;;(format t "plusp range ~a ~a~%" depth range)
 	      (if (<= depth range)
 		  (contour-offset (1- depth) range minus-half-r)
 		  (contour-offset (1- (+ (abs range) depth))
