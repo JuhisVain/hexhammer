@@ -266,7 +266,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
     (setf (terrain-base (point-terrain (hex-vertex (hex-at (crd 3 2) *world*) v)))
 	  'swamp))
 
-  (dolist (v (list :n :ne :se :s :sw :nw))
+  '(dolist (v (list :n :ne :se :s :sw :nw))
     (setf (terrain-base (point-terrain (hex-vertex (hex-at (crd 1 1) *world*) v)))
 	  'lake))
   (dolist (v (list :cen :e :ssw :w))
@@ -276,7 +276,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
     (setf (terrain-base (point-terrain (hex-vertex (hex-at (crd 1 1) *world*) v)))
 	  'forest))
   
-  (setf (terrain-base (point-terrain (hex-vertex (hex-at (crd 1 3) *world*) :cen)))
+  '(setf (terrain-base (point-terrain (hex-vertex (hex-at (crd 1 3) *world*) :cen)))
 	'lake)
   (dolist (v (list :nw :ne :nne :nnw :nnw :sw))
     (setf (terrain-base (point-terrain (hex-vertex (hex-at (crd 1 3) *world*) v)))
@@ -285,7 +285,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
     (setf (terrain-base (point-terrain (hex-vertex (hex-at (crd 1 3) *world*) v)))
 	  'swamp))
 
-  (dolist (v (list :n))
+  '(dolist (v (list :n))
     (setf (terrain-base (point-terrain (hex-vertex (hex-at (crd 3 0) *world*) v)))
 	  'lake))
   (dolist (v (list :nne :cen))
@@ -295,7 +295,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
     (setf (terrain-base (point-terrain (hex-vertex (hex-at (crd 3 0) *world*) v)))
 	  'swamp))
 
-  (dolist (v (list :n))
+  '(dolist (v (list :n))
     (setf (terrain-base (point-terrain (hex-vertex (hex-at (crd 5 0) *world*) v)))
 	  'lake))
   (dolist (v (list :nne))
@@ -305,7 +305,7 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
     (setf (terrain-base (point-terrain (hex-vertex (hex-at (crd 5 0) *world*) v)))
 	  'swamp))
 
-  (dolist (v (list :n :se :sw))
+  '(dolist (v (list :n :se :sw))
     (setf (terrain-base (point-terrain (hex-vertex (hex-at (crd 5 2) *world*) v)))
 	  'lake))
   (dolist (v (list :cen :nw :e))
