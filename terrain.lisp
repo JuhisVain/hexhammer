@@ -1782,12 +1782,9 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
   (declare ((member :start :end) water-at))
   (let ((half-down-y (* +sin60+ hex-r))
 	(range (- b-r-ele l-b-ele)))
-    ;;(format t "woBOTTOM ")
     (case water-at
-      (:end ;; OK
-       ;;(format t "end ")
+      (:END
        (cond ((plusp range)
-	      ;;(format t "PLUSP depth ~a range ~a~%" depth range)
 	      (let ((shift-range (* depth 2 range)))
 		    (contour-offset (1- depth)
 				    shift-range
@@ -1795,7 +1792,6 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	     ((zerop range)
 	      (contour-offset (1- depth) depth half-down-y))
 	     ((minusp range)
-	      ;;(format t "minusp -> ~a ~a~%" depth range)
 	      (if (<= depth (abs range))
 		  (contour-offset (1- depth) range half-down-y)
 		  (let ((shift-range (- (+ (- depth (abs range))
@@ -1803,12 +1799,8 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		    (contour-offset (1- (abs shift-range))
 				    shift-range
 				    half-down-y))))))
-      (:start
-      ;;(format t "start ")
+      (:START
        (cond ((plusp range)
-	      '(format t "plusp depth ~a range ~a => ~a // ~a . ~a~%"
-		      depth range (1- (+ range depth))
-			      (+ range depth) half-down-y)
 	      ;;; This will cause water border to move away
 	      ;; from cliff drop as depth increases:
 	      (if (<= depth (abs range))
@@ -1821,10 +1813,8 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 				    shift-range
 				    half-down-y))))
 	     ((zerop range)
-	      ;;(format t "zerop range~%")
 	      (contour-offset 0 depth half-down-y))
 	     ((minusp range)
-	      ;;(format t "minusp depth: ~a range: ~a~%" depth range)
 	      (contour-offset (- (* depth (abs range) 2) depth)
 			      (* depth (abs range) 2)
 			      half-down-y)))))))
@@ -1833,12 +1823,9 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
   (declare ((member :start :end) water-at))
   (let ((half-down-y (* +sin60+ hex-r))
 	(range (- r-t-ele b-r-ele)))
-    ;;(format t "woRIGHT ")
     (case water-at
-      (:START ;; OK
-       ;;(format t "start ")
+      (:START
        (cond ((plusp range)
-	      ;;(format t "plusp~%")
 	      (if (<= depth range)
 		  (contour-offset (1- depth) range half-down-y)
 		  (let ((shift-range (+ (- depth range) range)))
@@ -1846,25 +1833,19 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 				    shift-range
 				    half-down-y))))
 	     ((zerop range)
-	      ;;(format t "zerop~%")
 	      (contour-offset (1- depth) depth half-down-y))
 	     ((minusp range)
-	      ;;(format t "MINUSP depth ~a range ~a~%" depth range)
 	      (contour-offset (1- depth)
 			      (* depth 2 (abs range))
 			      half-down-y))))
       (:END
-       ;;(format t "end ")
        (cond ((plusp range)
-	      ;;(format t "RIGHT END PLUSP depth ~a range ~a~%" depth range)
 	      (contour-offset (- (* depth range 2) depth)
 			      (* depth range 2)
 			      half-down-y))
 	     ((zerop range)
-	      ;;(format t "zerop~%")
 	      (contour-offset 0 depth half-down-y))
 	     ((minusp range)
-	      ;;(format t "Minusp ~a ~a~%" depth range)
 	      (if (<= depth (abs range))
 		  (contour-offset (- (abs range)
 				     depth)
@@ -1881,39 +1862,24 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	(range (- ele-1 ele-0)))
     (case water-at
       (:START
-       ;;(format t "TOP TOP TOP Water at start ")
        (cond ((plusp range)
-	      ;;(format t "plusp range ~a ~a~%" depth range)
 	      (if (<= depth range)
 		  (contour-offset (1- depth) range minus-half-r)
 		  (contour-offset (1- (+ (abs range) depth))
 				  (+ (abs range) depth)
 				  minus-half-r)))
 	     ((zerop range)
-	      ;;(format t "zero range -> ~a ~a~%" 0 1)
 	      (contour-offset (1- depth) depth minus-half-r))
 	     ((minusp range)
-	      ;;(format t "minusp range ~a ~a~%" depth range)
-	      ;; Great! ;; Update: not so great!
-	      '(contour-offset (1- (- depth (abs range)))
-			      (* 2 (+ (abs range)
-				      (- depth
-					 (abs range))))
-		minus-half-r)
-	      ;; the new GREAT!
 	      (contour-offset (1- depth)
 			      (* depth (abs range) 2)
 			      minus-half-r))))
       (:END
-       ;;(format t "TOP TOP TOP Water at end~%")
        (cond ((plusp range)
-	      ;;(format t "plusp range ~a ~a~%" (1- depth) range)
 	      (setf range (* depth range 2))
-	      ;;(format t "   -> ~a : ~a~%" (1- (- range (1- depth))) range)
-	      (contour-offset (1- (- range (1- depth))) ;; ?
+	      (contour-offset (1- (- range (1- depth)))
 			      range minus-half-r))
 	     ((zerop range)
-	      ;;(format t "zero range -> ~a ~a~%" 0 1)
 	      (contour-offset 0 depth minus-half-r))
 	     ((minusp range)
 	      (contour-offset
@@ -1934,28 +1900,21 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	(range (- l-b-ele t-l-ele)))
     (case water-at
       (:END
-       ;;(format t "LEFT LEFT LEFT Water at END~%")
        (cond ((plusp range)
-	      ;;(format t "LEFT plusp depth:~a range: ~a~%" (1- depth) range)
 	      (contour-offset (1- depth)
 			      (* depth range 2)
 			      half-r))
 	     ((zerop range)
-	      ;;(format t "zero range -> ~a ~a~%" 0 1)
 	      (contour-offset (1- depth) depth half-r))
 	     ((minusp range)
-	      ;;(format t "minusp range ~a ~a~%" depth range)
 	      (if (<= depth (abs range))
 		  (contour-offset (1- depth) (abs range) half-r)
 		  (contour-offset (1- (+ (abs range) depth))
 				  (+ (abs range) depth)
 				  half-r)))))
       (:START
-       ;;(format t "LEFT LEFT LEFT Water at START~%")
        (cond ((plusp range)
-	      ;;(format t "plusp range ~a ~a~%" (1- depth) range)
-	      ;;(setf range (* depth range 2))
-	      (contour-offset (1- (- range (1- depth))) ;; ?
+	      (contour-offset (1- (- range (1- depth)))
 			      range half-r)
 	      (contour-offset
 	       (if (<= depth (abs range))
@@ -1969,18 +1928,12 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 		      range))
 	       half-r))
 	     ((zerop range)
-	      ;;(format t "zero range -> ~a ~a~%" 0 1)
 	      (contour-offset 0 depth half-r))
 	     ((minusp range)
-	      ;;(format t "minus range Depth: ~a Range:~a~%" (1- depth) range)
 	      (setf range (* depth (abs range) 2))
-	      (prog1
-		  (contour-offset
-		   #1=(1- (- range (1- depth)))
-		   #2=range
-		   half-r)
-		;;(format t "   -> ~a : ~a ~%" #1# #2#)
-		)))))))
+	      (contour-offset (1- (- range (1- depth)))
+			      range
+			      half-r)))))))
 
 (defun abs-max (number &rest more-numbers)
   "Returns the number that has the greatest absolute value."
