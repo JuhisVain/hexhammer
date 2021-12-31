@@ -318,6 +318,9 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 (defun draw-kite-terrain (top left bottom right
 			  angle hex-centre-x hex-centre-y
 			  hex-radius cairo-context)
+  (declare (optimize speed)
+	   (single-float angle hex-radius hex-centre-x hex-centre-y)
+	   (point top left bottom right))
   (let* ((angle-d (+ angle
 		     (/ +sf-pi+ -3)))
 	 (sin-d (sin angle-d))
@@ -1781,9 +1784,13 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
      ))
 
 (defun water-offset-bottom (depth water-at l-b-ele b-r-ele hex-r)
-  (declare ((member :start :end) water-at))
+  (declare ((member :start :end) water-at)
+	   (fixnum depth l-b-ele b-r-ele)
+	   (single-float hex-r)
+	   ;(optimize speed)
+	   )
   (let ((half-down-y (* +sin60+ hex-r))
-	(range (- b-r-ele l-b-ele)))
+	(range (the fixnum (- b-r-ele l-b-ele))))
     (case water-at
       (:END
        (cond ((plusp range)
@@ -1822,7 +1829,9 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			      half-down-y)))))))
 
 (defun water-offset-right (depth water-at b-r-ele r-t-ele hex-r)
-  (declare ((member :start :end) water-at))
+  (declare ((member :start :end) water-at)
+	   (fixnum depth b-r-ele r-t-ele)
+	   (single-float hex-r))
   (let ((half-down-y (* +sin60+ hex-r))
 	(range (- r-t-ele b-r-ele)))
     (case water-at
@@ -1859,7 +1868,9 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 				    half-down-y)))))))))
 
 (defun water-offset-top (depth water-at ele-0 ele-1 hex-r)
-  (declare ((member :start :end) water-at))
+  (declare ((member :start :end) water-at)
+	   (fixnum depth ele-0 ele-1)
+	   (single-float hex-r))
   (let ((minus-half-r (/ hex-r -2.0))
 	(range (- ele-1 ele-0)))
     (case water-at
@@ -1896,7 +1907,9 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 				  minus-half-r))))))))
 
 (defun water-offset-left (depth water-at t-l-ele l-b-ele hex-r)
-  (declare ((member :start :end) water-at))
+  (declare ((member :start :end) water-at)
+	   (fixnum depth t-l-ele l-b-ele)
+	   (single-float hex-r))
   (let ((half-r (/ hex-r 2.0))
 	(range (- l-b-ele t-l-ele)))
     (case water-at
