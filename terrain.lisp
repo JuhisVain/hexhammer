@@ -1867,8 +1867,8 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
        (cond ((plusp range)
 	      (if (<= depth range)
 		  (contour-offset (1- depth) range minus-half-r)
-		  (contour-offset (1- (+ (abs range) depth))
-				  (+ (abs range) depth)
+		  (contour-offset (1- (+ range depth))
+				  (+ range depth)
 				  minus-half-r)))
 	     ((zerop range)
 	      (contour-offset (1- depth) depth minus-half-r))
@@ -1884,17 +1884,16 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 	     ((zerop range)
 	      (contour-offset 0 depth minus-half-r))
 	     ((minusp range)
-	      (contour-offset
-	       (if (<= depth (abs range))
-			     (- (abs range)
-				depth)
-			     0)
-	       (if (<= depth (abs range))
-		   range
-		   (+ (* (signum range)
-			 (- depth (abs range)))
-		      range))
-	       minus-half-r)))))))
+	      (if (<= depth (abs range))
+		  (contour-offset (- (abs range)
+				     depth)
+				  range
+				  minus-half-r)
+		  (contour-offset 0
+				  (+ (* (signum range) ; obviously -1
+					(- depth (abs range)))
+				     range)
+				  minus-half-r))))))))
 
 (defun water-offset-left (depth water-at t-l-ele l-b-ele hex-r)
   (declare ((member :start :end) water-at))
@@ -1916,19 +1915,15 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 				  half-r)))))
       (:START
        (cond ((plusp range)
-	      (contour-offset (1- (- range (1- depth)))
-			      range half-r)
-	      (contour-offset
-	       (if (<= depth (abs range))
-			     (- (abs range)
-				depth)
-			     0)
-	       (if (<= depth (abs range))
-		   range
-		   (+ (* (signum range)
-			 (- depth (abs range)))
-		      range))
-	       half-r))
+	      (if (<= depth range)
+		  (contour-offset (- range
+				     depth)
+				  range
+				  half-r)
+		  (contour-offset 0
+				  (+ (- depth range)
+				     range)
+				  half-r)))
 	     ((zerop range)
 	      (contour-offset 0 depth half-r))
 	     ((minusp range)
