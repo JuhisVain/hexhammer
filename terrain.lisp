@@ -1783,11 +1783,16 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
      ;(point-elevation point)
      ))
 
+(deftype edge-end () '(member :START :END))
+(declaim (ftype (function (elevation edge-end elevation elevation single-float)
+			  single-float)
+		water-offset-bottom
+		water-offset-right
+		water-offset-top
+		water-offset-left))
+
 (defun water-offset-bottom (depth water-at l-b-ele b-r-ele hex-r)
-  (declare ((member :start :end) water-at)
-	   (fixnum depth l-b-ele b-r-ele)
-	   (single-float hex-r)
-	   ;(optimize speed)
+  (declare ;(optimize speed)
 	   )
   (let ((half-down-y (* +sin60+ hex-r))
 	(range (the fixnum (- b-r-ele l-b-ele))))
@@ -1829,9 +1834,8 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 			      half-down-y)))))))
 
 (defun water-offset-right (depth water-at b-r-ele r-t-ele hex-r)
-  (declare ((member :start :end) water-at)
-	   (fixnum depth b-r-ele r-t-ele)
-	   (single-float hex-r))
+  (declare ;(optimize-speed)
+	   )
   (let ((half-down-y (* +sin60+ hex-r))
 	(range (- r-t-ele b-r-ele)))
     (case water-at
@@ -1868,9 +1872,8 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 				    half-down-y)))))))))
 
 (defun water-offset-top (depth water-at ele-0 ele-1 hex-r)
-  (declare ((member :start :end) water-at)
-	   (fixnum depth ele-0 ele-1)
-	   (single-float hex-r))
+  (declare ;(optimize-speed)
+	   )
   (let ((minus-half-r (/ hex-r -2.0))
 	(range (- ele-1 ele-0)))
     (case water-at
@@ -1907,9 +1910,8 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 				  minus-half-r))))))))
 
 (defun water-offset-left (depth water-at t-l-ele l-b-ele hex-r)
-  (declare ((member :start :end) water-at)
-	   (fixnum depth t-l-ele l-b-ele)
-	   (single-float hex-r))
+  (declare ;(optimize-speed)
+	   )
   (let ((half-r (/ hex-r 2.0))
 	(range (- l-b-ele t-l-ele)))
     (case water-at
