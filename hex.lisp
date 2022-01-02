@@ -2,19 +2,25 @@
 
 (deftype pointspec ()
   `(cons crd (cons (member ,@+vertex-directions+) null)))
+
 (defstruct (point (:constructor point (elevation &optional (raw-water 0))))
-  (terrain (make-terrain) :type terrain);;(list (cons 'cultivated 'dry))) ;; TODO ??((base-type . weather-state) . mod-types)??
-  (elevation 0 :type elevation)
-  (raw-water 0 :type elevation))
+  (terrain (make-terrain) :type terrain)
+  (elevation 0 :type elevation))
 
 (declaim (inline point-water))
-(defun point-water (instance)
-  (point-raw-water instance))
-(defun (setf point-water) (new-value instance)
-  (setf (point-raw-water instance)
-	(if (<= new-value (point-elevation instance))
-	    0
-	    new-value)))
+(defun point-water (point)
+  (cdr (assoc :depth (terrain-mod (point-terrain point)))))
+(defun (setf point-water) (new-value point)
+  (cond ((plusp new-value)
+	 (setf (cdr (assoc :depth (terrain-mod (point-terrain point))))
+	       new-value
+
+	       (terrain-base (point-terrain point))
+	       'cultivated))
+	(t
+	 (setf (terrain-mod (point-terrain point))
+	       (delete :depth
+		       (terrain-mod (point-terrain point)) :test #'eq :key #'car)))))
 
 (defstruct (hex (:constructor
 		    make-hex (cen &optional nne ne e se sse s ssw sw w nw nnw n)))
