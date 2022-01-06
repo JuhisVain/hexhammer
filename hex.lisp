@@ -72,19 +72,8 @@
 	    :range difference
 	    :water (max (point-water left-point)
 			(point-water right-point))
-	    ;;:water-right (point-water right-point)
 	    :deque (make-range-deque :step step))))
     (set-all-contours contours)
-    '(cond ((> difference 0)
-	   (loop for elevation
-		 from (* (ceiling left-ele step) step) ; round to higher step multiple
-		   to right-ele by step
-		 do (push-right elevation (contours-deque contours))))
-	  ((< difference 0)
-	   (loop for elevation
-		 from (* (floor left-ele step) step) ; round to lower step multiple
-		 downto right-ele by step
-		 do (push-right elevation (contours-deque contours)))))
     contours))
 
 (defun contours-right (contours)
