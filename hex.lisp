@@ -9,7 +9,8 @@
 
 (declaim (inline point-water))
 (defun point-water (point)
-  (cdr (assoc :depth (terrain-mod (point-terrain point)))))
+  (or (cdr (assoc :depth (terrain-mod (point-terrain point))))
+      0))
 (defun (setf point-water) (new-value point)
   (cond ((plusp new-value)
 	 (setf (cdr (assoc :depth (terrain-mod (point-terrain point))))
