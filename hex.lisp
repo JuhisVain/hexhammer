@@ -3,7 +3,7 @@
 (deftype pointspec ()
   `(cons crd (cons (member ,@+vertex-directions+) null)))
 
-(defstruct (point (:constructor point (elevation &optional (raw-water 0))))
+(defstruct (point (:constructor point (elevation)))
   (terrain (make-terrain) :type terrain)
   (elevation 0 :type elevation))
 
