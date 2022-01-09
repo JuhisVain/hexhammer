@@ -97,6 +97,29 @@ coordinate FROM through DIR in CRD."
 	     (cons dir to) (crd-paths-rivers crd-paths)))))
   (add-river-entry to (vertex-alias crd dir to) crd size world))
 
+(defun plumruntest (&optional (world *world*))
+  (clrhash *crd-paths*)
+  (macrolet
+      ((river-exits (&rest instructions)
+	 `(progn
+	    ,@(loop for (x0 y0 dir x1 y1 size)
+		      on instructions
+		    by #'(lambda (x) (nthcdr 6 x))
+		    collect `(add-river-exit (crd ,x0 ,y0)
+					     ,dir
+					     (crd ,x1 ,y1)
+					     ,(coerce size 'single-float)
+					     world)))))
+    (river-exits
+     46 41 :s 46 40 0.1
+     46 40 :sw 45 39  0.1
+     45 39 :s 45 38  0.1
+     45 38 :sw 44 38  0.1
+     44 38 :sw 43 37  0.1
+     43 37 :s 43 36  0.1
+     43 36 :sw 42 36 0.1)
+    ))
+
 (defun rivertest (&optional (world *world*))
   (clrhash *crd-paths*)
   (macrolet
@@ -270,7 +293,7 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 	    (* 4 (width view-state))))
 	 (cairo-context (cairo:create-context cairo-surface))
 	 (crd-paths (gethash crd *crd-paths*)))
-
+    
     (when (not crd-paths)
       (return-from draw-rivers))
     
