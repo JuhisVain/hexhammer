@@ -28,9 +28,11 @@
 	    (sdl2:render-present renderer)
 
 	    (let ((test-state
-		    (make-instance 'view-state
-				   :texture texture
-				   :buffer buffer))
+		    (apply #'make-instance
+			   'view-state
+			   :texture texture
+			   :buffer buffer
+			   *previous-view-state*))
 		  (test-world
 		    (progn
 		      (defvar *world* (make-world))

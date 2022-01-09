@@ -1,5 +1,7 @@
 (in-package :hexhammer)
 
+(defparameter *previous-view-state* nil)
+
 (defclass view-state ()
   ((width :initform 1000
 	  :initarg :width
@@ -18,6 +20,7 @@
    (buffer :initarg :buffer
 	   :accessor buffer)
    (hex-r :initform 75.0 ; ZOOM
+	  :initarg :hex-r
 	  :accessor hex-r)
    (contour-step :initform 1
 		 :reader contour-step)))
@@ -35,7 +38,14 @@
 
 (defmethod (setf hex-r) :after (new-r view-state)
   (when (<= (hex-r view-state) 0)
-    (setf (slot-value view-state 'hex-r) 1.0)))
+    (setf (slot-value view-state 'hex-r) 1.0))
+  (setf (getf *previous-view-state* :hex-r) (hex-r view-state)))
+
+(defmethod (setf centre-x) :after (new-x view-state)
+  (setf (getf *previous-view-state* :centre-x) (centre-x view-state)))
+
+(defmethod (setf centre-y) :after (new-x view-state)
+  (setf (getf *previous-view-state* :centre-y) (centre-y view-state)))
 
 (defun hex-x-at-pix (pixel view-state)
   "Returns floating point number as X coordinate of hex below this x PIXEL."
