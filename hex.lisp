@@ -14,14 +14,14 @@
 (defun (setf point-water) (new-value point)
   (cond ((plusp new-value)
 	 (setf (cdr (assoc :depth (terrain-mod (point-terrain point))))
-	       new-value
-
-	       (terrain-base (point-terrain point))
-	       'cultivated))
-	(t
+	       new-value))
+	(t ; no water
 	 (setf (terrain-mod (point-terrain point))
 	       (delete :depth
-		       (terrain-mod (point-terrain point)) :test #'eq :key #'car)))))
+		       (terrain-mod (point-terrain point)) :test #'eq :key #'car)
+
+	       (terrain-base (point-terrain point))
+	       'cultivated))))
 
 (defstruct (hex (:constructor
 		    make-hex (cen &optional nne ne e se sse s ssw sw w nw nnw n)))
@@ -313,18 +313,19 @@ and exist in world WORLD."
 
 (defun depress-vert (crd dir amount world)
   (let ((vertex (vertex-exists crd dir world)))
-    (decf (point-elevation vertex) amount)
-    ;; TODO: check connected verts for water, if yes fill this.
-    ))
+    (prog1
+	(decf (point-elevation vertex) amount)
+      ;; With below will preserve water surface level:
+      (when (terrain-waterp (terrain-base (point-terrain vertex)))
+	(incf (point-water vertex) amount)))))
 
 (defun elevate-vert (crd dir amount world)
   (let ((vertex (vertex-exists crd dir world)))
     (prog1
 	(incf (point-elevation vertex) amount)
-      ;; Guarantee 0 water level if point not submerged:
-      (when (>= (point-elevation vertex)
-		(point-water vertex))
-	(setf (point-water vertex) 0)))))
+      ;; With below will preserve water surface level:
+      (when (terrain-waterp (terrain-base (point-terrain vertex)))
+	(decf (point-water vertex) amount)))))
 
 (defun sink-vert (crd dir rel-water-level world)
   "Sink the vertex at CRD DIR by REL-WATER-LEVEL and fill depression."
