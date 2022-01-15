@@ -882,11 +882,10 @@ Forest at left and swamp at right produces (FOREST . SWAMP) border."
 				  (xy0 (crd bottom-offset 0))
 				  (xy1 (crd bottom-offset
 					    (* 0.36 bottom-offset)))
-				  (xy2 (crd (+ bottom-offset
+				  (xy2 (crd (- half-down-y
 					       (* *soft*
 						  0.5
-						  (- half-down-y
-						     bottom-offset)))
+						  bottom-offset))
 					    top-offset))
 				  (xy3 (crd half-down-y top-offset)))
 			     (rotation (xy0 xy1) (xy2 xy3))
