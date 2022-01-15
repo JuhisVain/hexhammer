@@ -131,7 +131,8 @@
 
 (defun push-test-world (origin)
   (push *world* *test-world-stack*)
-  (setf *world* nil)
+  (setf *world* nil
+	*previous-view-state* nil)
   (typecase origin
     (hex
      (setf *world* (make-world))
