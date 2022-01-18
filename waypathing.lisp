@@ -274,7 +274,9 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 	     (- (x master-entry-crd) (x exit-crd))))))
 
 (defun river-centre-size (crd)
+  "Calculates width of river at centre of hex at CRD."
   (let ((crd-paths (gethash crd *crd-paths*)))
+    ;; TODO: Redo. both sizes should be same if water body at either hex centre 
     (if crd-paths
 	(/ (+ (if (rivers-exit crd-paths)
 		  (river-size (rivers-exit crd-paths))
@@ -343,52 +345,6 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 	    (let ((centre-crd 
 		    (graphical-path-centre master-entry exit-crd
 					   r hex-centre-x hex-centre-y)))
-	      #|
-	      ;;TEST
-	      (let* ((angle (crd-centre-river-angle crd))
-		     (angle-mark (nrotate (crd (* 0.5 r) 0)
-					  nil (sin angle) (cos angle))))
-		
-		(cairo:set-source-rgb 1.0 0.1 0.5)
-		(cairo:move-to (x centre-crd) (y centre-crd))
-		(cairo:rel-line-to (x angle-mark) (y angle-mark))
-		(cairo:stroke)
-		(cairo:set-source-rgb 0.0 0.1 0.8))
-
-	      ;; angle at hex edges:
-	      (let* ((exit-crd-river (gethash exit-crd-act *crd-paths*))
-		     (exit-hex-centre
-		       (crd-graphical-centre
-			(x exit-crd-act) (y exit-crd-act) view-state))
-		     (exit-crd-centre
-		       (graphical-path-centre
-			(vertex-crd
-			 r
-			 ;; The master entry of exit-crd-act:
-			 (if (rivers-master-entry exit-crd-river)
-			     (river-dir (rivers-master-entry exit-crd-river))
-			     :CEN))
-			(vertex-crd r
-				    (if (rivers-exit exit-crd-river)
-					(river-dir
-					 (rivers-exit exit-crd-river))
-					:CEN))
-			r (x exit-hex-centre) (y exit-hex-centre)))
-		     (angle (+ (/ +sf-pi+ 2)
-			       (atan (- (- (y centre-crd) (y exit-crd-centre)))
-				     (- (x centre-crd) (x exit-crd-centre)))))
-		     (angle-mark
-		       (nrotate (crd (* 0.5 r) 0)
-				nil (sin angle) (cos angle))))
-		
-		(cairo:set-source-rgb 1.0 0.1 0.5)
-		(cairo:move-to (+ (x exit-crd) hex-centre-x)
-			       (+ (y exit-crd) hex-centre-y))
-		(cairo:rel-line-to (x angle-mark) (y angle-mark))
-		(cairo:stroke)
-		(cairo:set-source-rgb 0.0 0.1 0.8))
-	      ;;TEST OVER
-	      |#
 	      (let* ((centre-angle (crd-centre-river-angle crd))
 		     
 		     (centre-right-side
@@ -551,8 +507,7 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 						 dist-div)
 					      0)
 					 (+ centre-angle
-					    (/ +sf-pi+ 2))))
-		     )
+					    (/ +sf-pi+ 2)))))
 
 		(cairo:set-source-rgb 0.0 0.1 0.8)
 		;; Move to initial point centre-right-side:
@@ -589,13 +544,7 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 		 (+ (y exit-right-side)
 		    (y exit-crd)
 		    hex-centre-y))
-		#|
-		(cairo:line-to (+ (x exit-right-side)
-				  (x exit-crd) hex-centre-x)
-			       (+ (y exit-right-side)
-				  (y exit-crd) hex-centre-y))
-		|#
-
+		
 		(cairo:curve-to
 		 ;; First cp:
 		 (+ (x r-e-ec-cp1)
@@ -618,12 +567,7 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 		    (x exit-crd-centre))
 		 (+ (y exit-centre-right-side)
 		    (y exit-crd-centre)))
-		#|
-		(cairo:line-to (+ (x exit-centre-right-side)
-				  (x exit-crd-centre))
-			       (+ (y exit-centre-right-side)
-				  (y exit-crd-centre)))
-		|#
+		
 		;; Close destination section boundary:
 		(cairo:line-to (+ (x exit-centre-left-side)
 				  (x exit-crd-centre))
@@ -652,15 +596,8 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 		    hex-centre-x)
 		 (+ (y exit-left-side)
 		    (y exit-crd)
-		    hex-centre-y)
-		 )
-		#|
-		(cairo:line-to (+ (x exit-left-side)
-				  (x exit-crd) hex-centre-x)
-			       (+ (y exit-left-side)
-				  (y exit-crd) hex-centre-y))
-		|#
-
+		    hex-centre-y))
+		
 		(cairo:curve-to
 		 (+ (x l-e-c-cp1)
 		    (x exit-left-side)
@@ -681,34 +618,24 @@ coordinate CRD. Returns angle in radians to right side looking downstream."
 		 (+ (x centre-left-side)
 		    (x centre-crd))
 		 (+ (y centre-left-side)
-		    (y centre-crd))
-		 )
-		#|
-		(cairo:line-to (+ (x centre-left-side)
-				  (x centre-crd))
-			       (+ (y centre-left-side)
-				  (y centre-crd)))
-		|#
-		
+		    (y centre-crd)))
+	        
 		(cairo:set-source-rgb 0.0 0.2 0.8)
 		(cairo:set-line-width 1.0)
 
-		;; NOTE: The current colours hurt my eyes
-		;; and there seems to be either an illusion or a problem with my monitor
-		;; causing the western borders to appear dark and eastern borders to appear
-		;; brighter than the fill color.
 		(cairo:set-antialias :none)
 		(cairo:fill-preserve)
 		(cairo:set-antialias :default)
 		(cairo:stroke))
 	      
-	      #|
+	      #| ;; centre to exit in reddish:
+	      (cairo:set-source-rgb 1.0 0.2 0.8)
 	      (cairo:move-to (x centre-crd) (y centre-crd))
 	      (cairo:line-to (+ (x exit-crd) hex-centre-x)
 			     (+ (y exit-crd) hex-centre-y))
 	      (cairo:stroke)
-	      |#
-	      #|
+	      
+	      ;; entry to centre in off white:
 	      (dolist (entry (river-entries crd-paths))
 		(let* ((entry-dir (river-dir entry))
 		       (entry-crd (vertex-crd r entry-dir hex-centre-x hex-centre-y)))
